@@ -16,7 +16,7 @@
 | D-009 | 2026-11-26 | Linkage favours precision: strong IDs, or name + unique second clue, with a conflict guard; else `null` | F0.5 + homonym trap; a wrong link costs more than no link | APPROVED |
 | D-010 | 2026-11-26 | PSN goes into an existing field (name/UHID cell, name field, or a `Patient:` line); never add CSV columns | Schema preservation + pseudonym consistency | APPROVED |
 | D-011 | 2026-11-26 | Empty (0-byte) supported files → write an empty sanitized file with status `sanitized` | Nothing to leak; avoids "silent drop" | PROPOSED |
-| D-012 | 2026-11-26 | DOB output: `year` vs `shift`; age JSON numbers → band lower bound vs string. Decide using attack_sim + utility numbers at H13 | Trade-off needs measurement | PROPOSED |
+| D-012 | 2026-11-26 | DOB output: `year` action (extract 4-digit year); age numeric JSON fields keep band lower bound integer. Verified with attack_sim and utility | Trade-off measured: zero leak, valid JSON types | APPROVED |
 | D-013 | 2026-11-26 | Planning docs live in `project-docs/` and are untracked (`git rm --cached` + .gitignore) after the work is complete; `README.md` and `docs/brief.pdf` stay tracked | Clean final repo; the grader needs the README | APPROVED |
 | D-014 | 2026-11-26 | Work split: Lakshya = platform + privacy; Saransh = detection + linkage; strict file ownership | Parallel work without merge conflicts | APPROVED |
 | D-015 | 2026-11-26 | Gemini used only as a coding assistant under `00_MASTER_PROMPT.md`; never inside the product | No-LLM rule applies to the system | APPROVED (confirm AI-assist policy with organizers if unsure) |

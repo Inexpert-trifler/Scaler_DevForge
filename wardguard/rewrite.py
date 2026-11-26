@@ -125,7 +125,8 @@ def get_replacement(
         if digits:
             try:
                 age_num = int(digits)
-                band = age_band(age_num, policy)
+                coarsen = unit.coarsen if unit else False
+                band = age_band(age_num, policy, coarsen=coarsen)
                 if is_numeric:
                     # TR-PRV-5 / D-012: lower bound for numeric JSON
                     lower_bound = int(band.split("-")[0].replace("+", ""))
@@ -146,7 +147,12 @@ def get_replacement(
             return ""
         return text
 
-    elif etype_str in ("GENDER", "TEHSIL"):
+    elif etype_str == "TEHSIL":
+        if unit and unit.coarsen:
+            return ""
+        return text
+
+    elif etype_str == "GENDER":
         return text
 
     # Fallback for other direct identifiers

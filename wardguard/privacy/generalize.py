@@ -18,15 +18,16 @@ from wardguard.privacy.dates import date_offset
 from wardguard.privacy.pseudonym import pseudonym
 
 
-def age_band(age: int, policy: dict) -> str:
+def age_band(age: int, policy: dict, coarsen: bool = False) -> str:
     """Return age band, e.g. '45-49', '90+'.
     
     Guarantees the band always contains the true age.
+    When coarsen=True, produces a wider band (default 10 years, e.g. '40-49').
     """
     top = policy.get("age_top_code", 90)
     if age >= top:
         return f"{top}+"
-    width = policy.get("age_band_years", 5)
+    width = policy.get("age_band_years_coarsen", 10) if coarsen else policy.get("age_band_years", 5)
     lower = (age // width) * width
     upper = lower + width - 1
     return f"{lower}-{upper}"
@@ -45,6 +46,10 @@ def generalize_village(village: str, unit: Optional[Unit], policy: dict) -> str:
     """Generalize village name according to policy.village_action ('tehsil', 'district', 'remove')."""
     action = policy.get("village_action", "tehsil")
     if action == "remove":
+        return ""
+
+    if unit and unit.coarsen:
+        # L-12: Coarsened rare records drop village and tehsil
         return ""
 
     if unit:

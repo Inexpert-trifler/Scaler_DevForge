@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | M0 | Scaffold + contracts frozen | H2 | DONE | CONTRACT OK; both confirm `model.py` + `07_API_CONTRACTS.md` |
 | M1 | Integrated detection v1 | H8 | DONE | 4/4 canaries; recall > 0.9 per script; CONTRACT OK |
-| M2 | Linkage + privacy | H14 | TODO | F0.5 > 0.9; 0 homonym merges; attack_sim numbers logged |
+| M2 | Linkage + privacy | H14 | DONE | F0.5 > 0.9; 0 homonym merges; attack_sim numbers logged: A3 4.3%, A4 4.3%, A5 25.0% |
 | M3 | Hardened + feature freeze | H18 | TODO | chaos delta < 10; READY TO SUBMIT |
 | M4 | Release | H22 | TODO | 12_RELEASE_CHECKLIST all ticked |
 
@@ -29,7 +29,7 @@
 | L-09 | Privacy core: pseudonym, date_offset, format-preserving date shift, age band, PIN, village → tehsil | H6–10 | L-02 | TR-PRV-1..6, 8 | DONE | Crockford HMAC PSN, non-zero date offsets, 9-day stay preserved, generalizers |
 | L-10 | Rewrite engine: apply mentions, PSN placement, QI generalization | H8–11 | L-07, L-09 | TR-PRV-2, 08 §4 | DONE | **M1 integration**: right-to-left mentions, whole-cell replacement, JSON types, D-010 PSN placement; tests green (109/109) |
 | L-11 | `tools/attack_sim.py` (A2–A5 incl. global-shift recovery) | H10–14 | L-10 | TR-TOOL-2 | DONE | raw vs ours numbers logged; A3 4.5%, A4 4.5%, A5 25.0% (all pass); tests green (116/116) |
-| L-12 | k-anonymity plan + targeted coarsening; tune k, DOB policy (D-012) | H13–16 | L-11, S-08 | TR-PRV-7 | TODO | A5 < reference 40.1% |
+| L-12 | k-anonymity plan + targeted coarsening; tune k, DOB policy (D-012) | H13–16 | L-11, S-08 | TR-PRV-7 | DONE | **M2**: equivalence classes over QIs, wider age band (10y), village/tehsil/district drop; tests green (123/123) |
 | L-13 | Performance, memory, determinism; check_submission READY | H15–18 | all | TR-RUN-6, TR-SEC-4 | TODO | **M3** |
 | L-14 | README + 2-page brief (numbers from both) | H18–21 | L-13 | R16 | TODO | docs/brief.pdf ≤ 2 pages |
 | L-15 | Release checklist, cleanup, final push | H21–23 | L-14 | 12 | TODO | **M4** |
