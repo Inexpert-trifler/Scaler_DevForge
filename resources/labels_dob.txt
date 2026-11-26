@@ -1,5 +1,7 @@
 # Generic DOB & date labels
 dob
+birth_dt
+birth dt
 birth date
 date of birth
 d.o.b

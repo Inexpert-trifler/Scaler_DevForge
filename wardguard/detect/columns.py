@@ -41,12 +41,15 @@ RE_RELATIVE_HEADER = re.compile(
 # Column headers that are NEVER patient names even if values look like alphabetic words
 NON_NAME_HEADERS = {
     "procedure", "status", "category", "from", "to", "source", "destination",
-    "remarks", "notes", "note", "diagnosis", "complaints", "history", "department",
+    "remarks", "notes", "note", "diagnosis", "dx", "complaints", "history", "department",
     "dept", "hospital", "facility", "state", "country", "drug", "medicine", "rx",
     "test", "unit", "range", "loinc", "code", "display", "type", "role", "system",
-    "visits", "bed", "ward", "trip", "gender", "sex", "ling", "district", "jila",
-    "tehsil", "taluka", "village", "gaon", "city", "town", "relation", "relationship",
-    "payer", "scheme", "bill_type", "outcome", "severity", "result", "specimen",
+    "visits", "bed", "ward", "trip", "gender", "sex", "ling", "लिंग",
+    "district", "distt", "dist", "jila", "zilla", "जिला", "ज़िला", "जनपद",
+    "tehsil", "tahsil", "taluka", "taluk", "तहसील",
+    "village", "gram", "gaon", "ग्राम", "गाँव", "गांव", "city", "town",
+    "relation", "relationship", "payer", "scheme", "bill_type", "outcome",
+    "severity", "result", "specimen", "addr_line", "address_line",
 }
 
 # Date/DOB regex for values: DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY, etc.
@@ -165,11 +168,11 @@ def load_header_lexicons() -> dict[EType, set[str]]:
     lex_map[EType.AGE] = _read_lines("labels_age.txt")
 
     for lbl in _read_lines("labels_village.txt"):
-        if any(k in lbl for k in ("tehsil", "taluka", "taluk", "तहसील")):
+        if any(k in lbl for k in ("tehsil", "tahsil", "taluka", "taluk", "तहसील")):
             lex_map[EType.TEHSIL].add(lbl)
-        elif any(k in lbl for k in ("district", "jila", "zilla", "जिला")):
+        elif any(k in lbl for k in ("district", "distt", "dist", "jila", "zilla", "जिला", "ज़िला", "जनपद")):
             lex_map[EType.DISTRICT].add(lbl)
-        elif "village" in lbl or "gaon" in lbl or "gram" in lbl:
+        elif any(k in lbl for k in ("village", "gaon", "gram", "ग्राम", "गाँव", "गांव")):
             lex_map[EType.VILLAGE].add(lbl)
         elif any(k in lbl for k in ("mohalla", "ward", "colony", "मोहल्ला", "वार्ड")):
             lex_map[EType.LOCALITY].add(lbl)
@@ -178,11 +181,11 @@ def load_header_lexicons() -> dict[EType, set[str]]:
 
     addr_labels = _read_lines("labels_address.txt")
     for lbl in addr_labels:
-        if "pin" in lbl or "pincode" in lbl or "zip" in lbl:
+        if any(k in lbl for k in ("pin", "pincode", "postal", "zip", "पिन")):
             lex_map[EType.PIN].add(lbl)
-        elif any(k in lbl for k in ["tehsil", "taluka", "taluk", "तहसील"]):
+        elif any(k in lbl for k in ["tehsil", "tahsil", "taluka", "taluk", "teh", "तहसील"]):
             lex_map[EType.TEHSIL].add(lbl)
-        elif any(k in lbl for k in ["district", "jila", "zilla", "जिला"]):
+        elif any(k in lbl for k in ["district", "distt", "dist", "jila", "zilla", "जिला", "ज़िला", "जनपद"]):
             lex_map[EType.DISTRICT].add(lbl)
         elif any(k in lbl for k in ["h.no", "house", "मकान", "makan", "flat", "plot",
                                      "pata", "address", "addr", "residence", "permanent",

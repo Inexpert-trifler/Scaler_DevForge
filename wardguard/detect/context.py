@@ -177,7 +177,8 @@ RE_AGE_LABEL = re.compile(
     r'(?=\s*(?:y\b|yrs?\b|years?\b|yr\b|वर्ष|साल|/|,|;|\s|$))'
 )
 RE_AGE_SEX = re.compile(
-    r'(?i)(?<![\w/.])([\d०-९]{1,3})[ \t]*(?:y|yrs?|years?|वर्ष|साल)[ \t]*[/-][ \t]*(?:m|f|male|female|पुरुष|महिला)\b'
+    r'(?i)(?<![\w/.])([\d०-९]{1,3})[ \t]*(?:y|yrs?|years?|वर्ष|साल)'
+    r'(?:[ \t]*[/-][ \t]*(?:m|f|male|female|पुरुष|महिला)\b|[ \t]*,[ \t]*(?:male|female|पुरुष|महिला)\b)'
 )
 
 # 13. Initials + surname ("T. R. Chauhan", "R.K. Sharma") and alias labels ("also known as", "urf")

@@ -401,3 +401,85 @@ def test_honorific_kinship_and_date_linkage():
         strong_ids=(("PHONE", "6004394755"),),
     )
     assert not has_conflict(ev1, ev2, max_age_gap=3)
+
+
+def test_qi_hardening_dob_redact_fhir_xhtml_headers_and_cluster_kanon():
+    """Verify A3/A4/A5 hardening: DOB redaction, XHTML URL preservation, Hindi/variant headers, and cluster-level k-anon."""
+    import json
+    from wardguard.detect import build_gazetteer, detect_file
+    from wardguard.detect.columns import classify_column
+    from wardguard.detect.evidence import normalize_district_key
+    from wardguard.ingest.units import enumerate_units
+    from wardguard.model import ParsedFile, Unit, Evidence, EType
+    from wardguard.privacy.dates import date_offset
+    from wardguard.privacy.kanon import plan
+    from wardguard.rewrite import render
+
+    # 1. Hindi / Hinglish / abbreviated snake_case header classification
+    assert classify_column("तहसील", ["Khaga"]) == EType.TEHSIL
+    assert classify_column("जिला", ["सीतापुर"]) == EType.DISTRICT
+    assert classify_column("पिन", ["226001"]) == EType.PIN
+    assert classify_column("tahsil", ["Khaga"]) == EType.TEHSIL
+    assert classify_column("distt", ["Sitapur"]) == EType.DISTRICT
+    assert classify_column("addr_line", ["House 12"]) == EType.HOUSE
+    assert classify_column("birth_dt", ["1999-05-14"]) == EType.DOB
+
+    # 2. Devanagari & fuzzy district normalization
+    assert normalize_district_key("सीतापुर") == "sitapur"
+    assert normalize_district_key("रायबरेली") == normalize_district_key("Rae Bareli")
+    assert normalize_district_key("Barabanki") == "barabanki"
+
+    # 3. Bounded min/max date offset determinism and amplitude invariant
+    off_pol = {"date_shift_min_days": 15, "date_shift_max_days": 90}
+    d1 = date_offset("C:P1", b"sec-a", off_pol)
+    d2 = date_offset("C:P1", b"sec-b", off_pol)
+    assert 15 <= abs(d1) <= 90
+    assert 15 <= abs(d2) <= 90
+    assert d1 == date_offset("C:P1", b"sec-a", off_pol)
+
+    # 4. FHIR XHTML namespace preservation, comma age-sex banding, and DOB birthDate omission on redact
+    fhir_bundle = {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [{
+            "resource": {
+                "resourceType": "Patient",
+                "id": "pat-1",
+                "text": {"status": "generated", "div": '<div xmlns="http://www.w3.org/1999/xhtml">Ramesh Kumar, 27 yrs, male</div>'},
+                "name": [{"text": "Ramesh Kumar"}],
+                "gender": "male",
+                "birthDate": "1999-05-14",
+                "address": [{"district": "Sitapur", "postalCode": "261001"}],
+            }
+        }],
+    }
+    raw_fhir = json.dumps(fhir_bundle).encode("utf-8")
+    pf = ParsedFile(rel="fhir/bundle_1.json", sha256="fh1", size=len(raw_fhir), fmt="fhir", obj=fhir_bundle)
+    enumerate_units(pf)
+    for u in pf.units:
+        u.psn = "PSN-TEST01"
+        u.date_offset = 25
+        u.coarsen = True
+    redact_pol = {**POLICY, "dob_action": "redact", "age_band_years": 20, "age_band_years_coarsen": 30, "age_top_code": 60, "pin_keep_digits": 1}
+    detect_file(pf, build_gazetteer([pf], redact_pol), redact_pol)
+    rendered = json.loads(render(pf, redact_pol).decode("utf-8"))
+    pat = rendered["entry"][0]["resource"]
+    assert "http://www.w3.org/1999/xhtml" in pat["text"]["div"]
+    assert "20-39" in pat["text"]["div"] or "0-29" in pat["text"]["div"]
+    assert "birthDate" not in pat
+    assert pat["address"][0]["postalCode"] == "2*****"
+
+    # 5. Cluster-level k-anonymity propagation across units sharing a patient cluster (Devanagari vs Latin district + DOB fallback)
+    from wardguard.model import Slot
+    cluster_units = []
+    for i in range(2):
+        cu = Unit(uid=f"reg#{i}", file_rel="reg.csv", loc=f"row:{i}", patient_bearing=True, cluster=f"P{i}")
+        cu.evidence = Evidence(dob="1999-05-14", gender="M", district_key="सीतापुर")
+        cu.slots = [Slot(path="col:diagnosis", text="Typhoid fever", channel="content")]
+        cluster_units.append(cu)
+    linked_other = Unit(uid="other#0", file_rel="other.txt", loc="doc", patient_bearing=True, cluster="P0")
+    linked_other.evidence = Evidence(district_key="sitapur")
+    cluster_units.append(linked_other)
+    plan(cluster_units, {"k_min": 5, "age_band_years": 20, "age_band_years_coarsen": 30, "age_top_code": 60})
+    assert all(unit.coarsen for unit in cluster_units)
+

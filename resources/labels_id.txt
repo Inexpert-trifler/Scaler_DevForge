@@ -39,6 +39,10 @@ reg. no
 regno
 registration number
 hospital id
+hosp_no
+hosp no
+uid_no
+health_id
 patient id
 uhid no
 crno

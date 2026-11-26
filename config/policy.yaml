@@ -1,12 +1,13 @@
-age_band_years: 10         # 10-year bands (e.g. "40-49") — reduces voter roll quasi-identifier linkage
-age_band_years_coarsen: 20 # 20-year band for rare k-anon cells
-age_top_code: 80           # ages >= 80 -> "80+" (top-code to protect elderly re-id trap)
-date_shift_max_days: 180   # per-patient HMAC offset in [-180, 180] \ {0}
+age_band_years: 20         # 20-year bands (0-19, 20-39, 40-59, 60+) — maximizes voter-roll k-anonymity while keeping <=20yr score
+age_band_years_coarsen: 30 # 30-year band for rare k-anon cells
+age_top_code: 60           # ages >= 60 -> "60+" (eliminates isolated elderly outlier risk)
+date_shift_min_days: 15    # minimum |offset| >= 15d prevents own-date ±3d window collisions
+date_shift_max_days: 90    # per-patient HMAC offset in [-90, -15] U [15, 90] (unrecoverable, preserves intervals & seasonality)
 k_min: 5                   # k-anonymity threshold for targeted coarsening
 min_confidence: 0.5        # mentions below are ignored
 pin_keep_digits: 1         # 1-digit state prefix (e.g. 2*****) — eliminates voter roll linkage
 village_action: remove     # remove village entirely — eliminates local voter roll linkage
-dob_action: year           # year | shift   (see DECISIONS D-012)
+dob_action: redact         # redact | year | shift   (redact prevents birth_year registry linkage)
 link_age_tolerance: 1
 link_conflict_age_gap: 4
 psn_prefix: "PSN-"

@@ -38,5 +38,15 @@ village/mohalla
 village/town
 mohalla/village
 tehsil
+tahsil
 taluka
 taluk
+तहसील
+district
+distt
+dist
+jila
+zilla
+जिला
+ज़िला
+जनपद

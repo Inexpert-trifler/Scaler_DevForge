@@ -113,6 +113,8 @@ def get_replacement(
 
     elif etype_str == "DOB":
         dob_action = policy.get("dob_action", "year")
+        if dob_action in ("redact", "mask", "suppress"):
+            return "0" if is_numeric else tokens.get("DOB", "[DOB]")
         if dob_action == "year":
             ym = re.search(r"\b(19\d\d|20\d\d)\b", text)
             if ym:
@@ -591,9 +593,18 @@ def render(pf: ParsedFile, policy: dict) -> bytes:
                     if s.text != orig_key and s.text != unescaped_orig_key:
                         rename_json_key(obj_to_write, parent_ptr, orig_key, s.text)
 
-            # FHIR PSN placement (D-010)
-            if pf.fmt == "fhir" and pf.units and pf.units[0].psn:
-                place_fhir_psn(obj_to_write, pf.units[0].psn)
+            # FHIR PSN placement (D-010) and optional birthDate removal on DOB redact
+            if pf.fmt == "fhir":
+                if pf.units and pf.units[0].psn:
+                    place_fhir_psn(obj_to_write, pf.units[0].psn)
+                if policy.get("dob_action") in ("redact", "mask", "suppress") and isinstance(obj_to_write, dict):
+                    if obj_to_write.get("resourceType") == "Patient":
+                        obj_to_write.pop("birthDate", None)
+                    elif obj_to_write.get("resourceType") == "Bundle":
+                        for ent in obj_to_write.get("entry") or []:
+                            res = ent.get("resource") if isinstance(ent, dict) else None
+                            if isinstance(res, dict) and res.get("resourceType") == "Patient":
+                                res.pop("birthDate", None)
 
             orig_limit = sys.getrecursionlimit()
             try:

@@ -16,9 +16,32 @@ area
 colony
 ward
 tehsil
+tahsil
+taluka
+taluk
+तहसील
 district
+distt
+dist
+jila
+zilla
+जिला
+ज़िला
+जनपद
 pincode
 pin
+pin code
+pin_code
+pincode
+postal
+postal code
+zip
+zip code
+पिन
+पिन कोड
+पिनकोड
+addr_line
+address_line
 h.no
 house no
 मकान नं

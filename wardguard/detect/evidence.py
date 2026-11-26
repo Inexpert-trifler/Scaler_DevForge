@@ -51,6 +51,62 @@ RE_REL_PREFIX_STRIP = re.compile(
 
 _DEVA_TO_ASCII = str.maketrans("०१२३४५६७८९", "0123456789")
 
+_DISTRICT_ALIAS_NORM: Optional[dict[str, tuple[str, str, str]]] = None
+
+
+@lru_cache(maxsize=512)
+def normalize_district_key(raw: str) -> str:
+    """Map Latin/Devanagari/variant district spelling onto canonical UP district key."""
+    clean = (raw or "").strip()
+    if not clean:
+        return ""
+    # Strip admin prefix if free-text district span passed in ("Distt. Sitapur", "जिला बाराबंकी")
+    clean = re.sub(
+        r'(?i)^(?:distt?\.?|district|dist\.|jila|zila|जिला|ज़िला|जनपद)\s*[:.-]?\s*',
+        '',
+        clean,
+    ).strip()
+    if not clean:
+        return ""
+
+    from rapidfuzz import fuzz
+    from wardguard.link.normalize import phonetic_key
+
+    global _DISTRICT_ALIAS_NORM
+    if _DISTRICT_ALIAS_NORM is None:
+        _, districts, _ = load_admin_areas()
+        table: dict[str, tuple[str, str, str]] = {}
+        for d in sorted(districts):
+            comp = d.replace(" ", "")
+            c_name = canonical_name(d).replace(" ", "")
+            p_key = phonetic_key(d).replace("_", "")
+            table[comp] = (d, c_name, p_key)
+        _DISTRICT_ALIAS_NORM = table
+
+    canon_raw = canonical_name(clean)
+    cand_comp = canon_raw.replace(" ", "")
+    low_comp = clean.lower().replace(" ", "")
+    if low_comp in _DISTRICT_ALIAS_NORM:
+        return _DISTRICT_ALIAS_NORM[low_comp][0]
+    if cand_comp in _DISTRICT_ALIAS_NORM:
+        return _DISTRICT_ALIAS_NORM[cand_comp][0]
+
+    cand_phon = phonetic_key(clean).replace("_", "")
+    best_dist = ""
+    best_score = 0.0
+    for comp, (orig_d, c_d, p_d) in _DISTRICT_ALIAS_NORM.items():
+        sc = max(
+            fuzz.ratio(low_comp, comp),
+            fuzz.ratio(cand_comp, c_d),
+            fuzz.ratio(cand_phon, p_d) if cand_phon and p_d else 0.0,
+        )
+        if sc > best_score:
+            best_score = sc
+            best_dist = orig_d
+    if best_score >= 76.0 and best_dist:
+        return best_dist
+    return canon_raw or clean.lower()
+
 
 def _norm_id_core(etype_val: str, raw: str) -> str:
     """Normalize strong identifier core uniformly (Devanagari digits -> ASCII, strips +91/0 on Indian phones)."""
@@ -221,9 +277,9 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
         elif ctype == EType.TEHSIL:
             teh_canon = canonical_name(val)
             if not district_key and teh_canon in tehsil_to_dist:
-                district_key = tehsil_to_dist[teh_canon]
+                district_key = normalize_district_key(tehsil_to_dist[teh_canon])
         elif ctype == EType.DISTRICT:
-            district_key = (canonical_name(val) or val.lower().strip())
+            district_key = normalize_district_key(val) or canonical_name(val) or val.lower().strip()
         elif ctype in (EType.PHONE, EType.AADHAAR, EType.ABHA_NUMBER, EType.PAN, EType.MRN):
             core = _norm_id_core(ctype.value, val)
             if core:
@@ -271,6 +327,25 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
             g = parse_gender(slot.text)
             if g:
                 gender_val = g
+        if not district_key and slot.column_type is None and slot.value_type == "str":
+            m_dist = re.search(
+                r'(?i)(?:^|[\s,;])(?:distt?\.?|district|jila|zila|जिला|ज़िला)\s*[:.-]?\s*([A-Za-z\u0900-\u097f]{3,}(?:[ \t]+[A-Za-z\u0900-\u097f]{3,})?)',
+                slot.text,
+            )
+            if m_dist:
+                cand_d = m_dist.group(1).strip(" .:-")
+                fw = cand_d.split()[0].lower() if cand_d.split() else ""
+                if fw not in {"hospital", "centre", "center", "clinic", "office", "board", "health", "medical"}:
+                    district_key = normalize_district_key(cand_d)
+            if not district_key:
+                m_teh = re.search(
+                    r'(?i)(?:^|[\s,;])(?:tehsil|tahsil|taluka|तहसील)\s*[:.-]?\s*([A-Za-z\u0900-\u097f]{2,})',
+                    slot.text,
+                )
+                if m_teh:
+                    t_c = canonical_name(m_teh.group(1).strip())
+                    if t_c in tehsil_to_dist:
+                        district_key = normalize_district_key(tehsil_to_dist[t_c])
 
         for m in slot.mentions:
             m_text = m.text.strip()
@@ -305,6 +380,15 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
                 parsed_a = parse_age(m_text)
                 if parsed_a is not None:
                     age_val = parsed_a
+            elif m.etype == EType.TEHSIL and not district_key:
+                cleaned_teh = re.sub(r'(?i)^(?:tehsil|teh\.?|tahsil|taluka|taluk|तहसील)\s*[:.-]?\s*', '', m_text).strip()
+                teh_canon = canonical_name(cleaned_teh)
+                if teh_canon in tehsil_to_dist:
+                    district_key = normalize_district_key(tehsil_to_dist[teh_canon])
+            elif m.etype == EType.DISTRICT and not district_key:
+                norm_d = normalize_district_key(m_text)
+                if norm_d:
+                    district_key = norm_d
             elif m.etype in (EType.PHONE, EType.AADHAAR, EType.ABHA_NUMBER, EType.PAN, EType.MRN):
                 # Do not treat metadata/filename-level ID mentions on @file/#doc as primary unit identity if unit already has content IDs,
                 # except normalize PHONE/MRN uniformly.

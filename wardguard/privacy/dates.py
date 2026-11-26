@@ -26,17 +26,16 @@ ASCII_TO_DEVA = str.maketrans(ASCII_DIGITS, DEVA_DIGITS)
 
 
 def date_offset(key: str, secret: bytes, policy: dict) -> int:
-    r"""Deterministic per-patient date offset in [-max_days, max_days] \ {0}."""
-    max_days = policy.get("date_shift_max_days", 180)
+    r"""Deterministic per-patient date offset in [-max_days, -min_days] U [min_days, max_days]."""
+    max_days = max(1, int(policy.get("date_shift_max_days", 180)))
+    min_days = max(1, min(max_days, int(policy.get("date_shift_min_days", 1))))
     h = hmac.new(secret, f"shift|{key}".encode("utf-8"), hashlib.sha256).digest()
     num = int.from_bytes(h[:4], "big")
-    span = 2 * max_days
-    val = num % span  # 0 to 2*max_days - 1
-    if val < max_days:
-        offset = val - max_days  # -max_days to -1
-    else:
-        offset = (val - max_days) + 1  # 1 to max_days
-    return offset
+    span = max_days - min_days + 1
+    val = num % (2 * span)
+    if val < span:
+        return -(min_days + val)
+    return min_days + (val - span)
 
 
 # Regexes for extracting date vs time

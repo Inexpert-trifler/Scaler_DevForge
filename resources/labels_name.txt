@@ -6,6 +6,8 @@ patient name
 pt name
 pt. name
 pt_nm
+patient_nm
+patient nm
 patient_name
 patient's name
 naam
@@ -15,7 +17,13 @@ naam
 रोगी
 रोगी का नाम
 मरीज़ का नाम
+marij naam
+rogi naam
 guardian
+guardian_nm
+father_nm
+husband_nm
+relative_nm
 relative
 father
 husband

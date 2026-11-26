@@ -398,9 +398,9 @@ def find_identifiers(text: str, *, _pre_norm: Optional[tuple[str, object]] = Non
 
     # 9. MRN
     for m in RE_MRN.finditer(norm_text):
-        # Skip matches embedded inside URLs (e.g. https://.../fhir/r4/.../icd-10)
-        prefix_ctx = norm_text[max(0, m.start(1) - 12):m.start(1)]
-        if "://" in norm_text[max(0, m.start(1) - 60):m.start(1)] and not re.search(r'\s', norm_text[max(0, m.start(1) - 60):m.start(1)]):
+        # Skip matches embedded inside URLs (e.g. http://www.w3.org/1999/xhtml, https://.../icd-10)
+        prefix_ctx = norm_text[max(0, m.start(1) - 80):m.start(1)]
+        if "://" in prefix_ctx and not re.search(r'[\s"\'<>]', prefix_ctx.rsplit("://", 1)[1]):
             continue
         m_val = m.group(1)
         # Require at least 4 digits for generic codes not starting with an explicit hospital MRN prefix
@@ -511,7 +511,9 @@ _ETYPE_PRIORITY = {
     EType.RELATIVE_NAME: 39,
     EType.PATIENT_NAME: 38,
     EType.DOB: 34,
+    EType.TEHSIL: 33,
     EType.VILLAGE: 32,
+    EType.DISTRICT: 31,
     EType.AGE: 30,
     EType.DATE: 28,
 }
