@@ -29,6 +29,13 @@ def main() -> None:
         sys.stderr.write("Error: --input and --output (or RAKSHA_INPUT and RAKSHA_OUTPUT) are required.\n")
         sys.exit(2)
 
+    try:
+        if output_dir.resolve().is_relative_to(input_dir.resolve()):
+            sys.stderr.write("Error: --output cannot be inside --input.\n")
+            sys.exit(2)
+    except OSError:
+        pass
+
     secret_str = os.environ.get("RAKSHA_SECRET")
     if not secret_str:
         sys.stderr.write("Error: RAKSHA_SECRET environment variable is required.\n")
