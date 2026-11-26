@@ -42,7 +42,7 @@
 | S-02 | `normalize.py` + `patterns.py`: all ID regexes, Verhoeff, Devanagari digits, masked forms + tests | H2–5 | L-02 | TR-DET-1, 2 | DONE | Tests green (8/8); Verhoeff + all Indian IDs |
 | S-03 | `columns.py`: header lexicon + value profiling classifier + tests (renamed-header cases) | H4–7 | S-02 | TR-DET-3 | DONE | Tests green (5/5); header lexicon + value profile |
 | S-04 | `guards.py`: Dr., doses, 1-0-1, frequency, vitals, labs, eponyms, wards, C/O-complaint, K/C/O, H/O, ASHA + tests | H5–7 | S-02 | TR-DET-6 | DONE | Tests green (6/6); all precision traps guarded |
-| S-05 | `context.py` + `detect_text`: labels, relations, honorifics, `Name 48 Y/F`; roles patient/relative | H6–10 | S-04 | TR-DET-4, 7 | TODO | 4/4 canaries |
+| S-05 | `context.py` + `detect_text`: labels, relations, honorifics, `Name 48 Y/F`; roles patient/relative | H6–10 | S-04 | TR-DET-4, 7 | DONE | Tests green (7/7); all 4 canaries caught |
 | S-06 | `translit.py` + `names.py` Gazetteer: harvest, variants (Latin ↔ Deva, spelling rules), fast find | H7–11 | S-03 | TR-DET-5 | TODO | language-trap patients caught; deva/hinglish recall > 0.9 |
 | S-07 | `detect_file` orchestration + QI mentions (AGE/DATE/DOB/VILLAGE/PIN…) + `evidence.py` | H9–11 | S-05, S-06 | TR-DET-8, TR-LNK-1 | TODO | **M1 integration** |
 | S-08 | Linkage: canonical_name, phonetic_key, union-find, unique name+clue, conflict guard, blocking | H10–14 | S-07 | TR-LNK-1..7 | TODO | F0.5 > 0.9; 0 homonym merges — **M2** |
