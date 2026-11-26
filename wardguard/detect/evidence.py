@@ -96,6 +96,17 @@ def load_admin_areas() -> tuple[dict[str, str], set[str], set[str]]:
     return tehsil_to_district, districts, tehsils
 
 
+def is_history_duration(text: str, start: int, end: int) -> bool:
+    """Check if number span is a symptom/disease duration rather than patient age."""
+    before = text[max(0, start - 15):start].lower()
+    after = text[end:min(len(text), end + 20)].lower()
+    if any(k in before for k in ("x ", "for ", "since ", "h/o ", "k/c/o ", "c/o ")):
+        return True
+    if any(k in after for k in ("back", "ago", "prior", "history", "completed", "duration")):
+        return True
+    return False
+
+
 def parse_iso_date(date_str: str) -> Optional[str]:
     """Parse date string into standard ISO format (YYYY-MM-DD)."""
     m = RE_DATE_EXTRACT.search(date_str.strip())
@@ -197,6 +208,10 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
             parsed_a = parse_age(val)
             if parsed_a is not None and age_val is None:
                 age_val = parsed_a
+            if not gender_val:
+                g = parse_gender(val)
+                if g:
+                    gender_val = g
         elif ctype == EType.GENDER:
             g = parse_gender(val)
             if g and not gender_val:
@@ -237,9 +252,14 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
     # 2. Process Mentions in Slots (free-text / hidden channels / regex hits)
     for slot in unit.slots:
         # Inspect un-typed free-text slots ONLY with strict explicit age pattern (avoids dates like 2026-05-26 -> age=26!)
-        if age_val is None and slot.column_type is None and slot.value_type == "str":
+        # Never extract patient age from clinical history, complaints, vitals, notes, or medication slots
+        slot_path_lower = slot.path.lower()
+        is_clinical_narrative = any(k in slot_path_lower for k in (
+            "history", "complaint", "diag", "rx", "med", "dose", "range", "vitals", "notes"
+        ))
+        if age_val is None and slot.column_type is None and slot.value_type == "str" and not is_clinical_narrative:
             m_explicit = RE_AGE_EXPLICIT.search(slot.text)
-            if m_explicit:
+            if m_explicit and not is_history_duration(slot.text, m_explicit.start(), m_explicit.end()):
                 num_str = m_explicit.group(1) or m_explicit.group(2) or m_explicit.group(3)
                 try:
                     cand_a = int(num_str)

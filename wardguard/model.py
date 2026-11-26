@@ -129,6 +129,7 @@ class Unit:
     psn: Optional[str] = None  # "PSN-XXXXXX" (privacy)
     date_offset: Optional[int] = None  # days (privacy)
     coarsen: bool = False  # k-anon rare record (privacy.kanon)
+    coarsen_cond: bool = False  # second-pass k-anon: also generalise condition to ICD chapter
 
 
 @dataclass(slots=True)

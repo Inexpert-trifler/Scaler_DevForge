@@ -163,7 +163,7 @@ def _classify_json_slot(slot: Slot) -> Optional[EType]:
     # Patient/person fields
     if leaf in ("dob", "birth_date", "birthdate", "date_of_birth"):
         return EType.DOB
-    if leaf == "age":
+    if leaf in ("age", "age_sex", "age_gender", "age/sex", "age-sex", "age-gender"):
         return EType.AGE
     if leaf in ("gender", "sex"):
         return EType.GENDER

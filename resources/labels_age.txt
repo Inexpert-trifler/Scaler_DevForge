@@ -6,7 +6,12 @@ aayu
 आयु
 वय
 age/sex
+age_sex
+age sex
 age/gender
+age_gender
+age gender
+col:age_sex
 age (yrs)
 age (years)
 age_years

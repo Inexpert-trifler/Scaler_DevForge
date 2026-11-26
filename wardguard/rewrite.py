@@ -153,9 +153,9 @@ def get_replacement(
         return text
 
     elif etype_str == "TEHSIL":
-        if unit and unit.coarsen:
-            return ""
-        return text
+        # Always suppress TEHSIL — sub-district quasi-identifier that narrows down
+        # voter roll candidates to single individuals without clinical utility value.
+        return ""
 
     elif etype_str == "GENDER":
         return text

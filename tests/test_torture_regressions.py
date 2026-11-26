@@ -329,3 +329,43 @@ def test_torture_smoke(tmp_path):
         res = check_seed(seed, tmp_path, 10, mr=False)
         bad = [f for f in res["fails"] if f["sev"] in ("S0", "S1") or f["kind"] == "leak"]
         assert not bad, json.dumps(bad[:3], ensure_ascii=False)
+
+
+def test_accuracy_hardening_doctor_lab_linkage():
+    """Verify doctor qualifications, health workers, lab ranges, and linkage improvements."""
+    from wardguard.detect.context import detect_text
+    from wardguard.detect.guards import is_protected
+    from wardguard.detect.patterns import find_identifiers
+    from wardguard.detect.evidence import parse_age, parse_gender, extract_unit_evidence
+    from wardguard.model import EType, Unit, Slot, Evidence
+    from wardguard.link import resolve
+
+    # 1. Doctor qualification (MS Surgery) is not matched as patient name
+    doc_text = "Consultant: Dr. Imtiaz Ahmed (MS Surgery)"
+    m_doc = detect_text(doc_text)
+    assert not any(m.text == "Surgery" for m in m_doc)
+
+    # 2. ASHA workers is protected
+    asha_text = "ASHA workers coordinate field reporting."
+    assert is_protected(asha_text, 0, 4)
+
+    # 3. Lab range 150000-410000 is not a PIN
+    lab_text = "Platelet Count: 150000-410000 /uL"
+    m_lab = find_identifiers(lab_text)
+    assert not any(m.etype == EType.PIN for m in m_lab)
+
+    # 4. Composite age_sex extraction
+    assert parse_age("66/F") == 66
+    assert parse_gender("66/F") == "F"
+
+    # 5. Linkage phone sharing merges units with same name
+    u1 = Unit(uid="u1", file_rel="f1.json", loc="1", patient_bearing=True)
+    u1.evidence = Evidence(name_keys=("mahesh chauhan",), given_keys=("mahesh",), strong_ids=(("PHONE", "7286490658"),), age=48)
+    u2 = Unit(uid="u2", file_rel="f2.json", loc="2", patient_bearing=True)
+    u2.evidence = Evidence(name_keys=("mahesh chauhan",), given_keys=("mahesh",), strong_ids=(("PHONE", "7286490658"),), age=49)
+    u3 = Unit(uid="u3", file_rel="f3.json", loc="3", patient_bearing=True)
+    u3.evidence = Evidence(name_keys=("sunita chauhan",), given_keys=("sunita",), strong_ids=(("PHONE", "7286490658"),), age=45)
+
+    resolve([u1, u2, u3], {"link_conflict_age_gap": 3})
+    assert u1.cluster == u2.cluster
+    assert u1.cluster != u3.cluster

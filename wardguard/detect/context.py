@@ -259,6 +259,10 @@ DISALLOWED_NAME_TOKENS = {
     "status", "hospital", "clinic", "ward", "bed", "unit", "male", "female",
     "age", "years", "year", "yrs", "yr", "address", "residence", "village",
     "district", "city", "state", "date", "time", "dr", "doctor",
+    "surgery", "medicine", "ortho", "orthopaedics", "gynaecology", "obstetrics",
+    "pediatrics", "ent", "ophthalmology", "pathology", "radiology", "anesthesia",
+    "cardiology", "dermatology", "psychiatry", "neurology", "pulmonology", "nephrology",
+    "oncology", "urology", "worker", "workers", "didi",
 }
 
 
@@ -381,6 +385,14 @@ def find_context_mentions(text: str, *, _pre_norm: Optional[tuple[str, object]] 
 
     # 3. Honorific prefix
     for m in RE_HONORIFIC_PREFIX_NAME.finditer(norm_text):
+        cand_name = m.group(1).strip()
+        matched_str = m.group(0)
+        prefix_part = matched_str[:len(matched_str) - len(m.group(1))].strip().lower().lstrip("(:;, ")
+        if prefix_part in ("ms", "ms."):
+            # Reject if preceded by '(' or doctor title, or if candidate is medical specialty
+            lead = norm_text[max(0, m.start() - 10):m.start()]
+            if "(" in lead or "dr" in lead or cand_name.lower() in DISALLOWED_NAME_TOKENS:
+                continue
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
     # 4. Honorific suffix (<Name> ji, <Name> sahab, <Name> bhai, <Name> behenji)
