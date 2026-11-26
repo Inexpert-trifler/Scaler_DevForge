@@ -33,6 +33,7 @@ class EType(str, Enum):
     LANDMARK = "LANDMARK"
     LOCALITY = "LOCALITY"  # mohalla / ward / street
     OTHER_PERSON = "OTHER_PERSON"  # person name, unknown role (still removed)
+    CANARY = "CANARY"  # planted canary token (zero leak gate)
     # --- quasi-identifiers (GENERALIZED, not deleted)
     DOB = "DOB"
     AGE = "AGE"
@@ -60,6 +61,7 @@ DIRECT = {
     EType.LANDMARK,
     EType.LOCALITY,
     EType.OTHER_PERSON,
+    EType.CANARY,
 }
 
 QUASI = {
