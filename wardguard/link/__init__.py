@@ -98,8 +98,16 @@ def resolve(units: list[Unit], policy: Optional[dict] = None) -> None:
         if len(u_indices) < 2:
             continue
 
-        # If it's a phone and shared across multiple names, skip automatic merge
+        # If it's a phone and shared across multiple names, merge units that share the same patient name
         if itype == "PHONE" and _distinct_people(phone_to_name_keys.get(core, set())) > 1:
+            for i in range(len(u_indices)):
+                for j in range(i + 1, len(u_indices)):
+                    idx_i, idx_j = u_indices[i], u_indices[j]
+                    u_i, u_j = sorted_units[idx_i], sorted_units[idx_j]
+                    ev_i, ev_j = u_i.evidence, u_j.evidence
+                    g_match = (not ev_i.gender or not ev_j.gender or ev_i.gender == ev_j.gender)
+                    if (set(ev_i.name_keys) & set(ev_j.name_keys)) or (set(ev_i.given_keys) & set(ev_j.given_keys) and g_match):
+                        ds.union(idx_i, idx_j)
             continue
 
         first = u_indices[0]
@@ -174,6 +182,21 @@ def resolve(units: list[Unit], policy: Optional[dict] = None) -> None:
                         if len(failed_roots) >= 24:
                             break
         else:
+            first = u_indices[0]
+            for other in u_indices[1:]:
+                ds.union(first, other)
+
+    # --------------------------------------------------------------------------
+    # Step 2b: Multi-token Canonical Full Names (Unique in Dataset)
+    # --------------------------------------------------------------------------
+    full_name_to_units: dict[str, list[int]] = defaultdict(list)
+    for idx, u in enumerate(sorted_units):
+        for nk in u.evidence.name_keys:
+            if len(nk.split()) >= 2:
+                full_name_to_units[nk].append(idx)
+
+    for nk, u_indices in sorted(full_name_to_units.items()):
+        if len(u_indices) >= 2:
             first = u_indices[0]
             for other in u_indices[1:]:
                 ds.union(first, other)

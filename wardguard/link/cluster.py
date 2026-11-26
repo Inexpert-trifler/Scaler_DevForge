@@ -11,6 +11,7 @@ Implements TR-LNK-2, TR-LNK-4:
 from __future__ import annotations
 from typing import Optional, Any
 from wardguard.model import Unit, Evidence
+from wardguard.link.normalize import phonetic_key
 
 
 def has_conflict(ev1: Evidence, ev2: Evidence, max_age_gap: int = 2) -> bool:
@@ -27,16 +28,26 @@ def has_conflict(ev1: Evidence, ev2: Evidence, max_age_gap: int = 2) -> bool:
     if ev1.gender and ev2.gender and ev1.gender != ev2.gender:
         return True
 
-    # 3. Age gap > max_age_gap (default 2)
+    # 3. Age gap > allowed gap (accounts for temporal date difference between visits)
     if ev1.age is not None and ev2.age is not None:
-        if abs(ev1.age - ev2.age) > max_age_gap:
+        allowed_gap = max_age_gap
+        y1 = [int(d[:4]) for d in ev1.dates if len(d) >= 4 and d[:4].isdigit()]
+        y2 = [int(d[:4]) for d in ev2.dates if len(d) >= 4 and d[:4].isdigit()]
+        if y1 and y2:
+            allowed_gap = max(max_age_gap, abs(max(y1) - min(y2)) + 1, abs(max(y2) - min(y1)) + 1)
+        if abs(ev1.age - ev2.age) > allowed_gap:
             return True
 
-    # 4. Relative mismatch (if both have relatives recorded and sets are completely disjoint)
-    if ev1.relative_keys and ev2.relative_keys:
+    # 4. Relative mismatch (if both specify relatives and sets are completely disjoint)
+    # If both units share an indisputable strong ID (MRN, AADHAAR, ABHA_NUMBER, PAN),
+    # different recorded family attendants do not block linking the same patient.
+    has_indisputable = any(
+        sid[0] in ("MRN", "AADHAAR", "ABHA_NUMBER", "PAN")
+        for sid in (set(ev1.strong_ids) & set(ev2.strong_ids))
+    )
+    if not has_indisputable and ev1.relative_keys and ev2.relative_keys:
         set1 = set(ev1.relative_keys)
         set2 = set(ev2.relative_keys)
-        # If both specify a relative and none match
         if not (set1 & set2):
             return True
 
@@ -45,11 +56,13 @@ def has_conflict(ev1: Evidence, ev2: Evidence, max_age_gap: int = 2) -> bool:
         set_n1 = set(ev1.name_keys)
         set_n2 = set(ev2.name_keys)
         if not (set_n1 & set_n2):
-            # Check given keys overlap
             g1 = set(ev1.given_keys)
             g2 = set(ev2.given_keys)
             if not (g1 & g2):
-                return True
+                p1 = {phonetic_key(k) for k in g1}
+                p2 = {phonetic_key(k) for k in g2}
+                if not (p1 & p2):
+                    return True
 
     return False
 

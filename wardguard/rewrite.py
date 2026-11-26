@@ -148,7 +148,6 @@ def get_replacement(
         return generalize_village(text, unit, policy)
 
     elif etype_str == "DISTRICT":
-        # Suppress district for rare k-anon units (TR-PRV-7 targeted coarsening)
         if unit and unit.coarsen:
             return ""
         return text

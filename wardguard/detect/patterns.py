@@ -199,7 +199,7 @@ RE_LANDMARK = re.compile(
 # 6 digits: first digit 1-8, with context or at end of address ("- 229073", ", 228076")
 # POS: "PIN: 229073", "Pin code 226001", "Distt. Rae Bareli - 229073" | NEG: "100000", "250000"
 RE_PIN_WITH_LABEL = re.compile(
-    r'(?i)(?:\b(?:pin(?:\s*code)?|pincode|पिन\s*कोड?)\s*[:#-]?\s*|(?:,\s*|-\s*))([1-8]\d{5})(?!\d)'
+    r'(?i)(?:\b(?:pin(?:\s*code)?|pincode|पिन\s*कोड?)\s*[:#-]?\s*|(?:,\s*|(?<!\d)\s*-\s*))([1-8]\d{5})(?!\d)'
 )
 RE_PIN_STANDALONE = re.compile(r'(?<!\d)([1-8]\d{5})(?!\d)')
 

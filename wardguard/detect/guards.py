@@ -72,7 +72,7 @@ RE_WARD_BED = re.compile(
 # 6. Healthcare worker roles (ASHA worker, ASHA didi, ANM)
 # POS: "ASHA didi", "ASHA worker", "ANM didi", "आशा वर्कर", "आशा दीदी"
 RE_HEALTH_ROLE = re.compile(
-    r'(?i)^\s*(?:asha\s+(?:worker|didi(?:\s+ji)?)|anm(?:\s+didi)?|anganwadi\s*worker|आशा\s+(?:वर्कर|दीदी))\s*$'
+    r'(?i)^\s*(?:asha\s+(?:workers?|didis?(?:\s+ji)?)|anm(?:\s+didis?)?|anganwadi\s*workers?|आशा\s+(?:वर्कर|दीदी))\s*$'
 )
 
 
@@ -139,17 +139,28 @@ def is_protected(text: str, start: int, end: int) -> bool:
         if not is_address_ctx:
             return True
 
-    # 5. Check for Health worker role (ASHA worker / didi)
-    if RE_HEALTH_ROLE.match(span_text):
-        return True
-
-    # 6. Check surrounding context in the original text (up to 40 chars before and after)
+    # 5. Check surrounding context in the original text (up to 40 chars before and after)
     ctx_before = text[max(0, start - 40):start]
     ctx_after = text[end:min(len(text), end + 40)]
+
+    # Check for Health worker role (ASHA worker / didi)
+    if RE_HEALTH_ROLE.match(span_text):
+        return True
+    if norm_span in ("asha", "आशा"):
+        if re.match(r'(?i)^\s*(?:workers?|didis?|bahu|karyakarti|कार्यकर्ता|वर्कर|दीदी)\b', ctx_after):
+            return True
 
     # Doctor check: preceded by Dr., Doctor, डॉ., etc. OR followed by MD, MS, MBBS, etc.
     if RE_DOCTOR_PREFIX.search(ctx_before) or RE_DOCTOR_SUFFIX.search(ctx_after):
         return True
+    # Doctor qualification specialty: e.g. Dr. <Name> (MS Surgery)
+    if re.search(r'(?i)(?:dr\.?|doctor|consultant|physician|surgeon)\b[^()\n]*\([^)]*$', ctx_before):
+        return True
+
+    # Lab reference range context: numeric range with hyphen (e.g. 150000-410000 in lab tables)
+    if span_text.isdigit() and (re.search(r'\d+\s*-\s*$', ctx_before) or re.match(r'^\s*-\s*\d+', ctx_after)):
+        if any(unit_w in text.lower() for unit_w in ("/ul", "g/dl", "mg/dl", "mmol/l", "reference_range", "ref_range", "loinc")):
+            return True
 
     # Clinical complaint check: preceded by C/O, K/C/O, H/O, etc.
     if RE_CLINICAL_PREFIX.search(ctx_before):
