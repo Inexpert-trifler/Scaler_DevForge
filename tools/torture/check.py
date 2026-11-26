@@ -290,6 +290,37 @@ def check_seed(seed: int, work: Path, patients: int, mr: bool) -> dict[str, Any]
         else:
             fail("lost_clinical", "S2", file=item["file"], kind_=item["kind"], text=item["text"])
 
+    # over-redaction metric (Item 5): share of non-PII input words surviving in sanitized outputs
+    word_re = re.compile(r"[A-Za-z0-9\u0900-\u097f]+")
+    rm_words_by_file: dict[str, Counter] = defaultdict(Counter)
+    for item in ans["remove"]:
+        if item["channel"] != "filename":
+            rm_words_by_file[item["file"]].update(word_re.findall(norm(item["surface"])))
+    ret_total = ret_kept = 0
+    for rel, o in in2out.items():
+        if not o or not o.exists() or ans["files"][rel]["expect"] != "sanitize":
+            continue
+        raw_txt = (inp / rel).read_bytes()
+        in_str = None
+        for enc in ("utf-8-sig", "utf-16", "utf-8", "cp1252"):
+            try:
+                in_str = raw_txt.decode(enc)
+                break
+            except UnicodeDecodeError:
+                continue
+        if not in_str:
+            continue
+        in_wc = Counter(word_re.findall(norm(in_str)))
+        non_pii = in_wc - rm_words_by_file.get(rel, Counter())
+        out_wc = Counter(word_re.findall(views[rel].norm if rel in views else norm(o.read_text(encoding="utf-8", errors="replace"))))
+        matched = sum((non_pii & out_wc).values())
+        tot_w = sum(non_pii.values())
+        ret_total += tot_w
+        ret_kept += matched
+    token_retention = (ret_kept / ret_total) if ret_total else 1.0
+    if token_retention < 0.80:
+        fail("over_redaction", "S2", detail=f"token_retention={round(100 * token_retention, 2)}%")
+
     # linkage
     out2in = {o.relative_to(out).as_posix(): rel for rel, o in in2out.items() if o}
     psn_of: dict[tuple[str, str], str | None] = {}
@@ -350,6 +381,7 @@ def check_seed(seed: int, work: Path, patients: int, mr: bool) -> dict[str, Any]
     stats: dict[str, Any] = {
         "secs": round(r1["secs"], 2), "leaks": len(leaks), "entities": len(ans["remove"]),
         "critical_leaks": sum(1 for x in leaks if x["critical"]), "kept": kept_ok, "keep_total": kept_total,
+        "ret_kept": ret_kept, "ret_total": ret_total,
         "tp": tp, "fp": fp, "fn": fn, "totals": {"|".join(k): v for k, v in totals.items()},
         "leak_keys": ["|".join((x["type"], x["script"], x["channel"])) for x in leaks],
     }
@@ -414,13 +446,14 @@ def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
             sev[f["sev"]] += 1
     tot: Counter = Counter()
     lk: Counter = Counter()
-    ent = leaks = crit = kept = keep_total = tp = fp = fn = 0
+    ent = leaks = crit = kept = keep_total = ret_kept = ret_total = tp = fp = fn = 0
     for r in results:
         s = r["stats"]
         if not s:
             continue
         ent += s["entities"]; leaks += s["leaks"]; crit += s["critical_leaks"]
         kept += s["kept"]; keep_total += s["keep_total"]; tp += s["tp"]; fp += s["fp"]; fn += s["fn"]
+        ret_kept += s.get("ret_kept", 0); ret_total += s.get("ret_total", 0)
         tot.update(s["totals"]); lk.update(s["leak_keys"])
     by_type: dict[str, list[int]] = defaultdict(lambda: [0, 0])
     by_script: dict[str, list[int]] = defaultdict(lambda: [0, 0])
@@ -436,6 +469,7 @@ def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "seeds": len(results), "entities": ent, "leaks": leaks, "leak_pct": round(100 * leaks / max(ent, 1), 2),
         "critical_leaks": crit, "kept_pct": round(100 * kept / max(keep_total, 1), 2),
+        "token_retention_pct": round(100 * ret_kept / max(ret_total, 1), 2),
         "link_precision": round(p, 3), "link_recall": round(rc, 3), "link_f05": round(f05, 3),
         "by_type": {k: f"{v[0]}/{v[1]}" for k, v in sorted(by_type.items())},
         "by_script": {k: f"{v[0]}/{v[1]}" for k, v in sorted(by_script.items())},

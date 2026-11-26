@@ -273,6 +273,16 @@ def test_holdout_unseen_ids_mrns_urdu_and_kinship(tmp_path):
     assert "Acute myocardial infarction (I21.9)" in res
 
 
+def test_over_redaction_token_retention(tmp_path):
+    """Sanitized outputs preserve >=80% of non-PII tokens across a multi-format seed."""
+    from tools.torture.check import check_seed
+    res = check_seed(1, tmp_path, 12, mr=False)
+    stats = res["stats"]
+    assert stats["ret_total"] > 0
+    assert (stats["ret_kept"] / stats["ret_total"]) >= 0.80
+    assert not any(f["kind"] == "over_redaction" for f in res["fails"])
+
+
 def test_torture_smoke(tmp_path):
     """Two generated torture datasets must have zero leaks and zero false merges."""
     from tools.torture.check import check_seed
