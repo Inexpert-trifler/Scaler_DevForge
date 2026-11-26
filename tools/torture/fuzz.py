@@ -28,8 +28,8 @@ from tools.torture.gen import generate  # noqa: E402
 
 
 def mutate(data: bytes, rng: random.Random) -> tuple[str, bytes]:
-    ops = ["truncate", "bitflip", "nul", "invalid_utf8", "dup_chunk", "long_line", "deep_nest", "strip_newlines",
-           "crlf_mix", "bom_mix", "garbage_prefix", "empty", "huge_field"]
+    ops = ["truncate", "bitflip", "nul", "invalid_utf8", "dup_chunk", "long_line", "deep_nest", "deep_nest_10k",
+           "backtrack_so", "strip_newlines", "crlf_mix", "bom_mix", "garbage_prefix", "empty", "huge_field"]
     op = rng.choice(ops)
     b = bytearray(data)
     if op == "truncate" and len(b) > 4:
@@ -52,6 +52,10 @@ def mutate(data: bytes, rng: random.Random) -> tuple[str, bytes]:
         b += b"A" * 100_000 + b" 9876543210 " + b"B" * 50_000 + b"\n"
     elif op == "deep_nest":
         b = b"[" * 5000 + b'"x"' + b"]" * 5000
+    elif op == "deep_nest_10k":
+        b = b'{"a":' * 10000 + b'"x"' + b"}" * 10000
+    elif op == "backtrack_so":
+        b = (b"S/o " * 5000 + b"late " * 2000 + b"Ramesh Kumar 9876543210\n") + bytes(b)
     elif op == "strip_newlines":
         b = bytearray(bytes(b).replace(b"\n", b" "))
     elif op == "crlf_mix":

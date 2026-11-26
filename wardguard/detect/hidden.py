@@ -90,20 +90,29 @@ def decode_escape_sequences(text: str) -> Optional[str]:
 
 
 def extract_json_keys(obj: Any, parent_pointer: str = "") -> List[tuple[str, str]]:
-    """Recursively collect (path, key_text) for all dictionary keys."""
+    """Iteratively collect (path, key_text) for all dictionary keys (stack-safe for deep JSON)."""
     keys: List[tuple[str, str]] = []
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            k_str = str(k)
-            escaped_k = escape_pointer_segment(k_str)
-            slot_path = f"@key:{parent_pointer}/{escaped_k}" if parent_pointer else f"@key:/{escaped_k}"
-            keys.append((slot_path, k_str))
-            child_pointer = f"{parent_pointer}/{escaped_k}" if parent_pointer else f"/{escaped_k}"
-            keys.extend(extract_json_keys(v, child_pointer))
-    elif isinstance(obj, list):
-        for idx, item in enumerate(obj):
-            child_pointer = f"{parent_pointer}/{idx}"
-            keys.extend(extract_json_keys(item, child_pointer))
+    stack: list[tuple[Any, str]] = [(obj, parent_pointer)]
+    while stack:
+        cur_obj, cur_ptr = stack.pop()
+        if isinstance(cur_obj, dict):
+            # Collect keys at this level in forward order, push children in reverse so pop order is forward
+            children: list[tuple[Any, str]] = []
+            for k, v in cur_obj.items():
+                k_str = str(k)
+                escaped_k = escape_pointer_segment(k_str)
+                slot_path = f"@key:{cur_ptr}/{escaped_k}" if cur_ptr else f"@key:/{escaped_k}"
+                keys.append((slot_path, k_str))
+                if isinstance(v, (dict, list)):
+                    child_ptr = f"{cur_ptr}/{escaped_k}" if cur_ptr else f"/{escaped_k}"
+                    children.append((v, child_ptr))
+            for child in reversed(children):
+                stack.append(child)
+        elif isinstance(cur_obj, list):
+            for idx in range(len(cur_obj) - 1, -1, -1):
+                item = cur_obj[idx]
+                if isinstance(item, (dict, list)):
+                    stack.append((item, f"{cur_ptr}/{idx}"))
     return keys
 
 

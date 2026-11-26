@@ -28,11 +28,11 @@ Implements format-preserving reconstruction and mention application:
 from __future__ import annotations
 
 import base64
-import copy
 import csv
 import io
 import json
 import re
+import sys
 from typing import Any, List, Optional
 
 from wardguard.detect.patterns import resolve_overlaps
@@ -106,6 +106,9 @@ def get_replacement(
             shifted = shift_date_text(text, unit.date_offset)
             if shifted is not None:
                 return shifted
+        # Fail closed if a ragged/misaligned cell in a DATE column holds non-date direct PII
+        if len(text.strip()) >= 6:
+            return scrub_free_text(text, policy)
         return text
 
     elif etype_str == "DOB":
@@ -118,6 +121,8 @@ def get_replacement(
             shifted = shift_date_text(text, unit.date_offset)
             if shifted is not None:
                 return shifted
+        if len(text.strip()) >= 6:
+            return scrub_free_text(text, policy)
         return text
 
     elif etype_str == "AGE":
@@ -476,6 +481,41 @@ def scrub_embedded_base64(text: str, policy: dict) -> str:
     return _B64_TOKEN.sub(_fix, text)
 
 
+def _copy_json_iterative(obj: Any) -> Any:
+    """Iteratively deep-copy a JSON tree (immune to Python recursion limits)."""
+    if not isinstance(obj, (dict, list)):
+        return obj
+    root: Any = {} if isinstance(obj, dict) else []
+    stack: list[tuple[Any, Any]] = [(obj, root)]
+    while stack:
+        src, dst = stack.pop()
+        if isinstance(src, dict):
+            for k, v in src.items():
+                if isinstance(v, dict):
+                    nv: Any = {}
+                    dst[k] = nv
+                    stack.append((v, nv))
+                elif isinstance(v, list):
+                    nl: Any = []
+                    dst[k] = nl
+                    stack.append((v, nl))
+                else:
+                    dst[k] = v
+        else:
+            for item in src:
+                if isinstance(item, dict):
+                    nv = {}
+                    dst.append(nv)
+                    stack.append((item, nv))
+                elif isinstance(item, list):
+                    nl = []
+                    dst.append(nl)
+                    stack.append((item, nl))
+                else:
+                    dst.append(item)
+    return root
+
+
 def render(pf: ParsedFile, policy: dict) -> bytes:
     """Render sanitized bytes from ParsedFile and policy.
     
@@ -523,7 +563,7 @@ def render(pf: ParsedFile, policy: dict) -> bytes:
 
     elif pf.fmt in ("json", "fhir"):
         if pf.obj is not None:
-            obj_to_write = copy.deepcopy(pf.obj)
+            obj_to_write = _copy_json_iterative(pf.obj)
 
             # Apply rewritten unit slots back to obj_to_write
             if pf.units:
@@ -555,7 +595,13 @@ def render(pf: ParsedFile, policy: dict) -> bytes:
             if pf.fmt == "fhir" and pf.units and pf.units[0].psn:
                 place_fhir_psn(obj_to_write, pf.units[0].psn)
 
-            return json.dumps(obj_to_write, indent=2, ensure_ascii=False).encode("utf-8") + b"\n"
+            orig_limit = sys.getrecursionlimit()
+            try:
+                if orig_limit < 5000:
+                    sys.setrecursionlimit(5000)
+                return json.dumps(obj_to_write, indent=2, ensure_ascii=False).encode("utf-8") + b"\n"
+            finally:
+                sys.setrecursionlimit(orig_limit)
         return b"{}\n"
 
     else:  # text

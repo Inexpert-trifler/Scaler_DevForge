@@ -84,7 +84,7 @@ def generate_verhoeff_check_digit(num_str: str) -> int:
 # --- AADHAAR ---
 # 12 digits, first digit 2-9, optional spaces/dashes/dots/slashes every 4 digits
 # POS: "9845 2136 7098", "9845.2136.7098", "9845/2136/7098" | NEG: "0123 4567 8901"
-RE_AADHAAR = re.compile(r'(?<!\d)([2-9]\d{3}[-\s./]?\d{4}[-\s./]?\d{4})(?!\d)')
+RE_AADHAAR = re.compile(r'(?<!\d)([2-9]\d{3}[ ./-]?\d{4}[ ./-]?\d{4})(?!\d)')
 
 # --- CANARY ---
 # Explicit planted canary markers in test suites / hidden channels
@@ -93,19 +93,19 @@ RE_CANARY = re.compile(r'(?i)\bCANARY(?:[-_][A-Za-z0-9]+){1,5}\b')
 # --- AADHAAR_MASKED ---
 # 8 masked digits/X followed by 4 digits, or 4-4-4 format with X
 # POS: "XXXXXXXX1234", "XXXX-XXXX-1234", "xxxx xxxx 4567" | NEG: "XXXX-1234"
-RE_AADHAAR_MASKED = re.compile(r'(?<![A-Za-z0-9])([xX*]{4}[-\s]?[xX*]{4}[-\s]?\d{4}|[xX*]{8}[-\s]?\d{4})(?!\d)')
+RE_AADHAAR_MASKED = re.compile(r'(?<![A-Za-z0-9])([xX*]{4}[- ]?[xX*]{4}[- ]?\d{4}|[xX*]{8}[- ]?\d{4})(?!\d)')
 
 # --- ABHA_NUMBER ---
 # 14 digits, typically 2-4-4-4 format: 91-1234-5678-9012 or 14-1234-5678-9012
 # POS: "91-6009-6930-8506", "14-1234-5678-9012" | NEG: "12345"
 RE_ABHA_NUMBER = re.compile(
-    r'(?<![\d-])([1-9]\d[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4})(?![\d-])'
+    r'(?<![\d-])([1-9]\d[- ]?\d{4}[- ]?\d{4}[- ]?\d{4})(?![\d-])'
 )
 
 # ABHA number right after an ABHA / Health-ID label: any leading digit is accepted
 RE_ABHA_LABELLED = re.compile(
     r'(?i)(?:abha|health\s*id|hid|आभा)(?:\s*(?:no\.?|number|id|#))?\s*[:=-]?\s*'
-    r'(\d{2}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4})(?![\d-])'
+    r'(\d{2}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4})(?![\d-])'
 )
 
 # --- ABHA_ADDRESS ---
@@ -123,8 +123,8 @@ RE_PAN = re.compile(r'(?<![A-Za-z0-9])([A-Z]{5}\d{4}[A-Z])(?![A-Za-z0-9])')
 # Also masked forms: 98XXXXXX10
 # POS: "+91 98765 43210", "098765-43210", "9876543210", "98XXXXXX10" | NEG: "650mg", "1-0-1", "150/90"
 RE_PHONE = re.compile(
-    r'(?<![\d.])(?:(?:\(\s*\+?91\s*\)|\+?\s?91|0)[-\s.]*)?'
-    r'([6-9](?:[-\s.]?\d){9}|[6-9]\d[xX*]{6}\d{2})(?![\d])'
+    r'(?<![\d.])(?:(?:\([ ]*\+?91[ ]*\)|\+?[ ]?91|0)[- .]*)?'
+    r'([6-9](?:[- .]?\d){9}|[6-9]\d[xX*]{6}\d{2})(?![\d])'
 )
 
 # --- EMAIL ---
@@ -209,7 +209,7 @@ def _detect_script(text: str) -> Script:
     return "latin"
 
 
-def find_identifiers(text: str) -> list[Mention]:
+def find_identifiers(text: str, *, _pre_norm: Optional[tuple[str, object]] = None) -> list[Mention]:
     """Scan text for identifier patterns with verification and index mapping.
     
     Required contract: returns non-overlapping Mention objects sorted by start offset.
@@ -218,25 +218,26 @@ def find_identifiers(text: str) -> list[Mention]:
     if not text:
         return []
 
-    norm_text, index_map = normalize_with_map(text)
+    norm_text, index_map = _pre_norm if _pre_norm is not None else normalize_with_map(text)
     orig_len = len(text)
     raw_mentions: list[Mention] = []
 
     # 1. AADHAAR_MASKED
-    for m in RE_AADHAAR_MASKED.finditer(norm_text):
-        start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
-        span_text = text[start:end]
-        raw_mentions.append(Mention(
-            etype=EType.AADHAAR_MASKED,
-            start=start,
-            end=end,
-            text=span_text,
-            script=_detect_script(span_text),
-            channel="content",
-            role="patient",
-            source="regex",
-            confidence=0.98,
-        ))
+    if any(ch in norm_text for ch in ("x", "X", "*")):
+        for m in RE_AADHAAR_MASKED.finditer(norm_text):
+            start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
+            span_text = text[start:end]
+            raw_mentions.append(Mention(
+                etype=EType.AADHAAR_MASKED,
+                start=start,
+                end=end,
+                text=span_text,
+                script=_detect_script(span_text),
+                channel="content",
+                role="patient",
+                source="regex",
+                confidence=0.98,
+            ))
 
     # 2. AADHAAR (12 digits with Verhoeff verification)
     for m in RE_AADHAAR.finditer(norm_text):
@@ -301,21 +302,40 @@ def find_identifiers(text: str) -> list[Mention]:
             source="regex", confidence=0.98,
         ))
 
-    # 4. ABHA_ADDRESS
-    for m in RE_ABHA_ADDRESS.finditer(norm_text):
-        start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
-        span_text = text[start:end]
-        raw_mentions.append(Mention(
-            etype=EType.ABHA_ADDRESS,
-            start=start,
-            end=end,
-            text=span_text,
-            script=_detect_script(span_text),
-            channel="content",
-            role="patient",
-            source="regex",
-            confidence=0.99,
-        ))
+    # 4. ABHA_ADDRESS & 7. EMAIL (require '@')
+    if "@" in norm_text:
+        for m in RE_ABHA_ADDRESS.finditer(norm_text):
+            start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
+            span_text = text[start:end]
+            raw_mentions.append(Mention(
+                etype=EType.ABHA_ADDRESS,
+                start=start,
+                end=end,
+                text=span_text,
+                script=_detect_script(span_text),
+                channel="content",
+                role="patient",
+                source="regex",
+                confidence=0.99,
+            ))
+
+        for m in RE_EMAIL.finditer(norm_text):
+            # If already matched as ABHA_ADDRESS, skip
+            if any(dom in m.group(1).lower() for dom in ["@abdm", "@sbx", "@phr"]):
+                continue
+            start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
+            span_text = text[start:end]
+            raw_mentions.append(Mention(
+                etype=EType.EMAIL,
+                start=start,
+                end=end,
+                text=span_text,
+                script=_detect_script(span_text),
+                channel="content",
+                role="unknown",
+                source="regex",
+                confidence=0.99,
+            ))
 
     # 5. PAN
     for m in RE_PAN.finditer(norm_text):
@@ -351,25 +371,6 @@ def find_identifiers(text: str) -> list[Mention]:
             role="unknown",
             source="regex",
             confidence=0.95,
-        ))
-
-    # 7. EMAIL
-    for m in RE_EMAIL.finditer(norm_text):
-        # If already matched as ABHA_ADDRESS, skip
-        if any(dom in m.group(1).lower() for dom in ["@abdm", "@sbx", "@phr"]):
-            continue
-        start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
-        span_text = text[start:end]
-        raw_mentions.append(Mention(
-            etype=EType.EMAIL,
-            start=start,
-            end=end,
-            text=span_text,
-            script=_detect_script(span_text),
-            channel="content",
-            role="unknown",
-            source="regex",
-            confidence=0.99,
         ))
 
     # 8. INSURANCE_ID

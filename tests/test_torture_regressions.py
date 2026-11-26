@@ -140,6 +140,88 @@ def test_pii_in_folder_name_is_renamed(tmp_path):
     assert "Sunita" not in (out / "report.json").read_text()
 
 
+def test_deep_json_1500_sanitized_without_recursion_error(tmp_path):
+    deep = {"patient": {"name": "Sunita Yadav", "phone": "9876543210"}}
+    for _ in range(1500):
+        deep = {"child": deep}
+    out = _run(tmp_path, {"deep1500.json": json.dumps(deep)})
+    rep = json.loads((out / "report.json").read_text())
+    assert rep["files"][0]["status"] == "sanitized"
+    txt = (out / "sanitized" / "deep1500.json").read_text()
+    assert "Sunita" not in txt and "9876543210" not in txt
+
+
+def test_deep_json_10k_is_safe(tmp_path):
+    raw = '{"a":' * 10000 + '{"patient":{"name":"Sunita Yadav"}}' + "}" * 10000
+    out = _run(tmp_path, {"deep10k.json": raw})
+    rep = json.loads((out / "report.json").read_text())
+    assert rep["counts"]["files_total"] == 1
+    assert rep["files"][0]["status"] in ("sanitized", "quarantined")
+
+
+def test_repeated_relation_backtracking_is_fast(tmp_path):
+    import time
+    txt = "S/o " * 10000 + "late " * 5000 + "Patient Name: Kavita Chauhan Mob: 9876543210.\n"
+    t0 = time.time()
+    out = _run(tmp_path, {"backtrack.txt": txt})
+    assert time.time() - t0 < 2.0
+    res = (out / "sanitized" / "backtrack.txt").read_text()
+    assert "Kavita" not in res and "9876543210" not in res
+
+
+def test_gazetteer_scales_with_many_names():
+    import time
+    from wardguard.detect.names import Gazetteer
+    gaz = Gazetteer()
+    for i in range(2000):
+        gaz.add(f"Patient{i} Surname{i}", role="patient")
+    t0 = time.time()
+    hits = gaz.find("Patient1999 Surname1999 arrived with fever and normal vitals.")
+    assert time.time() - t0 < 0.2
+    assert len(hits) == 1
+
+
+def test_tab_separated_phone_and_aadhaar_both_detected():
+    # A phone ending in digits followed by \t and an Aadhaar must not merge across \t
+    from wardguard.detect.patterns import generate_verhoeff_check_digit
+    base = "82453744495"
+    aad = base + str(generate_verhoeff_check_digit(base))
+    aad_spaced = f"{aad[:4]} {aad[4:8]} {aad[8:]}"
+    s = f"978-865-4045\t{aad_spaced}\t52-9208-1777-7323"
+    got = {(m.etype, m.text) for m in find_identifiers(s)}
+    assert (EType.PHONE, "978-865-4045") in got
+    assert (EType.AADHAAR, aad_spaced) in got
+    assert (EType.ABHA_NUMBER, "52-9208-1777-7323") in got
+
+
+def test_comma_adjacent_aadhaar_after_phone_detected():
+    from wardguard.detect.patterns import generate_verhoeff_check_digit
+    base = "40430314988"
+    aad = base + str(generate_verhoeff_check_digit(base))
+    aad_dashed = f"{aad[:4]}-{aad[4:8]}-{aad[8:]}"
+    s = f"751-438-9537,{aad_dashed},22-8852-3605-3929"
+    got = {(m.etype, m.text) for m in find_identifiers(s)}
+    assert (EType.PHONE, "751-438-9537") in got
+    assert (EType.AADHAAR, aad_dashed) in got
+    assert (EType.ABHA_NUMBER, "22-8852-3605-3929") in got
+
+
+def test_ragged_csv_pii_in_date_column_scrubbed(tmp_path):
+    from wardguard.detect.patterns import generate_verhoeff_check_digit
+    base = "89571037815"
+    aad = base + str(generate_verhoeff_check_digit(base))
+    aad_sp = f"{aad[:4]} {aad[4:8]} {aad[8:]}"
+    csv_txt = (
+        "Patient Name,Admission Date,Diagnosis\n"
+        "Aarav Sharma,12/04/2026,Fever\n"
+        "Sunita Yadav,13/04/2026,Cough\n"
+        f"Ramesh Patel,(+91) 6756192499,{aad_sp}\n"
+    )
+    out = _run(tmp_path, {"ragged.csv": csv_txt})
+    res = (out / "sanitized" / "ragged.csv").read_text()
+    assert "6756192499" not in res and aad_sp not in res
+
+
 def test_torture_smoke(tmp_path):
     """Two generated torture datasets must have zero leaks and zero false merges."""
     from tools.torture.check import check_seed

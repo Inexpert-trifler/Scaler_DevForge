@@ -133,14 +133,46 @@ def resolve(units: list[Unit], policy: Optional[dict] = None) -> None:
         if len(u_indices) < 2:
             continue
         if clue_val.startswith("dist:"):
-            for i in range(len(u_indices)):
-                for j in range(i + 1, len(u_indices)):
-                    idx1 = u_indices[i]
-                    idx2 = u_indices[j]
-                    a1 = sorted_units[idx1].evidence.age
+            # Deduplicate by current cluster root first so already-linked units don't trigger O(N^2) scans
+            root_reps: dict[int, int] = {}
+            for idx in u_indices:
+                a = sorted_units[idx].evidence.age
+                if a is None:
+                    continue
+                r = ds.find(idx)
+                if r not in root_reps:
+                    root_reps[r] = idx
+            if len(root_reps) < 2:
+                continue
+            by_age = sorted(
+                root_reps.values(),
+                key=lambda idx: (sorted_units[idx].evidence.age or 0, idx),
+            )
+            max_gap = ds.max_age_gap
+            m_len = len(by_age)
+            for i in range(m_len):
+                idx1 = by_age[i]
+                a1 = sorted_units[idx1].evidence.age
+                if a1 is None:
+                    continue
+                r1 = ds.find(idx1)
+                failed_roots: set[int] = set()
+                for j in range(i + 1, m_len):
+                    idx2 = by_age[j]
                     a2 = sorted_units[idx2].evidence.age
-                    if a1 is not None and a2 is not None and abs(a1 - a2) <= ds.max_age_gap:
-                        ds.union(idx1, idx2)
+                    if a2 is None:
+                        continue
+                    if a2 - a1 > max_gap:
+                        break
+                    r2 = ds.find(idx2)
+                    if r2 == r1 or r2 in failed_roots:
+                        continue
+                    if ds.union(idx1, idx2):
+                        r1 = ds.find(idx1)
+                    else:
+                        failed_roots.add(r2)
+                        if len(failed_roots) >= 24:
+                            break
         else:
             first = u_indices[0]
             for other in u_indices[1:]:

@@ -80,6 +80,9 @@ def _date_header_kind(header: str) -> Optional[EType]:
 
 def _dates_look_like_birthdates(values: list[str]) -> bool:
     """Birth dates spread over decades; visit/admission dates cluster within a couple of years."""
+    if len(values) > 500:
+        step = max(1, len(values) // 500)
+        values = values[::step][:500]
     years = sorted(int(m.group(1)) for v in values if v for m in [_YEAR_IN_DATE.search(str(v).translate(
         str.maketrans('०१२३४५६७८९', '0123456789')))] if m)
     if len(years) < 3:
@@ -295,9 +298,15 @@ def _is_name_like(val: str, med_terms: set[str], min_tokens: int = 2) -> bool:
 
 def profile_values(values: list[str]) -> Optional[EType]:
     """Profile column values: if >= 60% of non-empty values match a type, return that type."""
+    if len(values) > 2000:
+        step = max(1, len(values) // 1000)
+        values = values[::step][:1000]
     non_empty = [v.strip() for v in values if v and str(v).strip()]
     if not non_empty:
         return None
+    if len(non_empty) > 500:
+        step = max(1, len(non_empty) // 500)
+        non_empty = non_empty[::step][:500]
 
     total = len(non_empty)
     med_terms = load_medical_terms()

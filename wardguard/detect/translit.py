@@ -101,6 +101,7 @@ def simplify_latin_phonetics(text: str) -> str:
     return " ".join(simplified)
 
 
+@lru_cache(maxsize=8192)
 def canonical_name(name: str) -> str:
     """Produce standardized Latin canonical name key for linkage and matching."""
     if not name:

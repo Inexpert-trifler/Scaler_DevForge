@@ -41,10 +41,10 @@ RE_PATIENT_PREFIX_NAME = re.compile(
 # Note: c/o and h/o require Title Case or Devanagari start (never lowercase "C/O loose stools" or "H/O asthma"!).
 RE_RELATION_NAME = re.compile(
     r'(?:(?i:(?:^|[\s,;:(])(?:s/o|d/o|w/o|f/o|m/o|son\s+of|daughter\s+of|wife\s+of|husband\s+of|father\s+of|mother\s+of|guardian|husband|wife|father|mother|brother|sister|अभिभावक|पुत्र|पुत्री|पत्नी|पति|पिता|माता)\s*[:=-]?\s*'
-    r'(?:(?:late|swargiya|swargwasi|shri|smt\.?|shrimati|mr\.?|mrs\.?|ms\.?|dr\.?|स्व\.?|स्वर्गीय|श्री|श्रीमती|पं\.?)\s+)*)'
+    r'(?:(?:late|swargiya|swargwasi|shri|smt\.?|shrimati|mr\.?|mrs\.?|ms\.?|dr\.?|स्व\.?|स्वर्गीय|श्री|श्रीमती|पं\.?)\s+){0,4})'
     r'([A-Za-z\u0900-\u097f]+(?:[ \t]+[A-Za-z\u0900-\u097f]+){0,3})'
     r'|(?i:(?:^|[\s,;:(])(?:c/o|care\s+of|h/o)\s*[:=-]?\s*)'
-    r'((?:(?:Late|Shri|Smt\.?|Shrimati|Mr\.?|Mrs\.?|Ms\.?|श्री|श्रीमती)\s+)*'
+    r'((?:(?:Late|Shri|Smt\.?|Shrimati|Mr\.?|Mrs\.?|Ms\.?|श्री|श्रीमती)\s+){0,4}'
     r'[A-Z\u0900-\u097f][a-z\u0900-\u097f]+(?:[ \t]+[A-Z\u0900-\u097f][a-z\u0900-\u097f]+){0,3}))'
 )
 
@@ -323,17 +323,28 @@ def _trim_name_span(text: str, start: int, end: int) -> tuple[int, int]:
     return start + toks[0][0], start + toks[-1][1]
 
 
-def find_context_mentions(text: str) -> list[Mention]:
+_HONORIFIC_SUFFIX_HINT = re.compile(
+    r'(?i)\s(?:sahab|saheb|ji|babu|bhai|bhaiya|behen|behenji|ben|didi|amma|abbu|dadi|dada|nani|nana|chacha|chachi|kaka|bua|mausi|uncle|aunty|साहब|जी|बाबू|भाई|भैया|बहन|दीदी|अम्मा)(?:[\s,;:\n।.]|$)'
+)
+_DEVA_ANY_RE = re.compile(r'[\u0900-\u097f]')
+_RE_KIN_HINT = re.compile(r'(?i)\s(?:' + _KIN_WORDS + r')(?![A-Za-z])')
+
+
+def find_context_mentions(text: str, *, _pre_norm: Optional[tuple[str, object]] = None) -> list[Mention]:
     """Extract names and quasi-identifiers using contextual grammatical rules."""
     if not text:
         return []
 
-    norm_text, index_map = normalize_with_map(text)
+    norm_text, index_map = _pre_norm if _pre_norm is not None else normalize_with_map(text)
     orig_len = len(text)
     mentions: list[Mention] = []
 
     def _add_mention(m_start: int, m_end: int, etype: EType, role: Role):
+        if m_end - m_start < 2:
+            return
         start, end = map_span_back(m_start, m_end, index_map, orig_len)
+        if end - start < 2:
+            return
         start, end = _trim_name_span(text, start, end)
         ap = re.match(r"['\u2019][A-Z][a-z]+", text[end:end + 25])
         if ap and end > start:
@@ -372,16 +383,19 @@ def find_context_mentions(text: str) -> list[Mention]:
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
     # 4. Honorific suffix (<Name> ji, <Name> sahab, <Name> bhai, <Name> behenji)
-    for m in RE_HONORIFIC_SUFFIX_NAME.finditer(norm_text):
-        _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+    if len(norm_text) < 4096 or _HONORIFIC_SUFFIX_HINT.search(norm_text):
+        for m in RE_HONORIFIC_SUFFIX_NAME.finditer(norm_text):
+            _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
     # 4b. Name preceding relation ("Asha, W/o Kamal")
-    for m in RE_BEFORE_RELATION_NAME.finditer(norm_text):
-        _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+    if "/" in norm_text:
+        for m in RE_BEFORE_RELATION_NAME.finditer(norm_text):
+            _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
     # 4c. Possessive patient before attendant/relative ("Asha's attendant")
-    for m in RE_POSSESSIVE_PERSON.finditer(norm_text):
-        _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+    if "'" in norm_text or "\u2019" in norm_text:
+        for m in RE_POSSESSIVE_PERSON.finditer(norm_text):
+            _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
     # 5. Demographic pattern (<Name> 48 Y / F)
     for m in RE_DEMOGRAPHIC_NAME.finditer(norm_text):
@@ -394,12 +408,15 @@ def find_context_mentions(text: str) -> list[Mention]:
     for m in RE_ATTENDANT_LABEL.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.RELATIVE_NAME, "relative")
 
-    for m in RE_ATTENDANT_NAME.finditer(norm_text):
-        _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+    if "(" in norm_text:
+        for m in RE_ATTENDANT_NAME.finditer(norm_text):
+            _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
     # 7. Hindi sentence structure
-    for m in RE_HINDI_SENTENCE_NAME.finditer(norm_text):
-        _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+    has_deva = bool(_DEVA_ANY_RE.search(norm_text))
+    if has_deva:
+        for m in RE_HINDI_SENTENCE_NAME.finditer(norm_text):
+            _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
     for m in RE_HINGLISH_SENTENCE_NAME.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
@@ -514,42 +531,48 @@ def find_context_mentions(text: str) -> list[Mention]:
             _add_raw(a, b, etype, "patient", 0.85, validate_name=False)
 
     # 10. Kinship-named relatives
-    for rx in (RE_KIN_NAME, RE_KIN_NAME_DEVA):
-        for m in rx.finditer(text):
+    if len(text) < 4096 or _RE_KIN_HINT.search(text):
+        for m in RE_KIN_NAME.finditer(text):
+            _add_raw(m.start(1), m.end(1), EType.RELATIVE_NAME, "relative", 0.88, validate_name=True)
+    if has_deva:
+        for m in RE_KIN_NAME_DEVA.finditer(text):
             _add_raw(m.start(1), m.end(1), EType.RELATIVE_NAME, "relative", 0.88, validate_name=True)
 
     # 11. Chat senders
-    for m in RE_CHAT_SENDER.finditer(text):
-        sender = m.group(1)
-        if re.search(r'\d', sender):
-            continue  # a phone number sender is caught by the PHONE pattern
-        km = re.search(r'(?i)[ \t]+(?:' + _KIN_WORDS + r')$', sender)
-        end = m.start(1) + (km.start() if km else len(sender))
-        _add_raw(m.start(1), end, EType.RELATIVE_NAME, "relative", 0.9, validate_name=True)
+    if "[" in text:
+        for m in RE_CHAT_SENDER.finditer(text):
+            sender = m.group(1)
+            if re.search(r'\d', sender):
+                continue  # a phone number sender is caught by the PHONE pattern
+            km = re.search(r'(?i)[ \t]+(?:' + _KIN_WORDS + r')$', sender)
+            end = m.start(1) + (km.start() if km else len(sender))
+            _add_raw(m.start(1), end, EType.RELATIVE_NAME, "relative", 0.9, validate_name=True)
 
     # 13. Initials and aliases (doctors stay protected by the Dr./MD guards in detect_text)
-    for m in RE_INITIALS_NAME.finditer(text):
-        span = m.group(1)
-        last = span.split(".")[-1].strip().lower()
-        if re.search(r'[\d०-९]', text[max(0, m.start(1) - 8):m.start(1)]):
-            continue  # "Temp 99.2 F. Serum ..." - a unit after a number, not an initial
-        if (re.search(r'[a-z]{3,}', span) and last not in _ORG_WORDS and _is_valid_name_span(last)
-                and not is_protected(text, m.start(1), m.end(1))):
-            _add_raw(m.start(1), m.end(1), EType.PATIENT_NAME, "patient", 0.8, validate_name=False)
+    if "." in text:
+        for m in RE_INITIALS_NAME.finditer(text):
+            span = m.group(1)
+            last = span.split(".")[-1].strip().lower()
+            if re.search(r'[\d०-९]', text[max(0, m.start(1) - 8):m.start(1)]):
+                continue  # "Temp 99.2 F. Serum ..." - a unit after a number, not an initial
+            if (re.search(r'[a-z]{3,}', span) and last not in _ORG_WORDS and _is_valid_name_span(last)
+                    and not is_protected(text, m.start(1), m.end(1))):
+                _add_raw(m.start(1), m.end(1), EType.PATIENT_NAME, "patient", 0.8, validate_name=False)
     for m in RE_ALIAS_NAME.finditer(text):
         a, b = _trim_name_span(text, m.start(1), m.end(1))
         if b > a:
             _add_raw(a, b, EType.PATIENT_NAME, "patient", 0.85, validate_name=False)
 
     # 14. JSON-style name fields in text
-    for m in RE_JSON_NAME_FIELD.finditer(text):
-        key = m.group(1)
-        if _JSON_NONPERSON_KEY.search(key):
-            continue
-        a, b = _trim_name_span(text, m.start(2), m.end(2))
-        if b > a:
-            et = EType.RELATIVE_NAME if _JSON_RELATIVE_KEY.search(key) else EType.PATIENT_NAME
-            _add_raw(a, b, et, "relative" if et == EType.RELATIVE_NAME else "patient", 0.88, validate_name=True)
+    if '"' in text:
+        for m in RE_JSON_NAME_FIELD.finditer(text):
+            key = m.group(1)
+            if _JSON_NONPERSON_KEY.search(key):
+                continue
+            a, b = _trim_name_span(text, m.start(2), m.end(2))
+            if b > a:
+                et = EType.RELATIVE_NAME if _JSON_RELATIVE_KEY.search(key) else EType.PATIENT_NAME
+                _add_raw(a, b, et, "relative" if et == EType.RELATIVE_NAME else "patient", 0.88, validate_name=True)
 
     # 12. Ages
     for rx in (RE_AGE_LABEL, RE_AGE_SEX):
@@ -557,6 +580,46 @@ def find_context_mentions(text: str) -> list[Mention]:
             _add_raw(m.start(1), m.end(1), EType.AGE, "patient", 0.9, validate_name=False)
 
     return mentions
+
+
+def detect_gazetteer(
+    text: str,
+    channel: Channel = "content",
+    gaz: Optional[GazetteerProtocol] = None,
+    _pre_norm: Optional[tuple[str, object]] = None,
+) -> list[Mention]:
+    """Run ONLY gazetteer detection + guard filtering on text."""
+    if not text or gaz is None or getattr(gaz, "is_empty", False):
+        return []
+    try:
+        gaz_hits = gaz.find(text, channel=channel, _pre_norm=_pre_norm)
+    except TypeError:
+        try:
+            gaz_hits = gaz.find(text, channel=channel)
+        except TypeError:
+            gaz_hits = gaz.find(text)
+    out: list[Mention] = []
+    for g_start, g_end, g_role, g_canon in gaz_hits:
+        if not is_protected(text, g_start, g_end):
+            span_str = text[g_start:g_end]
+            if g_canon == "__MRN__":
+                etype = EType.MRN
+            elif g_role == "relative":
+                etype = EType.RELATIVE_NAME
+            else:
+                etype = EType.PATIENT_NAME
+            out.append(Mention(
+                etype=etype,
+                start=g_start,
+                end=g_end,
+                text=span_str,
+                script=_detect_script(span_str),
+                channel=channel,
+                role=g_role,
+                source="gazetteer",
+                confidence=0.88,
+            ))
+    return resolve_overlaps(out)
 
 
 def detect_text(
@@ -580,46 +643,24 @@ def detect_text(
     if not text:
         return []
 
+    pre_norm = normalize_with_map(text)
     all_mentions: list[Mention] = []
 
     # 1. Identifier patterns (Aadhaar, Phone, MRN, Email, PAN, ABHA, House, PIN)
-    id_mentions = find_identifiers(text)
+    id_mentions = find_identifiers(text, _pre_norm=pre_norm)
     for m in id_mentions:
         m.channel = channel
         all_mentions.append(m)
 
     # 2. Contextual rules (names, relatives, honorifics, demographics)
-    ctx_mentions = find_context_mentions(text)
+    ctx_mentions = find_context_mentions(text, _pre_norm=pre_norm)
     for m in ctx_mentions:
         m.channel = channel
         all_mentions.append(m)
 
     # 3. Dynamic Gazetteer matches
-    if gaz is not None:
-        try:
-            gaz_hits = gaz.find(text, channel=channel)
-        except TypeError:
-            gaz_hits = gaz.find(text)
-        for g_start, g_end, g_role, g_canon in gaz_hits:
-            if not is_protected(text, g_start, g_end):
-                span_str = text[g_start:g_end]
-                if g_canon == "__MRN__":
-                    etype = EType.MRN
-                elif g_role == "relative":
-                    etype = EType.RELATIVE_NAME
-                else:
-                    etype = EType.PATIENT_NAME
-                all_mentions.append(Mention(
-                    etype=etype,
-                    start=g_start,
-                    end=g_end,
-                    text=span_str,
-                    script=_detect_script(span_str),
-                    channel=channel,
-                    role=g_role,
-                    source="gazetteer",
-                    confidence=0.88,
-                ))
+    if gaz is not None and not getattr(gaz, "is_empty", False):
+        all_mentions.extend(detect_gazetteer(text, channel=channel, gaz=gaz, _pre_norm=pre_norm))
 
     # 4. Final filter with meaning-trap guards
     # Strong, format-validated identifiers (phone, Aadhaar, ABHA, PAN, MRN, e-mail, ...)

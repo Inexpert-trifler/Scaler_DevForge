@@ -4,8 +4,10 @@ Handles NFKC normalization, Devanagari digits to ASCII, zero-width stripping,
 and homoglyph folding while maintaining an exact index mapping back to original offsets.
 """
 from __future__ import annotations
+from bisect import bisect_right
+import re
 import unicodedata
-from typing import Tuple
+from typing import Sequence, Tuple
 
 # Devanagari digit mapping: U+0966 to U+096F -> '0'..'9'
 DEVA_DIGITS = {
@@ -55,16 +57,57 @@ HOMOGLYPHS = {
 }
 
 
+_TRANS_TABLE = str.maketrans({
+    **{ord(c): None for c in ZERO_WIDTH_CHARS},
+    **{ord(k): v for k, v in DEVA_DIGITS.items()},
+    **{ord(k): v for k, v in HOMOGLYPHS.items()},
+})
+_ASCII_NONASCII_RE = re.compile(r'[\x00-\x7f]+|[^\x00-\x7f]+')
+
+
+class _RunOffsetMap:
+    """Compact sequence mapping normalized offsets back to original text offsets."""
+    __slots__ = ("_norm_starts", "_orig_starts", "_length", "_orig_end")
+
+    def __init__(self, norm_starts: list[int], orig_starts: list[int], length: int, orig_end: int):
+        self._norm_starts = norm_starts
+        self._orig_starts = orig_starts
+        self._length = length
+        self._orig_end = orig_end
+
+    def __len__(self) -> int:
+        return self._length
+
+    def __bool__(self) -> bool:
+        return self._length > 0
+
+    def __getitem__(self, idx: int) -> int:
+        if idx < 0:
+            idx += self._length
+        if idx < 0 or idx >= self._length:
+            raise IndexError(idx)
+        if idx == self._length - 1:
+            return self._orig_end
+        pos = bisect_right(self._norm_starts, idx) - 1
+        return self._orig_starts[pos] + (idx - self._norm_starts[pos])
+
+
 def normalize_for_match(text: str) -> str:
     """Normalize text using NFKC, Devanagari digit conversion, and zero-width stripping.
     
     Required contract: pure function returning normalized string.
     """
-    norm, _ = normalize_with_map(text)
-    return norm
+    if not text:
+        return ""
+    if text.isascii():
+        return text
+    translated = text.translate(_TRANS_TABLE)
+    if unicodedata.is_normalized("NFKC", translated):
+        return translated
+    return unicodedata.normalize("NFKC", translated)
 
 
-def normalize_with_map(text: str) -> Tuple[str, list[int]]:
+def normalize_with_map(text: str) -> Tuple[str, Sequence[int]]:
     """Normalize text and produce an offset map back to the original text.
     
     Returns:
@@ -75,38 +118,57 @@ def normalize_with_map(text: str) -> Tuple[str, list[int]]:
     if not text:
         return "", [0]
 
-    # Step 1: Pre-process characters (strip zero-width, fold Devanagari digits & homoglyphs)
-    # Track original index for each character
-    step1_chars: list[str] = []
-    step1_orig_indices: list[int] = []
+    if text.isascii():
+        return text, range(len(text) + 1)
 
-    for orig_idx, ch in enumerate(text):
-        if ch in ZERO_WIDTH_CHARS:
-            continue
-        if ch in DEVA_DIGITS:
-            ch = DEVA_DIGITS[ch]
-        elif ch in HOMOGLYPHS:
-            ch = HOMOGLYPHS[ch]
-        
-        step1_chars.append(ch)
-        step1_orig_indices.append(orig_idx)
+    translated = text.translate(_TRANS_TABLE)
+    if len(translated) == len(text) and unicodedata.is_normalized("NFKC", translated):
+        return translated, range(len(text) + 1)
 
-    # Step 2: Apply NFKC normalization char-by-char or chunk-by-chunk to maintain accurate maps
-    norm_chars: list[str] = []
-    norm_to_orig_map: list[int] = []
+    norm_chunks: list[str] = []
+    norm_starts: list[int] = []
+    orig_starts: list[int] = []
+    norm_pos = 0
+    last_delta: int | None = None
 
-    for ch, orig_idx in zip(step1_chars, step1_orig_indices):
-        nfkc_ch = unicodedata.normalize("NFKC", ch)
-        for sub_ch in nfkc_ch:
-            norm_chars.append(sub_ch)
-            norm_to_orig_map.append(orig_idx)
+    for seg_m in _ASCII_NONASCII_RE.finditer(text):
+        a, b = seg_m.start(), seg_m.end()
+        seg = seg_m.group(0)
+        if seg.isascii():
+            delta = a - norm_pos
+            if delta != last_delta:
+                norm_starts.append(norm_pos)
+                orig_starts.append(a)
+                last_delta = delta
+            norm_chunks.append(seg)
+            norm_pos += b - a
+        else:
+            sub_chars: list[str] = []
+            for idx in range(a, b):
+                ch = text[idx]
+                if ch in ZERO_WIDTH_CHARS:
+                    continue
+                if ch in DEVA_DIGITS:
+                    ch = DEVA_DIGITS[ch]
+                elif ch in HOMOGLYPHS:
+                    ch = HOMOGLYPHS[ch]
+                nfkc_ch = unicodedata.normalize("NFKC", ch) if ord(ch) >= 128 else ch
+                for sub_ch in nfkc_ch:
+                    delta = idx - norm_pos
+                    if delta != last_delta:
+                        norm_starts.append(norm_pos)
+                        orig_starts.append(idx)
+                        last_delta = delta
+                    sub_chars.append(sub_ch)
+                    norm_pos += 1
+            if sub_chars:
+                norm_chunks.append("".join(sub_chars))
 
-    # Append sentinel mapping for the end index
-    norm_to_orig_map.append(len(text))
-    return "".join(norm_chars), norm_to_orig_map
+    norm_str = "".join(norm_chunks)
+    return norm_str, _RunOffsetMap(norm_starts, orig_starts, norm_pos + 1, len(text))
 
 
-def map_span_back(start: int, end: int, index_map: list[int], orig_len: int) -> Tuple[int, int]:
+def map_span_back(start: int, end: int, index_map: Sequence[int], orig_len: int) -> Tuple[int, int]:
     """Map a span [start, end) in normalized text back to [orig_start, orig_end) in original text."""
     if not index_map or start >= len(index_map):
         return start, end

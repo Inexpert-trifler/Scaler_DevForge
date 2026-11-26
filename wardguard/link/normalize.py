@@ -5,11 +5,13 @@ Implements TR-LNK-1, TR-LNK-5:
 - phonetic_key: Soundex / Metaphone style key for blocking
 """
 from __future__ import annotations
+from functools import lru_cache
 import re
 import jellyfish
 from wardguard.detect.translit import canonical_name
 
 
+@lru_cache(maxsize=8192)
 def phonetic_key(name: str) -> str:
     """Generate phonetic soundex/metaphone key for blocking.
     
