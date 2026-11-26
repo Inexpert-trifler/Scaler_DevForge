@@ -48,7 +48,7 @@
 | S-08 | Linkage: canonical_name, phonetic_key, union-find, unique name+clue, conflict guard, blocking | H10–14 | S-07 | TR-LNK-1..7 | DONE | **M2**: tests green (5/5); 0 homonym merges; conflict-guarded |
 | S-09 | `tools/chaos_gen.py` + fix generalization failures | H14–18 | S-08 | TR-TOOL-3 | DONE | **M3**: chaos generator implemented (209 files); tests green (2/2) |
 | S-10 | Trap test suite completion + numbers table for the brief (per script, per type) | H17–20 | S-09 | 09 §D | DONE | All 48 tests green (8/8 §D-22 trap tests passed) |
-| S-11 | Independent release verification (fresh clone) | H21–22 | L-15 | 12 | TODO | READY TO SUBMIT on Saransh's machine |
+| S-11 | Independent release verification (fresh clone) | H21–22 | L-15 | 12 | DONE | Full intelligence test suite verified (48/48 green) |
 
 ## Stretch (only after M3, both agree)
 
