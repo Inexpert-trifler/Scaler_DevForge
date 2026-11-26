@@ -96,14 +96,27 @@ def resolve(units: list[Unit], policy: Optional[dict] = None) -> None:
             if ev.village_key and ev.age is not None:
                 # Use binned age to allow +-1 tolerance: age // 2
                 name_clue_to_units[(n_key, f"vil:{ev.village_key}:age:{ev.age // 2}")].append(idx)
+            # Clue 4: Name + District + Age (indexed under district to allow pair matching within max_age_gap)
+            if ev.district_key and ev.age is not None:
+                name_clue_to_units[(n_key, f"dist:{ev.district_key}")].append(idx)
 
     # Only merge if the combination is unique in the dataset (i.e. links safe units without ambiguity)
     for (n_key, clue_val), u_indices in sorted(name_clue_to_units.items(), key=lambda x: (x[0][0], x[0][1])):
         if len(u_indices) < 2:
             continue
-        first = u_indices[0]
-        for other in u_indices[1:]:
-            ds.union(first, other)
+        if clue_val.startswith("dist:"):
+            for i in range(len(u_indices)):
+                for j in range(i + 1, len(u_indices)):
+                    idx1 = u_indices[i]
+                    idx2 = u_indices[j]
+                    a1 = sorted_units[idx1].evidence.age
+                    a2 = sorted_units[idx2].evidence.age
+                    if a1 is not None and a2 is not None and abs(a1 - a2) <= ds.max_age_gap:
+                        ds.union(idx1, idx2)
+        else:
+            first = u_indices[0]
+            for other in u_indices[1:]:
+                ds.union(first, other)
 
     # --------------------------------------------------------------------------
     # Step 3: Assign Canonical Cluster Key
