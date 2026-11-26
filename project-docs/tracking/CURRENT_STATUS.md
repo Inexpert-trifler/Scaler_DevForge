@@ -4,18 +4,19 @@
 > **Last updated:** 2026-11-26 · by Lakshya (planning) · Hackathon hour: pre-start
 
 ## Phase
-**Milestone M3 complete → Milestone M4 (Release Preparation).** Root documentation and 2-page brief complete.
+**Milestone M4 Complete (Final Release).** All release checklist items verified, 128/128 tests passing, submission verified READY TO SUBMIT.
 
 ## Repo state
 - Branch `lakshya/wardguard-core-scaffold`.
 - Tests passing: 128/128 green.
 - Evaluation harness: CONTRACT OK, DETERMINISM: ok, KEYED PSEUDONYMS: ok.
 - Attack simulator: All A1–A5 attack vectors pass below reference thresholds.
+- Submission verification: `check_submission.py --run` -> READY TO SUBMIT.
 
 ## Milestones
 | M0 | M1 | M2 | M3 | M4 |
 |---|---|---|---|---|
-| DONE | DONE | DONE | DONE | TODO |
+| DONE | DONE | DONE | DONE | DONE |
 
 ## Latest measured numbers (from `tools/eval.sh` / check_dev.py)
 | Metric | Starter baseline | Current | Target |
@@ -35,7 +36,7 @@
 ## Who is doing what right now
 | Person | Task | State |
 |---|---|---|
-| Lakshya | L-15 Release checklist & final release | TODO |
+| Lakshya | L-15 Release checklist & final release | DONE |
 | Saransh | S-11 Independent release verification | DONE |
 
 ## Blockers

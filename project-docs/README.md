@@ -30,6 +30,7 @@
 | – | `team/WORKFLOW.md` | Work split, timeline, git workflow, Gemini usage, DoD | rarely |
 | – | `team/LAKSHYA.md` | Lakshya's task cards + personal Gemini prompt | Lakshya |
 | – | `team/SARANSH.md` | Saransh's task cards + personal Gemini prompt | Saransh |
+| – | `testlab/TESTLAB_BUILD_GUIDE.md` | Test lab (sandbox) build guide: specs, task cards T-00..T-16, bug loop, prompts | Lab Builder |
 
 ## Build PDFs (context packs for Gemini)
 
@@ -38,6 +39,7 @@ bash project-docs/build_pdfs.sh
 # → project-docs/pdf/WardGuard_Context_Lakshya.pdf
 # → project-docs/pdf/WardGuard_Context_Saransh.pdf
 # → project-docs/pdf/WardGuard_Full_Docs.pdf
+# → project-docs/pdf/WardGuard_TestLab_Builder.pdf  (lab guide + product context, data models, API contracts, architecture, field research)
 ```
 Each personal pack = master prompt + all shared docs + tracking + that person's task file.
 It needs `pandoc` and Google Chrome (macOS paths; on Linux set `CHROME=` to your chromium binary).

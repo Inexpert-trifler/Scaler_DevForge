@@ -3,7 +3,9 @@
 > User-visible / score-relevant changes per version. Bump the minor version at each milestone (M1 → 0.2, M2 → 0.3 …).
 > Format: `- [TASK-ID] (Name) description`
 
-## [Unreleased]
+## [1.0.0] - 2026-11-26 (Milestone M4 Release)
+### Added
+- [L-15] (Lakshya) Final release execution and submission readiness verification (Milestone M4): 100% checks verified in 12_RELEASE_CHECKLIST.md, all 128 unit/property/adversarial tests passing, zero network imports confirmed, determinism and secret isolation proved, and internal planning docs untracked per D-013 for a clean submission repo.
 - [L-14] (Lakshya) Root README and 2-page project brief (docs/brief.pdf, R16): authored comprehensive root README.md replacing placeholders with verified empirical performance and attack simulation metrics, declared models as none, documented 3-pass architecture and limitations. Authored docs/brief.md and built docs/brief.pdf with automated tools/build_brief.sh confirming strict <= 2 pages compliance. Added automated test test_brief_pdf_and_readme_constraints.
 - [L-13] (Lakshya) Performance, memory, and determinism hardening (TR-RUN-6, TR-SEC-4, Milestone M3): eliminated urllib network import from hidden channels, verified fast import time (<0.2s), validated 10x bulk dataset scalability (60 files processed in 1.8s with peak RSS 35.4MB against 512MB ceiling), proved byte-identical determinism and secret isolation, and added automated submission checker verifying READY TO SUBMIT.
 - [L-12] (Lakshya) Targeted k-anonymity coarsening (TR-PRV-7, Milestone M2): partition patient-bearing units into equivalence classes over quasi-identifiers (age band, gender, district, diagnosis); mark rare units (size < k_min) with unit.coarsen = True for targeted coarsening (10-year wider age band, suppression of village, tehsil, and district). Preserves clinical utility on common records while reducing re-identification risk.

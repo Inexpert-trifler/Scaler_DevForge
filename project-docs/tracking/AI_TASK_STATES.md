@@ -12,7 +12,7 @@
 | M1 | Integrated detection v1 | H8 | DONE | 4/4 canaries; recall > 0.9 per script; CONTRACT OK |
 | M2 | Linkage + privacy | H14 | DONE | F0.5 > 0.9; 0 homonym merges; attack_sim numbers logged: A3 4.3%, A4 4.3%, A5 25.0% |
 | M3 | Hardened + feature freeze | H18 | DONE | chaos delta < 10; READY TO SUBMIT |
-| M4 | Release | H22 | TODO | 12_RELEASE_CHECKLIST all ticked |
+| M4 | Release | H22 | DONE | 12_RELEASE_CHECKLIST all ticked |
 
 ## Lakshya: Platform + Privacy
 
@@ -32,7 +32,7 @@
 | L-12 | k-anonymity plan + targeted coarsening; tune k, DOB policy (D-012) | H13–16 | L-11, S-08 | TR-PRV-7 | DONE | **M2**: equivalence classes over QIs, wider age band (10y), village/tehsil/district drop; tests green (123/123) |
 | L-13 | Performance, memory, determinism; check_submission READY | H15–18 | all | TR-RUN-6, TR-SEC-4 | DONE | **M3**: import <0.2s, bulk x10 (60 files, 1.8s, RSS 35.4MB), byte-identical determinism; check_submission READY TO SUBMIT; tests green (127/127) |
 | L-14 | README + 2-page brief (numbers from both) | H18–21 | L-13 | R16 | DONE | docs/brief.pdf ≤ 2 pages (2/2 verified); README complete |
-| L-15 | Release checklist, cleanup, final push | H21–23 | L-14 | 12 | IN_PROGRESS | **M4** |
+| L-15 | Release checklist, cleanup, final push | H21–23 | L-14 | 12 | DONE | **M4**: 12_RELEASE_CHECKLIST all ticked, planning docs untracked per D-013, READY TO SUBMIT |
 
 ## Saransh: Intelligence (Detection + Linkage)
 

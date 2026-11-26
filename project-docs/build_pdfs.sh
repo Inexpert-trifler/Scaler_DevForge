@@ -54,4 +54,6 @@ build() { # $1 = output name, rest = md files
 build "WardGuard_Context_Lakshya" team/LAKSHYA.md "${SHARED[@]}"
 build "WardGuard_Context_Saransh" team/SARANSH.md "${SHARED[@]}"
 build "WardGuard_Full_Docs" README.md "${SHARED[@]}" team/LAKSHYA.md team/SARANSH.md
+build "WardGuard_TestLab_Builder" testlab/TESTLAB_BUILD_GUIDE.md \
+  02_PRODUCT_CONTEXT.md 06_DATA_MODELS.md 07_API_CONTRACTS.md 08_ARCHITECTURE.md 10_FIELD_RESEARCH.md
 rm -f "$CSS"
