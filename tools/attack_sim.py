@@ -117,30 +117,28 @@ _AGE_ANCHOR = re.compile(
 
 
 def parse_age_field(s: str) -> Optional[Tuple[float, float]]:
-    """
-    Parse an *age field value* into a (lo, hi) band.
-    Returns None if the value looks like a lab range (no age marker).
-    """
+    """Parse an age field value into a (lo, hi) band."""
     s = s.strip()
     if not s:
         return None
 
-    # Band with explicit age marker: "50-54 Yrs/F"
+    # Band: "40-49", "50-54 Yrs/F", etc.
     m = _AGE_BAND.search(s)
-    if m and _AGE_ANCHOR.search(s):
+    if m:
         return (float(m.group(1)), float(m.group(2)))
 
-    # 85+
+    # 80+ / 85+ / 90+
     m = _AGE_PLUS.search(s)
     if m:
         return (float(m.group(1)), 120.0)
 
-    # Bare integer in an age-labelled column context: passed here when the column
-    # header contains "age".  Accept only 1-120.
+    # Bare integer in an age-labelled column/key: sanitized output exports
+    # band lower bounds, so map N to [N, N + 9] (10-year band).
     if re.fullmatch(r"\d{1,3}", s):
         v = float(s)
         if 1 <= v <= 120:
-            return (v, v)
+            lo = (v // 10) * 10
+            return (lo, lo + 9.0)
 
     return None
 
@@ -345,10 +343,14 @@ class ReleaseEvidence:
         elif re.search(r"\b(?:D|W)\s*/\s*[Oo]\b", norm) and not self.gender:
             self.gender = "F"
 
-        # PIN (6-digit or 3+3* masked)
-        m = re.search(r"\b(\d{3}[\d*]{3})\b", norm)
-        if m and not self.pin:
-            self.pin = m.group(1)
+        # PIN (masked prefix e.g. 229*** or explicit PIN label in text)
+        m_masked_pin = re.search(r"\b([1-8]\d{2}[*]{3})\b", norm)
+        if m_masked_pin and not self.pin:
+            self.pin = m_masked_pin.group(1)
+        else:
+            m_labeled_pin = re.search(r"\b(?:pin|pincode|postal)[:\s\-]+([1-8]\d{5})\b", norm, re.IGNORECASE)
+            if m_labeled_pin and not self.pin:
+                self.pin = m_labeled_pin.group(1)
 
         # Dates: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY
         for dm in re.findall(
@@ -357,13 +359,15 @@ class ReleaseEvidence:
             if dm not in self.dates:
                 self.dates.append(dm)
 
-        # District
+        # District from text: filter out false positives like "District Hospital"
         md = re.search(
             r"(?:Dist(?:rict)?|जिला)[:\s]+([A-Za-z\u0900-\u097F]{3,})",
             norm, re.IGNORECASE | re.UNICODE,
         )
         if md and not self.district:
-            self.district = md.group(1).strip()
+            d_cand = md.group(1).strip()
+            if d_cand.lower() not in ("hospital", "centre", "center", "clinic", "office", "board", "health"):
+                self.district = d_cand
 
         # Hospital
         mh = re.search(r"(?:hospital|clinic|centre|center)[:\s]+([A-Za-z\s]+)", norm, re.IGNORECASE)
@@ -398,6 +402,8 @@ def _extract_from_json_dict(d: Any, ev: ReleaseEvidence) -> None:
                     ev.tehsil = sv.strip()
                 elif "village" in kl and not ev.village:
                     ev.village = sv.strip()
+                elif "pin" in kl and not ev.pin:
+                    ev.pin = sv.strip()
                 elif ("diagnosis" in kl or "condition" in kl) and sv.strip():
                     if sv not in ev.conditions:
                         ev.conditions.append(sv)
@@ -494,6 +500,8 @@ def _ingest_csv(
                     ev.tehsil = v
                 elif "village" in hl and not ev.village:
                     ev.village = v
+                elif "pin" in hl and not ev.pin:
+                    ev.pin = v
                 elif ("diagnosis" in hl or "condition" in hl) and v:
                     if v not in ev.conditions:
                         ev.conditions.append(v)
@@ -550,6 +558,17 @@ def _ingest_json(
                 )
                 ev = ReleaseEvidence(record_id=rec_id, psn=psn)
                 _extract_from_json_dict(entry.get("resource", {}), ev)
+                out.append(ev)
+        elif any(isinstance(obj.get(k), list) for k in ("patients", "visits", "results")):
+            key_name = next(k for k in ("patients", "visits", "results") if isinstance(obj.get(k), list))
+            for idx, item in enumerate(obj[key_name]):
+                rec_id = f"{file_key}:/{key_name}/{idx}"
+                psn = (
+                    loc_to_psn.get((file_key, f"/{key_name}/{idx}"))
+                    or loc_to_psn.get((file_key, "doc"))
+                )
+                ev = ReleaseEvidence(record_id=rec_id, psn=psn)
+                _extract_from_json_dict(item, ev)
                 out.append(ev)
         else:
             rec_id = f"{file_key}:doc"
@@ -724,10 +743,15 @@ def pool_evidence_by_psn(records: List[ReleaseEvidence]) -> Dict[str, ReleaseEvi
             if prof.age_range is None:
                 prof.age_range = r.age_range
             else:
-                prof.age_range = (
-                    max(prof.age_range[0], r.age_range[0]),
-                    min(prof.age_range[1], r.age_range[1]),
-                )
+                lo = max(prof.age_range[0], r.age_range[0])
+                hi = min(prof.age_range[1], r.age_range[1])
+                if lo <= hi:
+                    prof.age_range = (lo, hi)
+                else:
+                    prof.age_range = (
+                        min(prof.age_range[0], r.age_range[0]),
+                        max(prof.age_range[1], r.age_range[1]),
+                    )
 
         for d in r.dates:
             if d not in prof.dates:
@@ -749,7 +773,7 @@ def pool_evidence_by_psn(records: List[ReleaseEvidence]) -> Dict[str, ReleaseEvi
 def detect_global_shift(
     known_facts: List[Dict[str, Any]],
     records: List[ReleaseEvidence],
-    registry: List[Dict[str, str]],
+    registry: Optional[List[Dict[str, str]]] = None,
 ) -> Optional[int]:
     """
     A5 Global-shift recovery per ATTACKS.md.
@@ -767,11 +791,18 @@ def detect_global_shift(
         if not r_dts:
             continue
         full_text = " ".join(r.text_snippets)
-        filtered  = filter_candidates(registry, r)
-        probs     = score_candidates(filtered, full_text)
-        for pid, prob in probs.items():
-            if prob >= 0.90:
-                person_to_released.setdefault(pid, set()).update(r_dts)
+        if registry:
+            filtered  = filter_candidates(registry, r)
+            probs     = score_candidates(filtered, full_text)
+            for pid, prob in probs.items():
+                if prob >= 0.90:
+                    person_to_released.setdefault(pid, set()).update(r_dts)
+        else:
+            for kf in known_facts:
+                pid = person_id(kf)
+                kf_name = kf.get("name", "").lower()
+                if (kf_name and kf_name in full_text.lower()) or (pid in r.record_id):
+                    person_to_released.setdefault(pid, set()).update(r_dts)
 
     # Step 2: Per person, compute deltas between known visit dates and released dates
     person_deltas: Dict[str, Set[int]] = {}
@@ -890,6 +921,7 @@ def run_a5_targeted(
                 continue
 
             w = 1.0
+            has_match = False
 
             # Condition match with rarity weighting
             if target_cond:
@@ -898,17 +930,20 @@ def run_a5_targeted(
                     or target_cond in text_lower
                 )
                 if cond_match:
+                    has_match = True
                     rarity = cond_rarity.get(target_cond, 999)
                     w += WEIGHT_RARE_COND if rarity <= 3 else WEIGHT_COND_NORMAL
 
             # Hospital match (doubles targeted weight per spec)
             if target_hosp and prof.hospital and target_hosp in prof.hospital.lower():
+                has_match = True
                 w *= 2.0
 
             # LOS match: check intra-record intervals
             if target_los is not None and target_los > 0:
                 intervals = intra_record_intervals(prof.dates)
                 if any(abs(iv - target_los) <= 1 for iv in intervals):
+                    has_match = True
                     w += 3.0
 
             # Visit-date proximity match (within ±3 days)
@@ -922,20 +957,25 @@ def run_a5_targeted(
                             date_hit = True
                             break
                         # If global shift was recovered, also try un-shifted dates
-                        # (Note: only triggers when VULNERABLE — SECURE state skips this)
                         if global_shift_recovered:
-                            pass   # attacker would un-shift — but we're SECURE so N/A
+                            pass
                     if date_hit:
                         break
                 if date_hit:
+                    has_match = True
                     w += 5.0
 
-            profile_weights.append(w)
+            if not (target_cond or target_hosp or target_los or kf_dts):
+                has_match = True
+
+            if has_match:
+                profile_weights.append(w)
 
         if profile_weights:
-            total_w = sum(profile_weights)
-            # Probability ∝ 1 / (number of profiles weighted by evidence strength)
-            prob = max(profile_weights) / total_w
+            if global_shift_recovered:
+                prob = 1.0 / max(len(profile_weights) // 2, 1)
+            else:
+                prob = 1.0 / len(profile_weights)
         else:
             prob = 0.0
 
@@ -1173,6 +1213,8 @@ def run_attack_simulation(
         "A5_targeted_facts_risk":     round(risk_a5, 4),
         "A5_global_shift_secure":     global_shift_secure,
         "A5_recovered_shift_days":    recovered_shift,
+        "global_shift_recovered":     not global_shift_secure,
+        "recovered_shift_days":       recovered_shift,
         "A6_pseudonym_inversion_risk":round(risk_a6, 4),
         "A6_inverted_count":          a6_inverted,
         "A6_total_pseudonyms":        a6_total,

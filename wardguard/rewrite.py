@@ -148,14 +148,15 @@ def get_replacement(
         return generalize_village(text, unit, policy)
 
     elif etype_str == "DISTRICT":
+        # Suppress district for rare k-anon units (TR-PRV-7 targeted coarsening)
         if unit and unit.coarsen:
             return ""
         return text
 
     elif etype_str == "TEHSIL":
-        if unit and unit.coarsen:
-            return ""
-        return text
+        # Always suppress TEHSIL — sub-district quasi-identifier that narrows down
+        # voter roll candidates to single individuals without clinical utility value.
+        return ""
 
     elif etype_str == "GENDER":
         return text
