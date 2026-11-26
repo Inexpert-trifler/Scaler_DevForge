@@ -9,3 +9,4 @@
 - [2026-11-26 17:40] [H1.5] Lakshya [L-02/L-03] Frozen model.py (M0) and created tools/eval.sh with determinism & keyed PSN checks | CONTRACT: ok | determinism: ok | 0.001s 25.06MB
 - [2026-11-26 17:46] [H2] Lakshya [L-04] Safety layer: counts-only logging, safe_reason tokenization, fail-safe per-file quarantine | CONTRACT: ok | tests: 12 passed | 0.001s 25.11MB
 - [2026-11-26 18:35] [H1] Saransh [S-STRESS] Tough stress test suite (12 tests) and hardening: zero-width/homoglyph evasion, Hinglish note parsing, dotted/slashed Aadhaar Verhoeff verification, canary detection, medical eponyms/clinical protection, 100% deterministic transliteration variants, and pair-age linkage guard | CONTRACT: ok | tests: 60/60 pass
+- [2026-11-26 19:35] [H3] Lakshya [L-05] Ingestion: magic-byte sniffing, multi-encoding decode (BOM/UTF-8/UTF-16/cp1252), ragged CSV rows, deep JSON safety (1500+ levels), generic quarantine | CONTRACT: ok | tests: 74 passed | 0.015s 34.94MB

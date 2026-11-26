@@ -4,6 +4,7 @@
 > Format: `- [TASK-ID] (Name) description`
 
 ## [Unreleased]
+- [L-05] (Lakshya) Ingestion engine: content-based format sniffing (magic bytes, XML/PDF/JPEG/binary rejection), multi-encoding decode (UTF-8, UTF-8-BOM, UTF-16, cp1252), dialect-aware CSV/TSV readers with ragged row tolerance, 1500-level deep-safe JSON parsing, FHIR R4 bundle classification, and generic quarantine tokens.
 - [L-04] (Lakshya) Safety layer: strict counts-only stderr logging, safe exception reason reduction, per-file crash isolation with generic quarantine, and report generation in finally block.
 - [L-02] (Lakshya) Freeze `wardguard/model.py` and confirm contracts with Saransh (Milestone M0).
 - [L-03] (Lakshya) Add `tools/eval.sh` evaluation harness with determinism diff and keyed pseudonym test.
