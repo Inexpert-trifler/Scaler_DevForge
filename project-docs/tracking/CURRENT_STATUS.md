@@ -35,7 +35,7 @@
 | Person | Task | State |
 |---|---|---|
 | Lakshya | L-01 Scaffold | TODO |
-| Saransh | S-10 Trap test suite completion | TODO |
+| Saransh | S-11 Independent verification | TODO |
 
 ## Blockers
 None.
