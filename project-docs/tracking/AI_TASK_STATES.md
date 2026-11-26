@@ -26,7 +26,7 @@
 | L-06 | Unit enumeration + content slots (`row:N`, pointers, `doc`) | H4–6 | L-05 | TR-ING-9 | DONE | locs match specification (row:N, pointers, doc), slots retain types |
 | L-07 | Export writers (format-preserving, UTF-8, header/delimiter, JSON types) + records.jsonl + report.json | H5–8 | L-06 | TR-EXP-1..4 | DONE | format-preserving writers, records.jsonl sorted, SPEC §5 report.json |
 | L-08 | Hidden channels: keys, headers, filenames (rename), metadata, base64, escapes, FHIR narrative | H7–11 | L-06, S-05 | TR-DET-9 | DONE | hidden slots extracted, base64/escapes decoded, PII filenames renamed |
-| L-09 | Privacy core: pseudonym, date_offset, format-preserving date shift, age band, PIN, village → tehsil | H6–10 | L-02 | TR-PRV-1..6, 8 | TODO | interval test; A7 different-secret test |
+| L-09 | Privacy core: pseudonym, date_offset, format-preserving date shift, age band, PIN, village → tehsil | H6–10 | L-02 | TR-PRV-1..6, 8 | DONE | Crockford HMAC PSN, non-zero date offsets, 9-day stay preserved, generalizers |
 | L-10 | Rewrite engine: apply mentions, PSN placement, QI generalization | H8–11 | L-07, L-09 | TR-PRV-2, 08 §4 | TODO | **M1 integration** |
 | L-11 | `tools/attack_sim.py` (A2–A5 incl. global-shift recovery) | H10–14 | L-10 | TR-TOOL-2 | TODO | raw vs ours numbers logged |
 | L-12 | k-anonymity plan + targeted coarsening; tune k, DOB policy (D-012) | H13–16 | L-11, S-08 | TR-PRV-7 | TODO | A5 < reference 40.1% |

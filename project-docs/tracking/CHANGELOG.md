@@ -4,6 +4,7 @@
 > Format: `- [TASK-ID] (Name) description`
 
 ## [Unreleased]
+- [L-09] (Lakshya) Privacy core engine: Crockford Base32 HMAC-SHA256 keyed pseudonym generator (`PSN-XXXXXX`), non-zero deterministic date offset generator, format- and interval-preserving date shifter supporting 8 formats, datetimes, and Devanagari numerals, and age band / PIN prefix generalizers.
 - [L-08] (Lakshya) Hidden channels & filename renaming: added `@filename` (stem), `@header:<index>`, and `@key:<pointer>/<key>` slot extractors, automated printable base64 decoding (`<path>#b64`), multi-scheme escape decoding (`\uXXXX`, `%XX`, HTML entities), metadata channel classification, and deterministic PII filename renaming with collision guard.
 - [L-07] (Lakshya) Format-preserving export writers: RFC 4180 compliant CSV/TSV serialization handling quoted newlines/commas, JSON reconstruction preserving exact structure/key order/primitive types (`int`, `float`, `bool`, `null`), deterministic `records.jsonl` writer sorted by `(file, loc)`, and full SPEC §5 `report.json` reporting honest stats, timing, and peak RSS.
 - [L-06] (Lakshya) Unit enumeration & content slots: robust RFC 6901 pointer traversal for top-level and nested JSON object lists (`/{i}`, `/{key}/{i}`), `doc` units for single-object/FHIR/text files, and deterministic `row:N` locators for CSV/TSV with duplicate/empty header collision handling (`col#<index>`).

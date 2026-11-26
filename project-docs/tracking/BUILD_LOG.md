@@ -13,3 +13,4 @@
 - [2026-11-26 19:47] [H4] Lakshya [L-06] Unit enumeration: RFC 6901 JSON pointers, CSV row:N locators with duplicate/empty header handling, FHIR/text doc locators | CONTRACT: ok | tests: 81 passed | 0.015s 34.86MB
 - [2026-11-26 19:52] [H5] Lakshya [L-07] Export: RFC 4180 CSV/TSV writer, JSON type/structure-preserving emitter, sorted records.jsonl, and SPEC §5 report.json | CONTRACT: ok | tests: 87 passed | 0.015s 34.91MB
 - [2026-11-26 20:33] [H6] Lakshya [L-08] Hidden channels: @filename stem, @header, @key slots, metadata pointers, base64 / escape decoding, and collision-safe PII file renaming | CONTRACT: ok | tests: 93 passed | 0.016s 35.28MB
+- [2026-11-26 20:39] [H7] Lakshya [L-09] Privacy core: Crockford Base32 HMAC pseudonyms, non-zero date offsets, format & interval preserving date shifter (9-day stay preserved), age band, PIN prefix | CONTRACT: ok | tests: 98 passed | 0.016s 35.27MB
