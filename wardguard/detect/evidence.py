@@ -297,6 +297,10 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
                 iso = parse_iso_date(m_text)
                 if iso:
                     dob_val = iso
+            elif m.etype == EType.DATE:
+                iso = parse_iso_date(m_text)
+                if iso and iso not in dates:
+                    dates.append(iso)
             elif m.etype == EType.AGE and age_val is None:
                 parsed_a = parse_age(m_text)
                 if parsed_a is not None:

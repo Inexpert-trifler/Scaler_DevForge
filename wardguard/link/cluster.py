@@ -49,7 +49,10 @@ def has_conflict(ev1: Evidence, ev2: Evidence, max_age_gap: int = 2) -> bool:
         set1 = set(ev1.relative_keys)
         set2 = set(ev2.relative_keys)
         if not (set1 & set2):
-            return True
+            rel_g1 = {k.replace("_", " ").split()[0] for k in set1 if k and k.replace("_", " ").split()}
+            rel_g2 = {k.replace("_", " ").split()[0] for k in set2 if k and k.replace("_", " ").split()}
+            if not (rel_g1 & rel_g2):
+                return True
 
     # 5. Name mismatch (if both have full name keys and they are completely different)
     if ev1.name_keys and ev2.name_keys:

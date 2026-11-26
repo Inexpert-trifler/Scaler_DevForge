@@ -369,3 +369,35 @@ def test_accuracy_hardening_doctor_lab_linkage():
     resolve([u1, u2, u3], {"link_conflict_age_gap": 3})
     assert u1.cluster == u2.cluster
     assert u1.cluster != u3.cluster
+
+
+def test_honorific_kinship_and_date_linkage():
+    """Verify honorific stripping, kinship relative matching, and date harvesting in linkage."""
+    from wardguard.link.normalize import canonical_name, phonetic_key
+    from wardguard.link.cluster import has_conflict
+    from wardguard.model import Evidence
+
+    # 1. Honorific suffix stripping in canonical names
+    assert canonical_name("Jaspreet babu") == "jasprit"
+    assert canonical_name("Sukhwinder Papa") == "sukhvinder"
+    assert canonical_name("Mohan Papa") == "mohan"
+    assert canonical_name("Vikas babu") == "vikas"
+
+    # 2. Kinship relative given name matching (e.g. Sukhwinder Singh vs Sukhwinder Papa)
+    ev1 = Evidence(
+        name_keys=("jasprit singh",),
+        given_keys=("jasprit",),
+        relative_keys=("sukhvinder singh",),
+        age=45,
+        gender="M",
+        strong_ids=(("PHONE", "6004394755"),),
+    )
+    ev2 = Evidence(
+        name_keys=("jasprit",),
+        given_keys=("jasprit",),
+        relative_keys=("sukhvinder",),
+        age=45,
+        gender="M",
+        strong_ids=(("PHONE", "6004394755"),),
+    )
+    assert not has_conflict(ev1, ev2, max_age_gap=3)

@@ -15,6 +15,7 @@ from indic_transliteration import sanscript
 
 # Regex for Devanagari character detection
 RE_DEVA = re.compile(r'[\u0900-\u097f]')
+HONORIFIC_TOKENS = {"babu", "sahab", "sahib", "ji", "bhaiya", "didi", "papa", "mummy", "beta", "beti"}
 
 
 @lru_cache(maxsize=1)
@@ -111,6 +112,10 @@ def canonical_name(name: str) -> str:
     lat = re.sub(r"['\u2019]", "", lat)
     lat = re.sub(r'[^a-zA-Z\s]', ' ', lat).lower()
     tokens = [t.strip() for t in lat.split() if t.strip()]
+    if len(tokens) > 1:
+        filtered = [t for t in tokens if t not in HONORIFIC_TOKENS]
+        if filtered:
+            tokens = filtered
 
     var_map = load_translit_variants()
     norm_tokens = []

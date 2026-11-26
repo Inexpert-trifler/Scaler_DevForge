@@ -148,7 +148,7 @@ def get_replacement(
         return generalize_village(text, unit, policy)
 
     elif etype_str == "DISTRICT":
-        if unit and unit.coarsen:
+        if unit and unit.coarsen and policy.get("district_action") != "keep":
             return ""
         return text
 
