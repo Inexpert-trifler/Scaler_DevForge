@@ -18,7 +18,7 @@
 
 | ID | Task | Hours | Depends | Reqs | State | Gate / Notes |
 |---|---|---|---|---|---|---|
-| L-01 | Scaffold: new layout, raksha.toml, port starter I/O + HMAC helpers, stubs for every module, remove `src/` | H0–1.5 | – | TR-RUN-2 | TODO | `main.py` runs end to end with stubs; CONTRACT OK |
+| L-01 | Scaffold: new layout, raksha.toml, port starter I/O + HMAC helpers, stubs for every module, remove `src/` | H0–1.5 | – | TR-RUN-2 | DONE | `main.py` runs end to end with stubs; CONTRACT OK |
 | L-02 | `model.py` + contracts freeze with Saransh | H1–2 | L-01 | 06, 07 | TODO | both approve; M0 |
 | L-03 | `tools/eval.sh` (run → validate → check_dev → log line; second run → determinism diff) | H1.5–2.5 | L-01 | TR-TOOL-1 | TODO | one command gives scores |
 | L-04 | Safety: `log.event`, `safe_reason`, top-level try/except, report in `finally` | H2–3 | L-01 | TR-SEC-2, 3 | TODO | crash test → still exit 0 + report |

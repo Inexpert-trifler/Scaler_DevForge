@@ -4,7 +4,7 @@
 > Format: `- [TASK-ID] (Name) description`
 
 ## [Unreleased]
-- (add entries here while working)
+- [L-01] (Lakshya) Scaffold WardGuard package layout with modular stubs, data models, safety logging, raksha.toml, policy configuration, and test suites.
 
 ## [0.0.1] - 2026-11-26
 ### Added
