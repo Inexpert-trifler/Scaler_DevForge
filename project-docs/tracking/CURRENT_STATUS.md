@@ -35,7 +35,7 @@
 | Person | Task | State |
 |---|---|---|
 | Lakshya | L-01 Scaffold | TODO |
-| Saransh | S-03 Column classifier | TODO |
+| Saransh | S-04 Meaning-trap guards | TODO |
 
 ## Blockers
 None.
