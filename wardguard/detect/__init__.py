@@ -6,6 +6,8 @@ from wardguard.detect.patterns import find_identifiers
 from wardguard.detect.columns import classify_column
 from wardguard.detect.guards import is_protected
 from wardguard.detect.context import detect_text
+from wardguard.detect.translit import deva_to_latin, canonical_name
+from wardguard.detect.names import Gazetteer, build_gazetteer
 
 __all__ = [
     "normalize_for_match",
@@ -14,4 +16,8 @@ __all__ = [
     "classify_column",
     "is_protected",
     "detect_text",
+    "deva_to_latin",
+    "canonical_name",
+    "Gazetteer",
+    "build_gazetteer",
 ]
