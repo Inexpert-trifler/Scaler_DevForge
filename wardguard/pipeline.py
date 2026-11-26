@@ -35,6 +35,7 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
     stats = RunStats()
     files: List[ParsedFile] = []
     fatal = False
+    pipeline_errors: Dict[str, int] = {}
 
     try:
         event("pipeline_start", count=1)
@@ -86,33 +87,63 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
                         pf.reason = safe_reason(e)
                         event("file_quarantined", count=1)
         except Exception as e:
+            pipeline_errors["detection"] = pipeline_errors.get("detection", 0) + 1
             event("detection_error", count=1)
-            # Create a fallback empty gazetteer
             from wardguard.detect import Gazetteer
             gaz = Gazetteer()
 
         # Apply filename renaming for files whose @filename contains PII mentions (TR-EXP-2)
         try:
             apply_filename_renaming(files, policy)
-        except Exception:
-            pass
+        except Exception as e:
+            pipeline_errors["filename_renaming"] = pipeline_errors.get("filename_renaming", 0) + 1
+            event("filename_rename_error", count=1)
+            # Fail closed: neutral deterministic fallback name or quarantine
+            for pf in files:
+                if pf.status == "pending":
+                    p = Path(pf.rel)
+                    has_pii = any(m for s in pf.file_slots if s.path == "@filename" for m in s.mentions)
+                    if has_pii:
+                        # Fallback to neutral hash name: file_<sha8>.<ext>
+                        pf.out_rel = f"sanitized/{p.parent.as_posix()}/file_{pf.sha256[:8]}{p.suffix}".replace("/./", "/")
 
         # Pass 2: Global Linkage and Privacy
         active_units = [u for pf in files if pf.status == "pending" for u in pf.units]
+
+        # 2a. Resolve identity linkage
         try:
             resolve(active_units, policy)
-        except Exception:
+        except Exception as e:
+            pipeline_errors["resolve"] = pipeline_errors.get("resolve", 0) + 1
             event("link_error", count=1)
+            # Fail closed: all units unlinked (cluster = None, patient = null)
+            for u in active_units:
+                u.cluster = None
 
+        # 2b. Assign identity (pseudonyms + date shifting)
         try:
             assign_identity(active_units, secret, policy)
-        except Exception:
+        except Exception as e:
+            pipeline_errors["assign_identity"] = pipeline_errors.get("assign_identity", 0) + 1
             event("privacy_error", count=1)
+            # Fail closed: dates and ages cannot be protected; quarantine all pending files
+            for pf in files:
+                if pf.status == "pending":
+                    pf.status = "quarantined"
+                    pf.reason = "privacy_error"
+                    event("file_quarantined", count=1)
+            active_units = []
 
-        try:
-            plan(active_units, policy)
-        except Exception:
-            pass
+        # 2c. Plan targeted k-anonymity
+        if active_units:
+            try:
+                plan(active_units, policy)
+            except Exception as e:
+                pipeline_errors["plan"] = pipeline_errors.get("plan", 0) + 1
+                event("kanon_error", count=1)
+                # Fail closed: maximum generalization on all units
+                for u in active_units:
+                    u.coarsen = True
 
         # Pass 3: Rewrite and Export
         for pf in files:
@@ -145,6 +176,7 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
         try:
             write_records(files, output_dir)
         except Exception as e:
+            pipeline_errors["write_records"] = pipeline_errors.get("write_records", 0) + 1
             event("export_error", count=1)
 
         event("pipeline_complete", count=len(files))
@@ -158,6 +190,6 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
     finally:
         # Guarantee report.json is always written if output_dir is accessible
         try:
-            write_report(files, stats, output_dir, t0)
+            write_report(files, stats, output_dir, t0, pipeline_errors=pipeline_errors)
         except Exception:
             pass

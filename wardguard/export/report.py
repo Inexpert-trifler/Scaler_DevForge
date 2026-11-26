@@ -38,6 +38,7 @@ def write_report(
     stats: RunStats,
     output_dir: Path,
     t0: float,
+    pipeline_errors: Optional[dict[str, int]] = None,
 ) -> None:
     """Write SPEC-compliant report.json."""
     duration = round(time.time() - t0, 3)
@@ -90,6 +91,7 @@ def write_report(
             "records_quarantined": stats.records_quarantined,
         },
         "entities": sorted_entities,
+        "pipeline_errors": {k: v for k, v in sorted((pipeline_errors or {}).items())},
         "timing": {
             "seconds": duration,
         },
