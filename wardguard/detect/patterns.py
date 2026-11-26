@@ -142,19 +142,25 @@ RE_MRN = re.compile(
     r'(?:UHID|MRN|IPD?|OPD|ADM|REG|CR|PAT|JJH|SNJ|DHH|ARG)[-\s#/:]*[A-Z0-9]{2,6}(?:[/-][A-Z0-9]*\d[A-Z0-9]*){1,3}'
     r'|(?:UHID|MRN|IPD?|OPD|ADM|CRNO?|JJH|SNJ|DHH|ARG)[-\s#/:]*\d{4,10}'
     r'|[A-Z]{2,5}\d{2,4}[-/]\d{4,10}'
-    r'|[A-Z]{2,5}(?:[/-][A-Z0-9]*\d[A-Z0-9]*){1,3}'
+    r'|[A-Z]{2,5}(?:[./-][A-Z0-9]*\d[A-Z0-9]*){1,3}'
+    r'|[A-Z]-\d{1,4}/\d{3,8}'
     r'|[A-Z]{2,5}-\d{4,10}'
     r')(?![A-Za-z0-9])'
 )
 
-# --- INSURANCE_ID ---
-# Ayushman Bharat PM-JAY (e.g., PMJAY-..., AB-PMJAY-...), or policy numbers
-# POS: "PMJAY-123456789", "ABPMJAY-987654321", "POL-987654321" | NEG: "OD 1 tab"
+# --- INSURANCE_ID (plus Voter ID / Driving Licence / Ration Card) ---
+# Ayushman Bharat PM-JAY (e.g., PMJAY-..., AB-PMJAY-...), policy, EPIC, DL, Ration Card
 RE_INSURANCE = re.compile(
     r'(?i)(?<![A-Za-z0-9])('
     r'(?:PMJAY|AB-?PMJAY|INS|POLICY)[-\s#/:]*[A-Z0-9]{6,16}'
     r'|[A-Z]{2,4}/POL/\d{4,12}'
+    r'|[A-Z]{2}[- ]?\d{2}[- ]?(?:19|20)\d{2}\d{7}'
     r')(?![A-Za-z0-9])'
+)
+RE_VOTER_EPIC = re.compile(r'(?<![A-Za-z0-9])([A-Z]{3}\d{7})(?![A-Za-z0-9])')
+RE_LABELLED_CIVIC_ID = re.compile(
+    r'(?i)(?:voter\s*id(?:\s*\(?epic\)?)?|epic\s*(?:no\.?|number)?|driving\s*licen[cs]e|dl\s*(?:no\.?|number)|ration\s*card(?:\s*(?:no\.?|number))?)'
+    r'\s*[:=-]?\s*([A-Z0-9][A-Z0-9 /-]{5,20}[0-9A-Z])(?![A-Za-z0-9])'
 )
 
 # --- HOUSE / RESIDENTIAL TOKENS ---
@@ -373,21 +379,22 @@ def find_identifiers(text: str, *, _pre_norm: Optional[tuple[str, object]] = Non
             confidence=0.95,
         ))
 
-    # 8. INSURANCE_ID
-    for m in RE_INSURANCE.finditer(norm_text):
-        start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
-        span_text = text[start:end]
-        raw_mentions.append(Mention(
-            etype=EType.INSURANCE_ID,
-            start=start,
-            end=end,
-            text=span_text,
-            script=_detect_script(span_text),
-            channel="content",
-            role="patient",
-            source="regex",
-            confidence=0.95,
-        ))
+    # 8. INSURANCE_ID (PMJAY, Policy, Voter EPIC, DL, Ration Card)
+    for rx in (RE_INSURANCE, RE_VOTER_EPIC, RE_LABELLED_CIVIC_ID):
+        for m in rx.finditer(norm_text):
+            start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
+            span_text = text[start:end]
+            raw_mentions.append(Mention(
+                etype=EType.INSURANCE_ID,
+                start=start,
+                end=end,
+                text=span_text,
+                script=_detect_script(span_text),
+                channel="content",
+                role="patient",
+                source="regex",
+                confidence=0.95,
+            ))
 
     # 9. MRN
     for m in RE_MRN.finditer(norm_text):

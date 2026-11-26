@@ -253,6 +253,26 @@ def test_metamorphic_relations_smoke(tmp_path):
     assert check_mr_seed(1, tmp_path) == []
 
 
+def test_holdout_unseen_ids_mrns_urdu_and_kinship(tmp_path):
+    txt = (
+        "DEATH SUMMARY\n"
+        "Deceased Name: Bhawani Shekhawat\n"
+        "Lab Ref / UHID: AIIMS.26.454957\n"
+        "Alt Ref: R-77/5053\n"
+        "Voter ID (EPIC): MZB9162888\n"
+        "Driving Licence: RJ14 20239781466\n"
+        "Attendant: Irshad Khalu\n"
+        "نام: فریدہ خاتون\n"
+        "ولد: طارق محمود\n"
+        "Cause of Death: Acute myocardial infarction (I21.9)\n"
+    )
+    out = _run(tmp_path, {"holdout.txt": txt})
+    res = (out / "sanitized" / "holdout.txt").read_text()
+    for secret_tok in ("Bhawani", "AIIMS.26.454957", "R-77/5053", "MZB9162888", "20239781466", "Irshad", "فریدہ", "طارق"):
+        assert secret_tok not in res, f"leaked {secret_tok}"
+    assert "Acute myocardial infarction (I21.9)" in res
+
+
 def test_torture_smoke(tmp_path):
     """Two generated torture datasets must have zero leaks and zero false merges."""
     from tools.torture.check import check_seed

@@ -26,8 +26,8 @@ from wardguard.detect.guards import is_protected, load_eponyms_and_clinical_term
 # 1. Names after explicit name labels
 # POS: "Name: Rahul Sharma", "Patient: Sunita Patel", "नाम: महेश यादव", "Pt: Anita"
 RE_LABEL_NAME = re.compile(
-    r'(?i)(?:^|[\s,;:(])(?:name|patient(?:\s*name)?|pt\.?(?:\s*name)?|naam|नाम|मरीज़|मरीज|रोगी)\s*[:=-]\s*'
-    r'([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){0,3})'
+    r'(?i)(?:^|[\s,;:(])(?:name|patient(?:\s*name)?|deceased(?:\s*name)?|pt\.?(?:\s*name)?|naam|नाम|मरीज़|मरीज|रोगी|نام|مریض)\s*[:=-]\s*'
+    r'([A-Za-z\u0600-\u06ff\u0900-\u097f]+(?:[ \t]+[A-Za-z\u0600-\u06ff\u0900-\u097f]+){0,3})'
 )
 
 # 1b. Patient prefix without delimiter: "Patient Sunita Devi ko...", "Pt. Rajesh was admitted"
@@ -40,9 +40,9 @@ RE_PATIENT_PREFIX_NAME = re.compile(
 # POS: "S/o Shyam Patel", "W/O Ramesh Kumar", "D/o Mohan Lal", "wife: Rekha Devi", "pita: Shyam", "पत्नी स्व. श्री रामेश्वर दयाल"
 # Note: c/o and h/o require Title Case or Devanagari start (never lowercase "C/O loose stools" or "H/O asthma"!).
 RE_RELATION_NAME = re.compile(
-    r'(?:(?i:(?:^|[\s,;:(])(?:s/o|d/o|w/o|f/o|m/o|son\s+of|daughter\s+of|wife\s+of|husband\s+of|father\s+of|mother\s+of|guardian|husband|wife|father|mother|brother|sister|अभिभावक|पुत्र|पुत्री|पत्नी|पति|पिता|माता)\s*[:=-]?\s*'
+    r'(?:(?i:(?:^|[\s,;:(])(?:s/o|d/o|w/o|f/o|m/o|son\s+of|daughter\s+of|wife\s+of|husband\s+of|father\s+of|mother\s+of|guardian|husband|wife|father|mother|brother|sister|अभिभावक|पुत्र|पुत्री|पत्नी|पति|पिता|माता|ولد|بنت|زوجہ)\s*[:=-]?\s*'
     r'(?:(?:late|swargiya|swargwasi|shri|smt\.?|shrimati|mr\.?|mrs\.?|ms\.?|dr\.?|स्व\.?|स्वर्गीय|श्री|श्रीमती|पं\.?)\s+){0,4})'
-    r'([A-Za-z\u0900-\u097f]+(?:[ \t]+[A-Za-z\u0900-\u097f]+){0,3})'
+    r'([A-Za-z\u0600-\u06ff\u0900-\u097f]+(?:[ \t]+[A-Za-z\u0600-\u06ff\u0900-\u097f]+){0,3})'
     r'|(?i:(?:^|[\s,;:(])(?:c/o|care\s+of|h/o)\s*[:=-]?\s*)'
     r'((?:(?:Late|Shri|Smt\.?|Shrimati|Mr\.?|Mrs\.?|Ms\.?|श्री|श्रीमती)\s+){0,4}'
     r'[A-Z\u0900-\u097f][a-z\u0900-\u097f]+(?:[ \t]+[A-Z\u0900-\u097f][a-z\u0900-\u097f]+){0,3}))'
@@ -157,8 +157,9 @@ def _sentence_cut(seg: str) -> int:
     return cut
 
 # 10. Kinship-named relatives: "Jagdish Chachu", "Ramesh Mama", "Sunil Bhaiya"
-_KIN_WORDS = (r'chachu|chacha|chachi|mama|mami|mamu|papa|pappa|mummy|bhaiya|bhaiyya|didi|mausi|mausa|fufa|phupha|bua|'
-              r'jiju|jija|bhabhi|nana|nani|dada|dadi|tau|tai|taiji|bhanja|bhatija|beta|beti|uncle|aunty|aunti')
+_KIN_WORDS = (r'chachu|chacha|chachi|mama|mami|mamu|papa|pappa|mummy|bhaiya|bhaiyya|didi|mausi|mausa|fufa|phupha|phuphi|bua|'
+              r'jiju|jija|bhabhi|nana|nani|dada|dadi|tau|tai|taiji|bhanja|bhanji|bhatija|bhatiji|beta|beti|uncle|aunty|aunti|'
+              r'khalu|khala|devar|jeth|sasur|saas|bahu|damad|nandoi|samdhi')
 RE_KIN_NAME = re.compile(
     r'(?<![A-Za-z])([A-Z][a-z]{1,20}(?:[ \t]+[A-Z][a-z]{1,20})?)[ \t]+(?i:' + _KIN_WORDS + r')(?![A-Za-z])'
 )
@@ -277,10 +278,10 @@ def _is_valid_name_span(span: str) -> bool:
     if norm.lower() in eponyms or norm.lower() in clinical_terms or norm.lower() in DISALLOWED_NAME_TOKENS:
         return False
 
-    # Check that tokens are purely alphabetic (Latin or Devanagari)
+    # Check that tokens are purely alphabetic (Latin, Devanagari, or Urdu/Perso-Arabic)
     for tok in tokens:
         clean_tok = tok.replace('.', '').replace("'", "").replace("\u2019", "")
-        if not (clean_tok.isalpha() or all('\u0900' <= ch <= '\u097f' for ch in clean_tok)):
+        if not (clean_tok.isalpha() or all('\u0900' <= ch <= '\u097f' or '\u0600' <= ch <= '\u06ff' for ch in clean_tok)):
             return False
         if clean_tok.lower() in clinical_terms or clean_tok.lower() in eponyms or clean_tok.lower() in DISALLOWED_NAME_TOKENS:
             return False
