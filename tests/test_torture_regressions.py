@@ -290,6 +290,18 @@ def test_sandbox_fidelity_and_symlink_containment(tmp_path):
     assert res["fails"] == [], json.dumps(res["fails"])
 
 
+def test_json_scalar_patient_key_scrubbed_standalone(tmp_path):
+    """Standalone JSON with scalar 'patient' name key scrubs patient name while preserving clinical text."""
+    out = _run(tmp_path, {
+        "trav.json": json.dumps({"source_file": "../../secret.txt", "patient": "Suresh Kumar", "diagnosis": "Flu"}),
+        "id_only.json": json.dumps({"patient": "PT00981", "diagnosis": "Malaria"}),
+    })
+    trav = (out / "sanitized" / "trav.json").read_text(encoding="utf-8")
+    assert "Suresh Kumar" not in trav
+    assert "Flu" in trav
+    assert "Malaria" in (out / "sanitized" / "id_only.json").read_text(encoding="utf-8")
+
+
 def test_kit_truth_schema_raksha_truth_1(tmp_path):
     """Forge writes truth/truth.json conforming to raksha-truth/1 schema deterministically."""
     from tools.torture.gen import generate

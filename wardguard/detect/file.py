@@ -191,6 +191,13 @@ def _classify_json_slot(slot: Slot) -> Optional[EType]:
         return EType.ABHA_ADDRESS
     if leaf in ("patient_name", "relative_name"):
         return EType.RELATIVE_NAME if leaf == "relative_name" else EType.PATIENT_NAME
+    if leaf == "patient" and slot.value_type == "str":
+        val = slot.text.strip()
+        if not val or re.match(r'^(?:PSN-[0-9A-Z]{4,}|n/?a|none|null|unknown)$', val, re.IGNORECASE):
+            return None
+        if re.match(r'^[A-Za-z0-9_./-]+$', val) and any(ch.isdigit() for ch in val):
+            return EType.MRN
+        return EType.PATIENT_NAME
     if leaf in ("first", "last", "local", "full_name") and "name" in ancestors:
         return EType.PATIENT_NAME
     if leaf == "name" and (ancestors & {"patient", "patients"}):
