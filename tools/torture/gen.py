@@ -17,6 +17,8 @@ import base64
 import hashlib
 import json
 import random
+import re
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -893,6 +895,180 @@ class Forge:
             }, ensure_ascii=False))
         (att_dir / "known_facts.jsonl").write_text("\n".join(fact_lines) + ("\n" if fact_lines else ""), encoding="utf-8")
 
+    def _write_truth(self, out: Path) -> None:
+        """Write kit-format truth/truth.json (schema 'raksha-truth/1') without perturbing self.rng."""
+        A = self.ans
+        word_re = re.compile(r"[A-Za-z0-9\u0900-\u097f]+")
+        profile = (
+            "tiny" if self.n <= 12 else
+            "small" if self.n <= 60 else
+            "medium" if self.n <= 200 else
+            "standard" if self.n <= 500 else
+            "large"
+        )
+
+        # Index records, removals, and preserved clinical items by (file, loc)
+        rec_by_file: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+        for rec in A.records:
+            rec_by_file[rec["file"]][rec["loc"]] = rec
+
+        rm_by_file_loc: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+        for item in A.remove:
+            loc = item.get("loc") or ("@filename" if item["channel"] == "filename" else "doc")
+            rm_by_file_loc[(item["file"], loc)].append(item)
+
+        kp_by_file_loc: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+        for item in A.keep:
+            loc = item.get("loc") or "doc"
+            kp_by_file_loc[(item["file"], loc)].append(item)
+
+        def _detect_format(rel: str, raw: bytes, meta: dict[str, Any]) -> tuple[str, str, str | None]:
+            fmt = str(meta.get("fmt") or "")
+            if not fmt:
+                ext = Path(rel).suffix.lower()
+                if ext == ".csv":
+                    fmt = "csv"
+                elif ext == ".tsv":
+                    fmt = "tsv"
+                elif ext == ".json":
+                    fmt = "fhir" if rel.startswith("fhir/") else "json"
+                elif ext == ".xml":
+                    fmt = "xml"
+                elif ext == ".pdf":
+                    fmt = "pdf"
+                elif ext in (".bin", ".jpg", ".png"):
+                    fmt = "binary"
+                else:
+                    fmt = "text"
+            enc = "utf-8-sig" if raw.startswith(b"\xef\xbb\xbf") else (
+                "utf-16" if raw.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8"
+            )
+            delim = "," if fmt == "csv" else ("\t" if fmt == "tsv" else None)
+            return fmt, enc, delim
+
+        files_obj: dict[str, Any] = {}
+        req_units = ambig_units = 0
+        linked_pids: set[str] = set()
+
+        for rel in sorted(A.files):
+            meta = A.files[rel]
+            raw = self.files[rel]
+            fmt, enc, delim = _detect_format(rel, raw, meta)
+            locs = sorted(
+                set(rec_by_file.get(rel, {}).keys())
+                | {loc for (f, loc) in rm_by_file_loc if f == rel}
+                | {loc for (f, loc) in kp_by_file_loc if f == rel}
+            ) or ["doc"]
+
+            units_obj: dict[str, Any] = {}
+            has_entities = False
+            for loc in locs:
+                rec = rec_by_file.get(rel, {}).get(loc)
+                pid = rec.get("patient") if rec else None
+                link_mode = "required" if pid else ("ambiguous" if rec and rec.get("ambiguous") else "none")
+                if link_mode == "required" and pid:
+                    req_units += 1
+                    linked_pids.add(pid)
+                elif link_mode == "ambiguous":
+                    ambig_units += 1
+
+                entities = []
+                for it in rm_by_file_loc.get((rel, loc), []):
+                    has_entities = True
+                    etype = it["type"]
+                    surf = it["surface"]
+                    is_name = etype in ("PATIENT_NAME", "RELATIVE_NAME", "DOCTOR_NAME", "NAME")
+                    toks = [t.lower() for t in word_re.findall(surf)] if is_name else []
+                    key = "" if is_name else re.sub(r"[\s\-()/]+", "", surf).lower()
+                    entities.append({
+                        "type": etype,
+                        "surface": surf,
+                        "person": it.get("person") or pid,
+                        "role": "relative" if etype == "RELATIVE_NAME" else "patient",
+                        "script": it.get("script", "latin"),
+                        "channel": it.get("channel", "content"),
+                        "match": "name" if is_name else "text",
+                        "tokens": toks,
+                        "full": len(toks) >= 2 if is_name else True,
+                        "key": key,
+                        "critical": bool(it.get("critical", False)),
+                        "weight": 1.0 if it.get("critical") else 0.4,
+                    })
+
+                preserve = [
+                    {"text": k["text"], "kind": k["kind"], "weight": 0.5, "path": loc}
+                    for k in kp_by_file_loc.get((rel, loc), [])
+                ]
+
+                units_obj[loc] = {
+                    "loc": loc,
+                    "patient": pid,
+                    "cid": f"{pid}#0" if pid else None,
+                    "link": link_mode,
+                    "tags": list(rec.get("tags", [])) if rec else [],
+                    "entities": entities,
+                    "preserve": preserve,
+                    "dates": [],
+                    "fields": [],
+                    "exclude": [],
+                }
+
+            files_obj[rel] = {
+                "path": rel,
+                "format": fmt,
+                "encoding": enc,
+                "delimiter": delim,
+                "expect": meta["expect"],
+                "category": meta.get("cat") or rel.split("/")[0],
+                "clean": not has_entities,
+                "date_hint": "dmy",
+                "sha256": meta.get("sha256") or hashlib.sha256(raw).hexdigest(),
+                "size": len(raw),
+                "generalizable": [],
+                "units": units_obj,
+            }
+
+        patients_obj: dict[str, Any] = {}
+        trap_buckets: dict[str, list[Any]] = {
+            "language": [],
+            "fragmented": [],
+            "meaning": [],
+            "reidentification": [],
+            "homonym_pairs": list(A.homonyms),
+        }
+        for p in self.people:
+            patients_obj[p.pid] = {
+                "rid": p.pid,
+                "pid": p.pid,
+                "hospitals": sorted(p.mrn.keys()),
+                "uhids": {h: [v] for h, v in sorted(p.mrn.items())},
+                "traps": list(p.traps),
+            }
+            for tr in p.traps:
+                if tr in trap_buckets:
+                    trap_buckets[tr].append(p.pid)
+
+        truth = {
+            "schema": "raksha-truth/1",
+            "generator_version": "1.0.0",
+            "seed": str(self.seed),
+            "profile": profile,
+            "chaos": bool(self.hard),
+            "ref_date": "2026-11-20",
+            "files": files_obj,
+            "patients": patients_obj,
+            "traps": trap_buckets,
+            "linkability": {
+                "required_units": req_units,
+                "ambiguous_units": ambig_units,
+                "components": len(linked_pids),
+            },
+            "canaries": list(A.canaries),
+        }
+        tdir = out / "truth"
+        tdir.mkdir(parents=True, exist_ok=True)
+        (tdir / "truth.json").write_text(json.dumps(truth, ensure_ascii=False, indent=1), encoding="utf-8")
+
     def write(self, out: Path) -> None:
         inp = out / "input"
         for rel, data in sorted(self.files.items()):
@@ -911,6 +1087,7 @@ class Forge:
                 "mrns": list(p.mrn.values()), "traps": p.traps,
             } for p in self.people},
         }, ensure_ascii=False, indent=1), encoding="utf-8")
+        self._write_truth(out)
         self._write_attacker(out)
 
 

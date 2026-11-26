@@ -290,6 +290,26 @@ def test_sandbox_fidelity_and_symlink_containment(tmp_path):
     assert res["fails"] == [], json.dumps(res["fails"])
 
 
+def test_kit_truth_schema_raksha_truth_1(tmp_path):
+    """Forge writes truth/truth.json conforming to raksha-truth/1 schema deterministically."""
+    from tools.torture.gen import generate
+    d1 = generate(3, tmp_path / "g1", 8)
+    d2 = generate(3, tmp_path / "g2", 8)
+    tpath = d1 / "truth" / "truth.json"
+    assert tpath.exists()
+    assert tpath.read_bytes() == (d2 / "truth" / "truth.json").read_bytes()
+    truth = json.loads(tpath.read_text(encoding="utf-8"))
+    assert truth["schema"] == "raksha-truth/1"
+    for k in ("generator_version", "seed", "profile", "chaos", "ref_date", "files", "patients", "traps", "linkability", "canaries"):
+        assert k in truth
+    assert len(truth["patients"]) == 8
+    assert truth["linkability"]["required_units"] > 0
+    sample_file = next(iter(truth["files"].values()))
+    assert {"path", "format", "encoding", "expect", "category", "sha256", "size", "units"} <= set(sample_file.keys())
+    sample_unit = next(iter(sample_file["units"].values()))
+    assert {"loc", "patient", "cid", "link", "entities", "preserve"} <= set(sample_unit.keys())
+
+
 def test_torture_smoke(tmp_path):
     """Two generated torture datasets must have zero leaks and zero false merges."""
     from tools.torture.check import check_seed
