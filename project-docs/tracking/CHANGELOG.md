@@ -4,6 +4,7 @@
 > Format: `- [TASK-ID] (Name) description`
 
 ## [Unreleased]
+- [L-04] (Lakshya) Safety layer: strict counts-only stderr logging, safe exception reason reduction, per-file crash isolation with generic quarantine, and report generation in finally block.
 - [L-02] (Lakshya) Freeze `wardguard/model.py` and confirm contracts with Saransh (Milestone M0).
 - [L-03] (Lakshya) Add `tools/eval.sh` evaluation harness with determinism diff and keyed pseudonym test.
 - [L-01] (Lakshya) Scaffold WardGuard package layout with modular stubs, data models, safety logging, raksha.toml, policy configuration, and test suites.
