@@ -19,7 +19,6 @@ import html
 from pathlib import Path
 import re
 from typing import Any, List, Optional, Set
-import urllib.parse
 
 from wardguard.ingest.units import escape_pointer_segment
 from wardguard.model import Channel, ParsedFile, Slot
@@ -70,7 +69,11 @@ def decode_escape_sequences(text: str) -> Optional[str]:
     # 2. URL %-encoding (e.g. %20, %41)
     if "%" in decoded and re.search(r"%[0-9a-fA-F]{2}", decoded):
         try:
-            decoded = urllib.parse.unquote(decoded)
+            decoded = re.sub(
+                r"%([0-9a-fA-F]{2})",
+                lambda m: chr(int(m.group(1), 16)),
+                decoded,
+            )
         except Exception:
             pass
 
