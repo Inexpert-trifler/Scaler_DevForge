@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WardGuard — Offline Clinical Privacy Firewall</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --surface-soft: #fafafa;
+      --surface-warm: #fff8f3;
+      --ink: #1d1d1f;
+      --ink-secondary: #515154;
+      --ink-muted: #6e6e73;
+      --border: #d2d2d7;
+      --border-strong: #9ca3af;
+      --accent-orange: #d9480f;
+      --accent-orange-hover: #c2410c;
+      --accent-orange-tint: color-mix(in oklab, #fc8019 13%, white);
+      --accent-blue: #0066cc;
+      --accent-blue-tint: color-mix(in oklab, #0071e3 11%, white);
+      --accent-rose: #d11d48;
+      --accent-rose-tint: color-mix(in oklab, #ff2d55 11%, white);
+      --accent-green: #047857;
+      --accent-green-tint: color-mix(in oklab, #10b981 12%, white);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-pill: 999px;
+      --shadow-card: 0 2px 14px rgb(15 23 42 / 0.045);
+      --shadow-hover: 0 8px 24px rgb(15 23 42 / 0.08);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Noto Sans", "Noto Sans Devanagari", system-ui, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      margin: 0;
+      min-block-size: 100dvh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      background-color: var(--bg);
+      color: var(--ink);
+    }
+
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      position: absolute !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      inline-size: 1px !important;
+      block-size: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      white-space: nowrap !important;
+    }
+
+    .skip-link:focus-visible {
+      position: fixed;
+      inset-block-start: 12px;
+      inset-inline-start: 12px;
+      z-index: 100;
+      padding-block: 10px;
+      padding-inline: 16px;
+      background: var(--accent-blue);
+      color: #ffffff;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    :where(a:any-link, button, input, select, textarea, summary):focus-visible {
+      outline: 3px solid var(--accent-blue);
+      outline-offset: 2px;
+    }
+
+    /* Sticky Apple-Health Light Navigation Bar */
+    .topbar {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 30;
+      background-color: color-mix(in oklab, white 92%, #f5f5f7);
+      backdrop-filter: blur(14px);
+      border-block-end: 1px solid var(--border);
+    }
+
+    .topbar-inner {
+      max-inline-size: 1320px;
+      margin-inline: auto;
+      padding-block: 14px;
+      padding-inline: clamp(16px, 3vw, 32px);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      inline-size: 44px;
+      block-size: 44px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #fff1f2, #ffffff);
+      border: 1px solid color-mix(in oklab, var(--accent-rose) 28%, var(--border));
+      display: grid;
+      place-items: center;
+      flex: none;
+      box-shadow: 0 2px 8px rgb(209 29 72 / 0.12);
+    }
+
+    .brand-mark svg {
+      display: block;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .brand-sub {
+      margin: 0;
+      font-size: 0.84rem;
+      color: var(--ink-secondary);
+    }
+
+    .header-badges {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding-block: 6px;
+      padding-inline: 12px;
+      border-radius: var(--radius-pill);
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background-color: var(--surface);
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .pill-green {
+      background-color: var(--accent-green-tint);
+      border-color: color-mix(in oklab, var(--accent-green) 35%, var(--border));
+      color: var(--accent-green);
+    }
+
+    .pill-blue {
+      background-color: var(--accent-blue-tint);
+      border-color: color-mix(in oklab, var(--accent-blue) 35%, var(--border));
+      color: var(--accent-blue);
+    }
+
+    .pill-orange {
+      background-color: var(--accent-orange-tint);
+      border-color: color-mix(in oklab, var(--accent-orange) 35%, var(--border));
+      color: var(--accent-orange-hover);
+    }
+
+    .pill-rose {
+      background-color: var(--accent-rose-tint);
+      border-color: color-mix(in oklab, var(--accent-rose) 35%, var(--border));
+      color: var(--accent-rose);
+    }
+
+    /* Main Workspace Container */
+    main {
+      max-inline-size: 1320px;
+      inline-size: 100%;
+      margin-inline: auto;
+      padding-block: 22px 42px;
+      padding-inline: clamp(16px, 3vw, 32px);
+      display: grid;
+      gap: 20px;
+      align-content: start;
+    }
+
+    /* Hero Strip blending Apple Health clarity + Swiggy speed */
+    .hero {
+      background: linear-gradient(125deg, #ffffff 0%, #fffaf6 55%, #f5f9ff 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding-block: 20px;
+      padding-inline: clamp(18px, 3vw, 28px);
+      box-shadow: var(--shadow-card);
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(260px, 1fr);
+      gap: 20px;
+      align-items: center;
+    }
+
+    @media (max-width: 860px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-rose);
+      margin-block-end: 6px;
+    }
+
+    .hero h2 {
+      margin: 0 0 8px 0;
+      font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-size: 0.96rem;
+      max-inline-size: 64ch;
+    }
+
+    .hero-kpis {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .kpi-tile {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding-block: 12px;
+      padding-inline: 14px;
+      display: grid;
+      gap: 2px;
+    }
+
+    .kpi-val {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .kpi-lbl {
+      font-size: 0.78rem;
+      color: var(--ink-secondary);
+      font-weight: 600;
+    }
+
+    /* Accessible Single-Row Tablist */
+    .tabs-bar {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding-inline: 12px;
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-gutter: stable;
+    }
+
+    [role="tab"] {
+      position: relative;
+      flex: none;
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink-secondary);
+      font-family: inherit;
+      font-size: 0.94rem;
+      font-weight: 600;
+      min-block-size: 48px;
+      padding-block: 10px;
+      padding-inline: 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    [role="tab"]:hover {
+      color: var(--ink);
+    }
+
+    [role="tab"][aria-selected="true"] {
+      color: var(--accent-orange-hover);
+    }
+
+    [role="tab"][aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      inset-block-end: 0;
+      inset-inline: 8px;
+      border-block-end: 3px solid var(--accent-orange);
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Panels wrapper without padding on hidden host */
+    .panel-inner {
+      display: grid;
+      gap: 18px;
+    }
+
+    /* Swiggy-inspired Quick Sample Preset Cards */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+    }
+
+    .preset-card {
+      container-type: inline-size;
+      appearance: none;
+      text-align: start;
+      font-family: inherit;
+      background-color: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding-block: 14px;
+      padding-inline: 16px;
+      cursor: pointer;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+    }
+
+    .preset-card:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--accent-orange);
+    }
+
+    .preset-card[aria-pressed="true"] {
+      border-color: var(--accent-orange);
+      background-color: var(--surface-warm);
+      box-shadow: 0 0 0 1px var(--accent-orange), var(--shadow-card);
+    }
+
+    .preset-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .preset-sub {
+      font-size: 0.82rem;
+      color: var(--ink-secondary);
+      line-height: 1.4;
+    }
+
+    /* Control Bar */
+    .card {
+      container-type: inline-size;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding-block: 18px;
+      padding-inline: 20px;
+      box-shadow: var(--shadow-card);
+      display: grid;
+      gap: 14px;
+    }
+
+    .control-bar {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(170px, 0.9fr) auto auto auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    @media (max-width: 960px) {
+      .control-bar {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 580px) {
+      .control-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .field label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--ink-secondary);
+    }
+
+    .input, select.input {
+      inline-size: 100%;
+      min-block-size: 44px;
+      padding-block: 8px;
+      padding-inline: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-strong);
+      background-color: var(--surface);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 0.92rem;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--border-strong);
+      background-color: var(--surface);
+      color: var(--ink);
+      border-radius: 12px;
+      min-block-size: 44px;
+      padding-block: 9px;
+      padding-inline: 16px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background-color: var(--bg);
+    }
+
+    .btn-primary {
+      background-color: var(--accent-orange);
+      border-color: var(--accent-orange);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-orange-hover);
+      border-color: var(--accent-orange-hover);
+    }
+
+    .btn-blue {
+      background-color: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: #ffffff;
+    }
+
+    .file-label {
+      cursor: pointer;
+    }
+
+    /* Live Run Telemetry Strip */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 10px;
+    }
+
+    .tele-box {
+      background-color: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding-block: 10px;
+      padding-inline: 14px;
+    }
+
+    .tele-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-secondary);
+    }
+
+    .tele-value {
+      font-size: 1.08rem;
+      font-weight: 800;
+      color: var(--ink);
+      margin-block-start: 2px;
+      word-break: break-word;
+    }
+
+    /* Raw vs Sanitized Side-by-Side Workspace */
+    .file-switcher {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .diff-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .diff-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pane-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .pane-head h3 {
+      margin: 0;
+      font-size: 1.02rem;
+      font-weight: 700;
+    }
+
+    .raw-editor {
+      inline-size: 100%;
+      min-block-size: 320px;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border-strong);
+      background-color: var(--surface-soft);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.55;
+      resize: vertical;
+      tab-size: 2;
+    }
+
+    .sanitized-view {
+      inline-size: 100%;
+      min-block-size: 320px;
+      max-block-size: 520px;
+      overflow: auto;
+      scrollbar-gutter: stable;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background-color: #fbfcfd;
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .tok-psn {
+      background-color: var(--accent-blue-tint);
+      color: var(--accent-blue);
+      border: 1px solid color-mix(in oklab, var(--accent-blue) 35%, transparent);
+      border-radius: 6px;
+      padding-inline: 5px;
+      font-weight: 700;
+    }
+
+    .tok-pii {
+      background-color: var(--accent-rose-tint);
+      color: var(--accent-rose);
+      border: 1px solid color-mix(in oklab, var(--accent-rose) 35%, transparent);
+      border-radius: 6px;
+      padding-inline: 5px;
+      font-weight: 700;
+    }
+
+    .tok-gen {
+      background-color: var(--accent-green-tint);
+      color: var(--accent-green);
+      border: 1px solid color-mix(in oklab, var(--accent-green) 35%, transparent);
+      border-radius: 6px;
+      padding-inline: 5px;
+      font-weight: 700;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: var(--ink-secondary);
+      align-items: center;
+    }
+
+    /* Native Disclosures */
+    details.drawer {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background-color: var(--surface-soft);
+      padding-inline: 14px;
+      padding-block: 8px;
+    }
+
+    details.drawer summary {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9rem;
+      min-block-size: 36px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+    }
+
+    .code-pre {
+      margin-block: 10px 4px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background-color: var(--surface);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    /* Attack Arena Bars & Accessible Tables */
+    .attack-bars {
+      display: grid;
+      gap: 12px;
+    }
+
+    .attack-row {
+      display: grid;
+      gap: 6px;
+      padding-block: 10px;
+      padding-inline: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background-color: var(--surface-soft);
+    }
+
+    .attack-top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+
+    .bar-track {
+      position: relative;
+      block-size: 12px;
+      border-radius: var(--radius-pill);
+      background-color: #e5e7eb;
+      overflow: clip;
+    }
+
+    .bar-raw {
+      position: absolute;
+      inset-block: 0;
+      inset-inline-start: 0;
+      inline-size: var(--raw-pct, 0%);
+      background-color: #fda4af;
+    }
+
+    .bar-rel {
+      position: absolute;
+      inset-block: 0;
+      inset-inline-start: 0;
+      inline-size: var(--rel-pct, 0%);
+      background-color: var(--accent-green);
+      border-radius: var(--radius-pill);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      scrollbar-gutter: stable;
+    }
+
+    table {
+      inline-size: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    caption {
+      text-align: start;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-block-end: 8px;
+      color: var(--ink);
+    }
+
+    th, td {
+      border-block-end: 1px solid var(--border);
+      padding-block: 10px;
+      padding-inline: 10px;
+      text-align: start;
+      vertical-align: top;
+    }
+
+    th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--ink-secondary);
+      background-color: var(--surface-soft);
+    }
+
+    /* 3-Pass Architecture Diagram */
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 14px;
+    }
+
+    .pass-card {
+      background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .pass-num {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-blue);
+    }
+
+    .pass-card h3 {
+      margin: 0;
+      font-size: 1.02rem;
+    }
+
+    .pass-card ul {
+      margin: 0;
+      padding-inline-start: 18px;
+      color: var(--ink-secondary);
+      font-size: 0.86rem;
+      display: grid;
+      gap: 4px;
+    }
+
+    .footer {
+      max-inline-size: 1320px;
+      inline-size: 100%;
+      margin-inline: auto;
+      padding-block: 14px 28px;
+      padding-inline: clamp(16px, 3vw, 32px);
+      color: var(--ink-muted);
+      font-size: 0.82rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    @media (forced-colors: active) {
+      .pill, .card, .preset-card, .btn, .tele-box, .attack-row {
+        border: 1px solid CanvasText;
+      }
+      [role="tab"][aria-selected="true"]::after {
+        border-block-end: 3px solid Highlight;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link visually-hidden">Skip to main content</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 21s-6.5-4.3-8.6-8.4C1.7 9.3 3.4 5.5 6.9 5c2-.3 3.8.7 5.1 2.3C13.3 5.7 15.1 4.7 17.1 5c3.5.5 5.2 4.3 3.5 7.6C18.5 16.7 12 21 12 21Z" fill="#d11d48"/>
+            <path d="M9 12.2l2 2 4.2-4.2" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1>WardGuard</h1>
+          <p class="brand-sub">Offline Multilingual Clinical Privacy Firewall · Track 3 "Secret Wards"</p>
+        </div>
+      </div>
+
+      <nav aria-label="System compliance badges" class="header-badges">
+        <span class="pill pill-green" id="offline-pill">
+          <span aria-hidden="true">&#x2714;</span> 100% Offline &middot; Zero Network
+        </span>
+        <span class="pill pill-blue">Zero LLM &middot; CPU Only</span>
+        <span class="pill pill-orange">CONTRACT OK &middot; READY TO SUBMIT</span>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <section class="hero" aria-label="Privacy and utility overview">
+      <div>
+        <div class="hero-eyebrow">
+          <span aria-hidden="true">&#x25CF;</span>
+          <span>DPDP Act 2023 &middot; ABDM &middot; FHIR R4 Ready</span>
+        </div>
+        <h2>What happens in the ward stays in the ward.</h2>
+        <p>
+          Sanitize English, Hindi, and Hinglish clinical CSVs, JSON exports, FHIR R4 bundles, and discharge notes locally in milliseconds—while preserving 100% of diagnoses, vitals, dosages, and exact length-of-stay intervals.
+        </p>
+      </div>
+      <div class="hero-kpis">
+        <div class="kpi-tile">
+          <span class="kpi-val" style="color: var(--accent-green);">0 / 3,230</span>
+          <span class="kpi-lbl">Direct &amp; Hidden PII Leaks (dev)</span>
+        </div>
+        <div class="kpi-tile">
+          <span class="kpi-val" style="color: var(--accent-blue);">0.0%</span>
+          <span class="kpi-lbl">A4 Profile Pooling Risk (raw 88.6%)</span>
+        </div>
+        <div class="kpi-tile">
+          <span class="kpi-val" style="color: var(--accent-orange-hover);">3.1%</span>
+          <span class="kpi-lbl">A3 Linkage Risk (raw 92.4%)</span>
+        </div>
+        <div class="kpi-tile">
+          <span class="kpi-val">1.00 / 0.99</span>
+          <span class="kpi-lbl">Linkage Precision / F0.5 Score</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="tabs-bar" role="tablist" aria-label="WardGuard demo sections">
+      <button type="button" role="tab" id="tab-sanitizer" aria-selected="true" tabindex="0">
+        <span aria-hidden="true">&#x26A1;</span> Live Sanitizer &amp; Diff Studio
+      </button>
+      <button type="button" role="tab" id="tab-attacks" aria-selected="false" tabindex="-1">
+        <span aria-hidden="true">&#x1F6E1;</span> Attack Arena (A1&#x2013;A7)
+      </button>
+      <button type="button" role="tab" id="tab-arch" aria-selected="false" tabindex="-1">
+        <span aria-hidden="true">&#x1F9E9;</span> 3-Pass Architecture &amp; Policy
+      </button>
+    </div>
+
+    <!-- TAB 1: LIVE SANITIZER -->
+    <div id="panel-sanitizer" role="tabpanel" aria-labelledby="tab-sanitizer" tabindex="0">
+      <div class="panel-inner">
+        <div class="preset-grid" id="preset-grid" aria-label="Sample clinical record presets"></div>
+
+        <article class="card">
+          <div class="control-bar">
+            <div class="field">
+              <label for="file-name-input">Virtual File Path (detects PII in filename too)</label>
+              <input id="file-name-input" class="input" type="text" value="notes/arogya_opd_note.txt">
+            </div>
+            <div class="field">
+              <label for="secret-input">Run Secret (<code>RAKSHA_SECRET</code>)</label>
+              <input id="secret-input" class="input" type="text" value="judge-demo-secret">
+            </div>
+            <button type="button" class="btn" id="rotate-secret-btn" title="Rotate secret and re-run to demonstrate keyed PSN and date shift decoupling">
+              &#x21BB; Rotate Secret
+            </button>
+            <label class="btn file-label" for="local-file-input">
+              &#x2B06; Upload Local File
+              <input id="local-file-input" type="file" accept=".txt,.csv,.tsv,.json,.jsonl,.ndjson" class="visually-hidden">
+            </label>
+            <button type="button" class="btn btn-primary" id="run-btn">
+              Run Privacy Firewall &#x2192;
+            </button>
+          </div>
+
+          <div class="telemetry-grid" aria-live="polite" id="telemetry-strip">
+            <div class="tele-box">
+              <div class="tele-label">Files Sanitized</div>
+              <div class="tele-value" id="stat-files">—</div>
+            </div>
+            <div class="tele-box">
+              <div class="tele-label">Identifiers Scrubbed</div>
+              <div class="tele-value" id="stat-ids">—</div>
+            </div>
+            <div class="tele-box">
+              <div class="tele-label">Pseudonyms Issued</div>
+              <div class="tele-value" id="stat-psns">—</div>
+            </div>
+            <div class="tele-box">
+              <div class="tele-label">Pipeline Latency</div>
+              <div class="tele-value" id="stat-latency">—</div>
+            </div>
+          </div>
+        </article>
+
+        <div class="file-switcher" id="file-switcher" aria-label="Bundle file selector"></div>
+
+        <div class="diff-grid">
+          <article class="card">
+            <div class="pane-head">
+              <h3>Raw Clinical Input</h3>
+              <span class="pill pill-rose" id="raw-file-pill">raw input</span>
+            </div>
+            <label for="raw-editor" class="visually-hidden">Editable raw clinical record content</label>
+            <textarea id="raw-editor" class="raw-editor" spellcheck="false"></textarea>
+          </article>
+
+          <article class="card">
+            <div class="pane-head">
+              <h3>Sanitized WardGuard Release</h3>
+              <span class="pill pill-green" id="san-file-pill">verified sanitized</span>
+            </div>
+            <div class="legend">
+              <span><strong>Token Guide:</strong></span>
+              <span class="tok-psn">PSN-XXXXXX Linked Key</span>
+              <span class="tok-pii">[PHONE] / [AADHAAR] / [DOB] Redacted</span>
+              <span class="tok-gen">20-yr Band &amp; 1-digit PIN</span>
+            </div>
+            <div id="sanitized-view" class="sanitized-view" aria-live="polite"></div>
+          </article>
+        </div>
+
+        <details class="drawer">
+          <summary>Inspect Emitted Contract Artifacts (<code>records.jsonl</code> &amp; <code>report.json</code>)</summary>
+          <div class="code-pre" id="contract-preview">Run the firewall to inspect exact records.jsonl and report.json outputs.</div>
+        </details>
+      </div>
+    </div>
+
+    <!-- TAB 2: ATTACK ARENA & BENCHMARKS -->
+    <div id="panel-attacks" role="tabpanel" aria-labelledby="tab-attacks" hidden>
+      <div class="panel-inner">
+        <article class="card">
+          <div class="pane-head">
+            <div>
+              <h2 style="margin: 0; font-size: 1.2rem;">Adversary Re-identification &amp; Clinical Utility Arena</h2>
+              <p style="margin: 4px 0 0 0; color: var(--ink-secondary); font-size: 0.9rem;">
+                Measured locally on <code>Secret-Wards-ToolKit/dev</code> (200 files, 3,230 PII items) and 10–20 unseen torture seeds.
+              </p>
+            </div>
+            <button type="button" class="btn btn-blue" id="bench-btn">
+              Run Live Benchmark on dev/input
+            </button>
+          </div>
+          <p id="bench-status" aria-live="polite" style="margin: 0; font-size: 0.88rem; color: var(--accent-green); font-weight: 600;"></p>
+          <div class="attack-bars" id="attack-bars"></div>
+        </article>
+
+        <article class="card">
+          <div class="table-wrap">
+            <table>
+              <caption>Practice Kit (<code>dev</code>) &amp; Torture Suite Summary (Commit 0132510)</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Evaluation Suite</th>
+                  <th scope="col">Scope</th>
+                  <th scope="col">Leaks &amp; Canaries</th>
+                  <th scope="col">Clinical Utility &amp; Linkage</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Official Dev Self-Check</strong></td>
+                  <td>200 heterogeneous files · 3,230 entities</td>
+                  <td>0 / 3,230 (0.0% across EN/HI/Hinglish) · 0 / 4 canaries</td>
+                  <td>98.1% kept (100% non-district clinical) · P 1.00 / R 0.95 / F0.5 0.99</td>
+                  <td><span class="pill pill-green">&#x2714; CONTRACT OK</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Torture Correctness (20 seeds)</strong></td>
+                  <td>Unseen multilingual chaos · 15,809 entities</td>
+                  <td>0 / 15,809 (0.0%) · 0 critical failures</td>
+                  <td>100.0% clinical kept · P 1.00 / R 0.994 / F0.5 0.999</td>
+                  <td><span class="pill pill-green">&#x2714; 0 LEAKS</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Torture Attack Arena (10 seeds)</strong></td>
+                  <td>1,000 synthetic patients + rotated secret</td>
+                  <td>A1 0.0% · A6 0 · A7 0.0% · Global Shift 0 recovered</td>
+                  <td>A3 0.23% (raw 20.0%) · A4 0.50% (raw 19.44%)</td>
+                  <td><span class="pill pill-green">&#x2714; ATTACKS OK</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Automated Regression Suite</strong></td>
+                  <td>Unit, property, schema, FHIR, safety tests</td>
+                  <td>Zero network sockets · Counts-only stderr</td>
+                  <td>178 / 178 tests passing in 11.27 s (69 MB RSS)</td>
+                  <td><span class="pill pill-green">&#x2714; READY TO SUBMIT</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- TAB 3: ARCHITECTURE & POLICY -->
+    <div id="panel-arch" role="tabpanel" aria-labelledby="tab-arch" hidden>
+      <div class="panel-inner">
+        <article class="card">
+          <h2 style="margin: 0; font-size: 1.2rem;">Deterministic 3-Pass In-Memory Firewall</h2>
+          <div class="pipeline-grid">
+            <div class="pass-card">
+              <span class="pass-num">Pass 1 &middot; Ingest &amp; Detect</span>
+              <h3>Multilingual Extraction</h3>
+              <ul>
+                <li>Magic-byte sniffing (UTF-8, UTF-16, cp1252, BOM) &amp; quarantine of unsupported binaries</li>
+                <li>Verhoeff-checked Aadhaar, ABHA, PAN, MRN, phones across Latin, Devanagari &amp; Hinglish</li>
+                <li>Clinical meaning guards preserve doctors, meds, doses (<code>1-0-1</code>), vitals &amp; eponyms</li>
+                <li>Hidden channels: filenames, headers, JSON keys &amp; decoded base64 attachments</li>
+              </ul>
+            </div>
+            <div class="pass-card">
+              <span class="pass-num">Pass 2 &middot; Link &amp; Plan</span>
+              <h3>Conflict-Guarded k-Anon</h3>
+              <ul>
+                <li>Cross-script phonetic/fuzzy blocking + union-find on verified identifiers</li>
+                <li>Strict conflict guard vetoes homonym false merges on age/gender/DOB disagreement</li>
+                <li>Keyed Crockford Base32 HMAC-SHA256 pseudonyms (<code>PSN-XXXXXX</code>)</li>
+                <li>Cluster-level k-anonymity (k=5) + UP district normalization across Hindi/Latin</li>
+              </ul>
+            </div>
+            <div class="pass-card">
+              <span class="pass-num">Pass 3 &middot; Rewrite &amp; Export</span>
+              <h3>Format-Safe Release</h3>
+              <ul>
+                <li>Right-to-left span rewriting preserving JSON types, CSV columns &amp; FHIR R4 validity</li>
+                <li>20-year age bands (60+ top-code), redacted DOB/<code>birthDate</code>, 1-digit PIN prefix</li>
+                <li>Per-patient secret date shifts (&plusmn;15&ndash;90d) keeping exact length-of-stay intervals</li>
+                <li>Emits deterministic <code>sanitized/</code>, <code>report.json</code>, and <code>records.jsonl</code></li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="table-wrap">
+            <table>
+              <caption>Active Privacy Policy (<code>config/policy.yaml</code>)</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Policy Key</th>
+                  <th scope="col">Configured Value</th>
+                  <th scope="col">Privacy / Utility Role</th>
+                </tr>
+              </thead>
+              <tbody id="policy-rows"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span>Team WardGuard &middot; Offline Python Stdlib Demo Server (zero external CDNs, fonts, or telemetry)</span>
+    <span>Core pipeline: <code>python main.py --input {input} --output {output}</code></span>
+  </footer>
+
+  <script>
+    (function () {
+      const state = {
+        presets: [],
+        activePresetId: null,
+        files: [{ name: "notes/arogya_opd_note.txt", content: "" }],
+        activeFileIdx: 0,
+        lastResult: null,
+      };
+
+      const el = {
+        tabs: Array.from(document.querySelectorAll('[role="tab"]')),
+        panels: Array.from(document.querySelectorAll('[role="tabpanel"]')),
+        presetGrid: document.getElementById("preset-grid"),
+        fileNameInput: document.getElementById("file-name-input"),
+        secretInput: document.getElementById("secret-input"),
+        rotateSecretBtn: document.getElementById("rotate-secret-btn"),
+        localFileInput: document.getElementById("local-file-input"),
+        runBtn: document.getElementById("run-btn"),
+        fileSwitcher: document.getElementById("file-switcher"),
+        rawEditor: document.getElementById("raw-editor"),
+        rawFilePill: document.getElementById("raw-file-pill"),
+        sanFilePill: document.getElementById("san-file-pill"),
+        sanitizedView: document.getElementById("sanitized-view"),
+        contractPreview: document.getElementById("contract-preview"),
+        statFiles: document.getElementById("stat-files"),
+        statIds: document.getElementById("stat-ids"),
+        statPsns: document.getElementById("stat-psns"),
+        statLatency: document.getElementById("stat-latency"),
+        attackBars: document.getElementById("attack-bars"),
+        benchBtn: document.getElementById("bench-btn"),
+        benchStatus: document.getElementById("bench-status"),
+        policyRows: document.getElementById("policy-rows"),
+      };
+
+      // Accessible Tabs + Arrow navigation
+      function activateTab(tab) {
+        for (const t of el.tabs) {
+          const selected = t === tab;
+          t.setAttribute("aria-selected", selected ? "true" : "false");
+          t.setAttribute("tabindex", selected ? "0" : "-1");
+        }
+        for (const p of el.panels) {
+          const show = p.getAttribute("aria-labelledby") === tab.id;
+          p.hidden = !show;
+          if (show) p.setAttribute("tabindex", "0");
+          else p.removeAttribute("tabindex");
+        }
+      }
+
+      el.tabs.forEach((tab, idx) => {
+        tab.addEventListener("click", () => activateTab(tab));
+        tab.addEventListener("keydown", (ev) => {
+          if (ev.key === "ArrowRight") {
+            const next = el.tabs[(idx + 1) % el.tabs.length];
+            activateTab(next);
+            next.focus();
+          } else if (ev.key === "ArrowLeft") {
+            const prev = el.tabs[(idx - 1 + el.tabs.length) % el.tabs.length];
+            activateTab(prev);
+            prev.focus();
+          }
+        });
+      });
+
+      // Safe highlighted token renderer (pure DOM nodes, zero innerHTML injection)
+      function renderHighlighted(container, text) {
+        container.replaceChildren();
+        if (!text) {
+          container.textContent = "(quarantined / empty output)";
+          return;
+        }
+        const tokRe = /(PSN-[A-Z0-9]{4,}|\[(?:PHONE|AADHAAR|ABHA|PAN|MRN|INSURANCE|EMAIL|ADDRESS|AREA|DOB|NAME|RELATIVE)\]|(?<!\d-)(?:(?:0-19|20-39|40-59|0-29|30-59|60\+|80\+|90\+)|(?:[1-9]?[05]-[1-9]?[49]))(?:\s*Yrs\/[MF])?(?![-\d])|[1-8]\*{5})/g;
+        let last = 0;
+        for (const m of text.matchAll(tokRe)) {
+          const idx = m.index ?? 0;
+          if (idx > last) {
+            container.appendChild(document.createTextNode(text.slice(last, idx)));
+          }
+          const val = m[0];
+          const span = document.createElement("span");
+          if (val.startsWith("PSN-")) span.className = "tok-psn";
+          else if (val.startsWith("[")) span.className = "tok-pii";
+          else span.className = "tok-gen";
+          span.textContent = val;
+          container.appendChild(span);
+          last = idx + val.length;
+        }
+        if (last < text.length) {
+          container.appendChild(document.createTextNode(text.slice(last)));
+        }
+      }
+
+      function syncFileSwitcher() {
+        el.fileSwitcher.replaceChildren();
+        if (state.files.length <= 1) return;
+        state.files.forEach((f, idx) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = idx === state.activeFileIdx ? "btn btn-primary" : "btn";
+          btn.textContent = f.name;
+          btn.addEventListener("click", () => {
+            state.files[state.activeFileIdx].name = el.fileNameInput.value;
+            state.files[state.activeFileIdx].content = el.rawEditor.value;
+            state.activeFileIdx = idx;
+            showActiveFile();
+          });
+          el.fileSwitcher.appendChild(btn);
+        });
+      }
+
+      function showActiveFile() {
+        const cur = state.files[state.activeFileIdx] || state.files[0];
+        el.fileNameInput.value = cur.name;
+        el.rawEditor.value = cur.content;
+        el.rawFilePill.textContent = cur.name;
+        if (state.lastResult && state.lastResult.files[state.activeFileIdx]) {
+          const rf = state.lastResult.files[state.activeFileIdx];
+          el.sanFilePill.textContent = `${rf.status} · ${rf.output_name || "quarantined"}`;
+          renderHighlighted(el.sanitizedView, rf.sanitized_text);
+        } else {
+          el.sanFilePill.textContent = "pending run";
+          el.sanitizedView.textContent = "";
+        }
+        syncFileSwitcher();
+      }
+
+      async function executeSanitize() {
+        state.files[state.activeFileIdx].name = el.fileNameInput.value.trim() || "record.txt";
+        state.files[state.activeFileIdx].content = el.rawEditor.value;
+
+        el.runBtn.textContent = "Sanitizing...";
+        el.runBtn.disabled = true;
+        try {
+          const resp = await fetch("/api/sanitize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              files: state.files,
+              secret: el.secretInput.value || "judge-demo-secret",
+            }),
+          });
+          const data = await resp.json();
+          if (!resp.ok || !data.ok) {
+            el.sanitizedView.textContent = `Error: ${data.error || "Pipeline failed"}`;
+            return;
+          }
+          state.lastResult = data;
+          const counts = data.report.counts || {};
+          const psns = Array.from(new Set((data.records || []).map(r => r.patient).filter(Boolean)));
+          el.statFiles.textContent = `${counts.files_sanitized || 0} / ${counts.files_total || 0} clean`;
+          el.statIds.textContent = `${counts.identifiers_detected || 0} scrubbed`;
+          el.statPsns.textContent = psns.length ? psns.join(", ") : "null / unlinked";
+          el.statLatency.textContent = `${data.elapsed_ms} ms (${data.report.resources?.peak_rss_mb || 0} MB)`;
+
+          const lines = (data.records || []).map(r => JSON.stringify(r)).join("\n");
+          el.contractPreview.textContent =
+            `=== records.jsonl ===\n${lines || "(none)"}\n\n=== report.json ===\n${JSON.stringify(data.report, null, 2)}`;
+
+          showActiveFile();
+        } finally {
+          el.runBtn.textContent = "Run Privacy Firewall \u2192";
+          el.runBtn.disabled = false;
+        }
+      }
+
+      function renderPresets(presets) {
+        el.presetGrid.replaceChildren();
+        presets.forEach((p, idx) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "preset-card";
+          btn.setAttribute("aria-pressed", idx === 0 ? "true" : "false");
+
+          const badge = document.createElement("span");
+          badge.className = "pill pill-orange";
+          badge.textContent = p.badge;
+
+          const title = document.createElement("div");
+          title.className = "preset-title";
+          title.textContent = p.title;
+
+          const sub = document.createElement("div");
+          sub.className = "preset-sub";
+          sub.textContent = p.subtitle;
+
+          btn.append(badge, title, sub);
+          btn.addEventListener("click", () => {
+            for (const c of el.presetGrid.querySelectorAll(".preset-card")) {
+              c.setAttribute("aria-pressed", "false");
+            }
+            btn.setAttribute("aria-pressed", "true");
+            state.files = p.files.map(f => ({ name: f.name, content: f.content }));
+            state.activeFileIdx = 0;
+            state.lastResult = null;
+            showActiveFile();
+            executeSanitize();
+          });
+          el.presetGrid.appendChild(btn);
+        });
+      }
+
+      function renderAttacks(attacks, gshift) {
+        el.attackBars.replaceChildren();
+        for (const a of attacks) {
+          const row = document.createElement("div");
+          row.className = "attack-row";
+
+          const top = document.createElement("div");
+          top.className = "attack-top";
+
+          const left = document.createElement("strong");
+          left.textContent = `${a.id}: ${a.name}`;
+
+          const right = document.createElement("span");
+          right.className = "pill pill-green";
+          const rawTxt = a.raw !== null ? `Raw ${a.raw}% \u2192 ` : "";
+          right.textContent = `${rawTxt}WardGuard ${a.release}% (${a.status})`;
+
+          top.append(left, right);
+
+          const track = document.createElement("div");
+          track.className = "bar-track";
+          track.setAttribute("aria-hidden", "true");
+          const barRaw = document.createElement("div");
+          barRaw.className = "bar-raw";
+          barRaw.style.setProperty("--raw-pct", `${a.raw !== null ? a.raw : 0}%`);
+          const barRel = document.createElement("div");
+          barRel.className = "bar-rel";
+          barRel.style.setProperty("--rel-pct", `${Math.max(a.release, 1.5)}%`);
+          track.append(barRaw, barRel);
+
+          row.append(top, track);
+          el.attackBars.appendChild(row);
+        }
+        const gsRow = document.createElement("div");
+        gsRow.className = "attack-row";
+        const gsTop = document.createElement("div");
+        gsTop.className = "attack-top";
+        const gsL = document.createElement("strong");
+        gsL.textContent = "A5 Global-Shift Date Recovery";
+        const gsR = document.createElement("span");
+        gsR.className = "pill pill-green";
+        gsR.textContent = gshift ? "\u2714 SECURE \u2014 Per-patient HMAC offsets unrecoverable" : "WARNING";
+        gsTop.append(gsL, gsR);
+        gsRow.appendChild(gsTop);
+        el.attackBars.appendChild(gsRow);
+      }
+
+      function renderPolicy(policy) {
+        const docs = {
+          age_band_years: "Generalizes exact ages into 20-year epidemiological strata",
+          age_band_years_coarsen: "Widened band for rare k < 5 equivalence clusters",
+          age_top_code: "Top-codes ages >= threshold to prevent elderly uniqueness",
+          date_shift_min_days: "Minimum |offset| guarantees true dates leave ±3d match window",
+          date_shift_max_days: "Upper bound on per-patient HMAC shift while keeping stay LOS exact",
+          k_min: "Minimum cluster equivalence class size before QI coarsening",
+          pin_keep_digits: "Retains coarse state digit only (e.g. 2*****)",
+          village_action: "Removes micro-geography to prevent electoral-roll linkage",
+          dob_action: "Redacts exact DOB & removes FHIR birthDate",
+        };
+        el.policyRows.replaceChildren();
+        for (const [k, desc] of Object.entries(docs)) {
+          const tr = document.createElement("tr");
+          const td1 = document.createElement("td");
+          const code = document.createElement("code");
+          code.textContent = k;
+          td1.appendChild(code);
+          const td2 = document.createElement("td");
+          const valStrong = document.createElement("strong");
+          valStrong.textContent = String(policy[k] ?? "—");
+          td2.appendChild(valStrong);
+          const td3 = document.createElement("td");
+          td3.textContent = desc;
+          tr.append(td1, td2, td3);
+          el.policyRows.appendChild(tr);
+        }
+      }
+
+      el.runBtn.addEventListener("click", executeSanitize);
+      el.rotateSecretBtn.addEventListener("click", () => {
+        const suffix = Math.random().toString(36).slice(2, 7).toUpperCase();
+        el.secretInput.value = `judge-secret-${suffix}`;
+        executeSanitize();
+      });
+
+      el.localFileInput.addEventListener("change", (ev) => {
+        const file = ev.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          state.files = [{ name: file.name, content: String(reader.result || "") }];
+          state.activeFileIdx = 0;
+          state.lastResult = null;
+          showActiveFile();
+          executeSanitize();
+        };
+        reader.readAsText(file, "utf-8");
+      });
+
+      el.benchBtn.addEventListener("click", async () => {
+        el.benchBtn.disabled = true;
+        el.benchBtn.textContent = "Running Live Practice Suite...";
+        el.benchStatus.textContent = "Executing main.py, validate_output.py, check_dev.py, and attack_sim.py locally...";
+        try {
+          const resp = await fetch("/api/benchmark", { method: "POST" });
+          const data = await resp.json();
+          if (data.live) {
+            el.benchStatus.textContent =
+              `Live run complete in ${data.elapsed_s}s (${data.peak_rss_mb} MB RSS) · ${data.contract} · Leaks: ${data.leaks_line} · Kept: ${data.medical_line}`;
+            if (data.attacks && data.attacks.length) {
+              renderAttacks(data.attacks, data.global_shift_secure);
+            }
+          } else {
+            el.benchStatus.textContent = data.reason || "Showing verified snapshot metrics.";
+          }
+        } finally {
+          el.benchBtn.disabled = false;
+          el.benchBtn.textContent = "Run Live Benchmark on dev/input";
+        }
+      });
+
+      // Boot offline app
+      fetch("/api/info")
+        .then(r => r.json())
+        .then(info => {
+          state.presets = info.presets || [];
+          if (state.presets.length) {
+            renderPresets(state.presets);
+            state.files = state.presets[0].files.map(f => ({ name: f.name, content: f.content }));
+            state.activeFileIdx = 0;
+            showActiveFile();
+            executeSanitize();
+          }
+          if (info.snapshot && info.snapshot.dev) {
+            renderAttacks(info.snapshot.dev.attacks, info.snapshot.dev.global_shift_secure);
+          }
+          if (info.policy) renderPolicy(info.policy);
+          if (!info.has_dev_dataset) el.benchBtn.hidden = true;
+        })
+        .catch(() => {
+          el.sanitizedView.textContent = "Could not connect to local demo server.";
+        });
+    })();
+  </script>
+</body>
+</html>
