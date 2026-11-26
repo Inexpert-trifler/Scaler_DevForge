@@ -222,6 +222,24 @@ def test_ragged_csv_pii_in_date_column_scrubbed(tmp_path):
     assert "6756192499" not in res and aad_sp not in res
 
 
+def test_independent_attack_arena_a1_a6_a7(tmp_path):
+    from tools.torture.gen import generate
+    from tools.torture.check import run_cli
+    from tools.torture.attacks import evaluate_attacks
+    ds = tmp_path / "ds"
+    generate(1, ds, 20)
+    assert (ds / "attacker" / "registry.csv").exists()
+    assert (ds / "attacker" / "known_facts.jsonl").exists()
+    r1 = run_cli(ds / "input", ds / "outA", "arena-secret-A", ds / "sbx")
+    r2 = run_cli(ds / "input", ds / "outB", "arena-secret-B", ds / "sbx")
+    assert r1["code"] == 0 and r2["code"] == 0
+    m = evaluate_attacks(ds, ds / "outA", is_raw=False, rotated_release_dir=ds / "outB")
+    assert m["A1_pct"] == 0.0
+    assert m["A6_inversion_hits"] == 0
+    assert m["A7_shared_psns"] == 0
+    assert m["global_shift_recovered"] is None
+
+
 def test_torture_smoke(tmp_path):
     """Two generated torture datasets must have zero leaks and zero false merges."""
     from tools.torture.check import check_seed

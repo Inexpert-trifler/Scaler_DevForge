@@ -212,6 +212,7 @@ class Forge:
         self.ans = Answer()
         self.files: dict[str, bytes] = {}
         self.people: list[Person] = []
+        self.visit_facts: dict[str, list[dict[str, Any]]] = {}
 
     # ---- people -------------------------------------------------------------------
     def _new_person(self, i: int) -> Person:
@@ -354,6 +355,12 @@ class Forge:
             self.ans.kp(f, dist, "district", loc=f"row:{ri}")
             self.ans.records.append(dict(file=f, loc=f"row:{ri}", patient=p.pid))
             self.ans.los.append(dict(file=f, loc=f"row:{ri}", col_in=13, col_out=14, days=stay, adm=adm_s, dis=dis_s))
+            self.visit_facts.setdefault(p.pid, []).append({
+                "date": f"{adm[0]}-{adm[1]:02d}-{adm[2]:02d}",
+                "condition": dx[0],
+                "los_days": stay,
+                "hospital": hosp[1],
+            })
         out_lines = []
         import csv
         import io
@@ -449,6 +456,12 @@ class Forge:
                      f"Tehsil {p.geo[0]}", p.geo[1]]:
             A.kp(f, keep, "clinical")
         A.records.append(dict(file=f, loc="doc", patient=p.pid))
+        self.visit_facts.setdefault(p.pid, []).append({
+            "date": f"{adm[0]}-{adm[1]:02d}-{adm[2]:02d}",
+            "condition": dx,
+            "los_days": stay,
+            "hospital": hname,
+        })
 
     def note_hindi(self, p: Person, idx: int) -> None:
         r = self.rng
@@ -793,6 +806,93 @@ class Forge:
         self.broken()
         _ = r
 
+    def _write_attacker(self, out: Path) -> None:
+        """Generate attacker/registry.csv (real cohort + 4x decoys) and known_facts.jsonl from answer key."""
+        import csv
+        import io
+        arng = random.Random(f"wardguard-attacker:{self.seed}")
+        att_dir = out / "attacker"
+        att_dir.mkdir(parents=True, exist_ok=True)
+
+        fieldnames = [
+            "rid", "name", "relation", "relative_name", "gender", "age", "birth_year",
+            "dob", "house", "village", "tehsil", "district", "pin", "phone", "email", "aadhaar_last4",
+        ]
+        reg_rows: list[dict[str, str]] = []
+        for p in self.people:
+            reg_rows.append({
+                "rid": p.pid,
+                "name": p.full,
+                "relation": p.rel_marker,
+                "relative_name": p.rel_full,
+                "gender": p.gender,
+                "age": str(p.age),
+                "birth_year": str(p.dob[0]),
+                "dob": f"{p.dob[0]:04d}-{p.dob[1]:02d}-{p.dob[2]:02d}",
+                "house": f"House {p.house}",
+                "village": p.village[0],
+                "tehsil": p.geo[0],
+                "district": p.geo[1],
+                "pin": p.pin,
+                "phone": p.phone,
+                "email": f"{p.given[0].lower().replace(' ', '')}.{p.surname[0].lower().replace(chr(39), '')}@example.com",
+                "aadhaar_last4": p.aadhaar[-4:],
+            })
+
+        # Add 4x decoy background population across same geography & age bands
+        n_decoys = max(40, len(self.people) * 4)
+        for di in range(n_decoys):
+            dec = self._new_person(self.n + di)
+            # Reuse arng deterministically for decoy identifiers
+            gender = arng.choice("MF")
+            given = arng.choice(GIVEN_M if gender == "M" else GIVEN_F)
+            surname = arng.choice(SURNAMES)
+            age = arng.randint(1, 95)
+            geo = arng.choice(GEO)
+            reg_rows.append({
+                "rid": f"D{self.seed:03d}P{di:03d}",
+                "name": f"{given[0]} {surname[0]}",
+                "relation": "S/o" if gender == "M" else arng.choice(["W/o", "D/o"]),
+                "relative_name": f"{arng.choice(GIVEN_M)[0]} {surname[0]}",
+                "gender": gender,
+                "age": str(age),
+                "birth_year": str(2026 - age),
+                "dob": f"{2026 - age:04d}-{arng.randint(1, 12):02d}-{arng.randint(1, 28):02d}",
+                "house": f"House {arng.randint(1, 999)}",
+                "village": arng.choice(VILLAGES)[0],
+                "tehsil": geo[0],
+                "district": geo[1],
+                "pin": geo[2] + f"{arng.randint(0, 999):03d}",
+                "phone": str(arng.randint(6, 9)) + "".join(str(arng.randint(0, 9)) for _ in range(9)),
+                "email": f"{given[0].lower()}.{surname[0].lower()}.{di}@decoy.org",
+                "aadhaar_last4": f"{arng.randint(0, 9999):04d}",
+            })
+            _ = dec
+
+        arng.shuffle(reg_rows)
+        buf = io.StringIO()
+        w = csv.DictWriter(buf, fieldnames=fieldnames)
+        w.writeheader()
+        w.writerows(reg_rows)
+        (att_dir / "registry.csv").write_text(buf.getvalue(), encoding="utf-8")
+
+        # Known facts for 50% of cohort (plus 2 decoys to catch false membership claims)
+        fact_lines: list[str] = []
+        for idx, p in enumerate(self.people):
+            if idx % 2 != 0:
+                continue
+            vfs = self.visit_facts.get(p.pid, [])
+            if not vfs:
+                continue
+            fact_lines.append(json.dumps({
+                "rid": p.pid,
+                "visit_dates": sorted({vf["date"] for vf in vfs}),
+                "hospital": vfs[0]["hospital"],
+                "condition_hint": vfs[0]["condition"],
+                "los_days": vfs[0]["los_days"],
+            }, ensure_ascii=False))
+        (att_dir / "known_facts.jsonl").write_text("\n".join(fact_lines) + ("\n" if fact_lines else ""), encoding="utf-8")
+
     def write(self, out: Path) -> None:
         inp = out / "input"
         for rel, data in sorted(self.files.items()):
@@ -805,8 +905,13 @@ class Forge:
         out.joinpath("answer.json").write_text(json.dumps({
             "seed": self.seed, "files": A.files, "remove": A.remove, "keep": A.keep, "records": A.records,
             "homonyms": A.homonyms, "twins": A.twins, "canaries": A.canaries, "los": A.los,
-            "people": {p.pid: {"name": p.full, "traps": p.traps} for p in self.people},
+            "people": {p.pid: {
+                "name": p.full, "name_deva": p.full_deva, "phone": p.phone,
+                "aadhaar": p.aadhaar, "abha": p.abha, "pan": p.pan,
+                "mrns": list(p.mrn.values()), "traps": p.traps,
+            } for p in self.people},
         }, ensure_ascii=False, indent=1), encoding="utf-8")
+        self._write_attacker(out)
 
 
 def generate(seed: int, out: Path, n_patients: int = 14) -> Path:
