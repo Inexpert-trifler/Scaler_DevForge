@@ -56,6 +56,14 @@ def deva_to_latin(text: str) -> str:
     except Exception:
         latin = text
 
+    # ITRANS marks: anusvara "M" / chandrabindu ".N" / ".n" are a nasal that is written "m"
+    # only before labials (p, b, m) and "n" everywhere else: हरजिंदर -> harjinder, not harjimder.
+    latin = re.sub(r'(?:M|\.N|\.n)(?=[pbmPBM])', 'm', latin)
+    latin = re.sub(r'(?:M|\.N|\.n)', 'n', latin)
+    # Word-final inherent schwa: ITRANS writes it as a lowercase "a" after a consonant
+    # (a long vowel is "A"/"aa"), and Hindi does not pronounce it: गिल -> gil, यादव -> yadav.
+    latin = re.sub(r'(?<=[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ])a(?=\s|$)', '', latin)
+
     return simplify_latin_phonetics(latin)
 
 

@@ -17,8 +17,34 @@ Implements TR-LNK-1..7:
 from __future__ import annotations
 from collections import defaultdict
 from typing import Optional
+from dataclasses import replace
 from wardguard.model import Unit
 from wardguard.link.normalize import phonetic_key, canonical_name
+
+
+def _phonetic_view(units: list[Unit]) -> None:
+    """Compare names by sound, not spelling: the same person is written "Sunita" / "Suneeta" /
+    "सुनीता" in different hospitals. Name, given, surname and relative keys are mapped to
+    phonetic keys before linking; the conflict guards (DOB, gender, age gap, relative) still
+    apply, so this cannot merge people who disagree on a hard attribute."""
+    def ph(keys: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(sorted({phonetic_key(k) or k for k in keys if k}))
+    for u in units:
+        ev = u.evidence
+        u.evidence = replace(ev, name_keys=ph(ev.name_keys), given_keys=ph(ev.given_keys),
+                             surname_keys=ph(ev.surname_keys), relative_keys=ph(ev.relative_keys))
+
+
+def _distinct_people(name_keys: set[str]) -> int:
+    """How many different people a set of (phonetic) name keys describes. A key whose tokens are
+    a subset of another key's tokens ("HRJNTR" vs "HRJNTR_JL") is the same person written shorter."""
+    toks = sorted((tuple(k.split("_")) for k in name_keys if k), key=lambda t: (-len(t), t))
+    groups: list[set[str]] = []
+    for t in toks:
+        ts = set(t)
+        if not any(ts <= g for g in groups):
+            groups.append(ts)
+    return len(groups)
 from wardguard.link.cluster import DisjointSet, has_conflict
 
 
@@ -38,6 +64,8 @@ def resolve(units: list[Unit], policy: Optional[dict] = None) -> None:
     max_age_gap = 2
     if policy:
         max_age_gap = policy.get("link_conflict_age_gap", 2)
+
+    _phonetic_view(units)
 
     # Filter units with non-trivial evidence
     # Sort units deterministically by UID
@@ -71,7 +99,7 @@ def resolve(units: list[Unit], policy: Optional[dict] = None) -> None:
             continue
 
         # If it's a phone and shared across multiple names, skip automatic merge
-        if itype == "PHONE" and len(phone_to_name_keys.get(core, set())) > 1:
+        if itype == "PHONE" and _distinct_people(phone_to_name_keys.get(core, set())) > 1:
             continue
 
         first = u_indices[0]
@@ -152,7 +180,7 @@ def resolve(units: list[Unit], policy: Optional[dict] = None) -> None:
         elif ev.strong_ids:
             # Phone-based strong ID: check if phone is shared across names
             itype, core = min(ev.strong_ids, key=lambda x: (x[0], x[1]))
-            if itype == "PHONE" and len(phone_to_name_keys.get(core, set())) > 1:
+            if itype == "PHONE" and _distinct_people(phone_to_name_keys.get(core, set())) > 1:
                 # Disambiguate with patient's name
                 p_name = min(ev.name_keys) if ev.name_keys else f"root:{root}"
                 cluster_key = f"PHONE:{core}:{p_name}"

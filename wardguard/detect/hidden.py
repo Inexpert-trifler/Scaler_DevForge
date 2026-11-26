@@ -127,6 +127,18 @@ def extract_hidden_slots(pf: ParsedFile) -> None:
         )
     )
 
+    # 1b. Add @dirname slot: folder names leak too ("scans/Sunita_Yadav/visit.txt")
+    parent = p.parent.as_posix()
+    if parent and parent != ".":
+        pf.file_slots.append(
+            Slot(
+                path="@dirname",
+                text=parent,
+                channel="filename",
+                value_type="str",
+            )
+        )
+
     # 2. Add @header:<index> slots for CSV/TSV
     if pf.header:
         for idx, h in enumerate(pf.header):
@@ -213,45 +225,42 @@ def apply_filename_renaming(files: List[ParsedFile], policy: Optional[dict] = No
     if policy and "tokens" in policy:
         token_map.update(policy["tokens"])
 
-    used_paths: Set[str] = set()
+    def _replace(text: str, slot: Optional[Slot]) -> str:
+        if not slot or not slot.mentions:
+            return text
+        out = text
+        for m in sorted(slot.mentions, key=lambda m: (m.start, m.end), reverse=True):
+            etype_key = m.etype.value if hasattr(m.etype, "value") else str(m.etype)
+            rep = token_map.get(etype_key, f"[{etype_key}]")
+            out = out[:m.start] + rep + out[m.end:]
+        return out
 
-    for pf in files:
-        if pf.status != "pending":
-            continue
-
+    # Phase 1: desired output path for every pending file (sanitized stem AND folders)
+    desired: list[tuple[ParsedFile, str]] = []
+    for pf in (f for f in files if f.status == "pending"):  # load_all order is already deterministic
         p = Path(pf.rel)
+        fn_slot = next((fs for fs in pf.file_slots if fs.path == "@filename"), None)
+        dir_slot = next((fs for fs in pf.file_slots if fs.path == "@dirname"), None)
         parent_dir = p.parent.as_posix()
-        suffix = p.suffix
-        stem = p.stem
+        new_parent = _replace(parent_dir, dir_slot) if parent_dir != "." else "."
+        new_stem = _replace(p.stem, fn_slot)
+        rel_out = f"{new_parent}/{new_stem}{p.suffix}" if new_parent != "." else f"{new_stem}{p.suffix}"
+        desired.append((pf, f"sanitized/{rel_out}"))
 
-        # Find @filename slot
-        fn_slot = None
-        for fs in pf.file_slots:
-            if fs.path == "@filename":
-                fn_slot = fs
-                break
-
-        if fn_slot and fn_slot.mentions:
-            # Sort mentions right-to-left to safely replace spans
-            sorted_mentions = sorted(fn_slot.mentions, key=lambda m: m.start, reverse=True)
-            new_stem = stem
-            for m in sorted_mentions:
-                etype_key = m.etype.value if hasattr(m.etype, "value") else str(m.etype)
-                rep = token_map.get(etype_key, f"[{etype_key}]")
-                new_stem = new_stem[:m.start] + rep + new_stem[m.end:]
-
-            new_filename = f"{new_stem}{suffix}"
-            target_out = f"sanitized/{parent_dir}/{new_filename}" if parent_dir != "." else f"sanitized/{new_filename}"
-
-            # Check collision
-            if target_out in used_paths:
-                sha8 = pf.sha256[:8] if pf.sha256 else "00000000"
-                collision_filename = f"file_{sha8}{suffix}"
-                target_out = f"sanitized/{parent_dir}/{collision_filename}" if parent_dir != "." else f"sanitized/{collision_filename}"
-
-            pf.out_rel = target_out
-            used_paths.add(target_out)
-        else:
-            default_out = f"sanitized/{pf.rel}"
-            pf.out_rel = default_out
-            used_paths.add(default_out)
+    # Phase 2: deterministic collision resolution. Untouched paths are claimed first so a
+    # renamed file can never overwrite (or be overwritten by) a file that kept its name.
+    used_paths: Set[str] = set()
+    unchanged = [(pf, t) for pf, t in desired if t == f"sanitized/{pf.rel}"]
+    changed = [(pf, t) for pf, t in desired if t != f"sanitized/{pf.rel}"]
+    for pf, target in unchanged + changed:
+        if target in used_paths:
+            parent = target.rsplit("/", 1)[0]
+            suffix = Path(target).suffix
+            sha8 = pf.sha256[:8] if pf.sha256 else "00000000"
+            target = f"{parent}/file_{sha8}{suffix}"
+            n = 2
+            while target in used_paths:
+                target = f"{parent}/file_{sha8}_{n}{suffix}"
+                n += 1
+        pf.out_rel = target
+        used_paths.add(target)

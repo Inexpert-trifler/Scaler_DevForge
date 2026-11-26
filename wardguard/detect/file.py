@@ -208,7 +208,10 @@ def detect_file(pf: ParsedFile, gaz: Gazetteer, policy: Optional[dict] = None) -
     
     Pure w.r.t I/O. Deterministic.
     """
-    if pf.status != "pending" or not pf.units:
+    # NOTE: a file with zero data units (a header-only CSV, an empty JSON object, a note whose
+    # body failed to parse) still has file-level slots - header, file name, keys, metadata - and
+    # those must be scanned too. Returning early here used to write such headers out verbatim.
+    if pf.status != "pending":
         return
 
     # 1. Structured Column Classification for CSV/TSV

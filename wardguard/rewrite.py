@@ -441,6 +441,41 @@ def place_fhir_psn(obj: Any, psn_val: str) -> None:
         _ensure_psn_identifier(obj)
 
 
+_B64_TOKEN = re.compile(r'(?<![A-Za-z0-9+/=])([A-Za-z0-9+/]{24,}={0,2})(?![A-Za-z0-9+/=])')
+
+
+def scrub_free_text(text: str, policy: dict) -> str:
+    """Detect and replace identifiers in a free-text string that has no unit context."""
+    if not text:
+        return text
+    from wardguard.detect.context import detect_text  # local import: avoid an import cycle
+    mentions = detect_text(text, channel="content", gaz=policy.get("_gazetteer"), policy=policy)
+    return apply_mentions(text, mentions, None, policy) if mentions else text
+
+
+def scrub_embedded_base64(text: str, policy: dict) -> str:
+    """Base64 blobs embedded inside free text (attachments pasted into notes, NDJSON lines,
+    half-parsed JSON) are decoded, scrubbed and re-encoded; blobs that are not readable
+    text are left alone."""
+    if not text or len(text) < 24:
+        return text
+
+    def _fix(m: re.Match) -> str:
+        tok = m.group(1)
+        if len(tok) % 4:
+            return tok
+        try:
+            dec = base64.b64decode(tok, validate=True).decode("utf-8")
+        except Exception:
+            return tok
+        if not dec or not all(c.isprintable() or c in "\r\n\t" for c in dec) or not any(c.isalpha() for c in dec):
+            return tok
+        clean = scrub_free_text(dec, policy)
+        return tok if clean == dec else base64.b64encode(clean.encode("utf-8")).decode("ascii")
+
+    return _B64_TOKEN.sub(_fix, text)
+
+
 def render(pf: ParsedFile, policy: dict) -> bytes:
     """Render sanitized bytes from ParsedFile and policy.
     
@@ -464,8 +499,11 @@ def render(pf: ParsedFile, policy: dict) -> bytes:
         delimiter = pf.delimiter or ("," if pf.fmt == "csv" else "\t")
         buf = io.StringIO()
         writer = csv.writer(buf, delimiter=delimiter, lineterminator="\n")
+        def _cells(vals: list[str]) -> list[str]:
+            return [scrub_embedded_base64(v, policy) if isinstance(v, str) else v for v in vals]
+
         if pf.header is not None:
-            writer.writerow(pf.header)
+            writer.writerow(_cells(pf.header))
         if pf.units:
             for u in pf.units:
                 row_slots = [
@@ -474,12 +512,13 @@ def render(pf: ParsedFile, policy: dict) -> bytes:
                     and (s.path.startswith("col:") or s.path.startswith("col#") or s.channel == "content")
                 ]
                 if row_slots:
-                    writer.writerow([s.text for s in row_slots])
+                    writer.writerow(_cells([s.text for s in row_slots]))
                 else:
-                    writer.writerow([s.text for s in u.slots])
+                    writer.writerow(_cells([s.text for s in u.slots]))
         elif pf.rows is not None:
+            # Fail closed: rows without unit context are scrubbed, never written raw.
             for row in pf.rows:
-                writer.writerow(row)
+                writer.writerow(_cells([scrub_free_text(c, policy) if isinstance(c, str) else c for c in row]))
         return buf.getvalue().encode("utf-8")
 
     elif pf.fmt in ("json", "fhir"):
@@ -532,6 +571,8 @@ def render(pf: ParsedFile, policy: dict) -> bytes:
                 if not has_patient_name_mention and u0.psn not in text_out:
                     text_out = f"Patient: {u0.psn}\n{text_out}"
         elif pf.text is not None:
-            text_out = pf.text
+            # Fail closed: a text file without a data unit is still scrubbed, never copied raw.
+            text_out = scrub_free_text(pf.text, policy)
 
+        text_out = scrub_embedded_base64(text_out, policy)
         return text_out.encode("utf-8")

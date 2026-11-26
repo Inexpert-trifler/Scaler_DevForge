@@ -38,6 +38,18 @@ def _has_consistent_delimiter(text: str, delimiter: str) -> bool:
     return (matching / len(counts)) >= 0.70
 
 
+def _is_json_lines(text: str) -> bool:
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    if len(lines) < 2:
+        return False
+    for ln in lines[:200]:
+        try:
+            json.loads(ln)
+        except Exception:
+            return False
+    return True
+
+
 def sniff(raw: bytes, rel: str) -> Fmt:
     """Sniff file format from raw bytes and relative path."""
     if not raw or len(raw) == 0:
@@ -104,6 +116,11 @@ def sniff(raw: bytes, rel: str) -> Fmt:
                 return "fhir"
             return "json"
         except Exception:
+            # NDJSON / JSON Lines: every non-empty line is its own JSON value. It is NOT a CSV
+            # (commas inside objects are not delimiters). Treat it as text so values are
+            # rewritten in place and every line stays valid JSON.
+            if _is_json_lines(stripped_text):
+                return "text"
             # Did not parse as JSON!
             # If it had a .json extension, return "json" so it will be quarantined as malformed/truncated
             if is_json_ext:

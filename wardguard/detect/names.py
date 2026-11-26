@@ -245,7 +245,10 @@ def build_gazetteer(files: list[ParsedFile], policy: Optional[dict] = None) -> G
 
                 # Also harvest high-confidence context/regex mentions found in pass 1a
                 for m in slot.mentions:
-                    if m.etype in (EType.PATIENT_NAME, EType.RELATIVE_NAME) and m.source in ("context", "column"):
+                    # Only confident rules feed the dataset-wide gazetteer: a weak guess (initials,
+                    # aliases) must not spread to every other file.
+                    if (m.etype in (EType.PATIENT_NAME, EType.RELATIVE_NAME) and m.source in ("context", "column")
+                            and (m.confidence or 0) >= 0.85):
                         role_m: Role = "relative" if m.etype == EType.RELATIVE_NAME else "patient"
                         if len(m.text.split()) >= 2:
                             gaz.add(m.text, role=role_m)

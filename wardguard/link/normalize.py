@@ -15,10 +15,18 @@ def phonetic_key(name: str) -> str:
     
     Required contract: phonetic_key(name: str) -> str
     """
-    canon = canonical_name(name)
+    canon = canonical_name(re.sub(r"['\u2019]", "", name))
     if not canon:
         return ""
-    # Metaphone on tokens
-    tokens = canon.split()
+    tokens = []
+    for t in canon.split():
+        # Aspiration and spelling noise that differs between scripts / clerks:
+        # kh->k, th->t, bh->b ... ; a silent h before a consonant (Mehboob/Mahbub);
+        # any leading vowel collapses to "a" (Anthony / Enthoni).
+        t = re.sub(r'(?<=[bcdgjklmnprstv])h', '', t)
+        t = re.sub(r'h(?=[bcdfgjklmnpqrstvwxyz])', '', t)
+        t = re.sub(r'^[aeiou]+', 'a', t)
+        if t:
+            tokens.append(t)
     meta_tokens = [jellyfish.metaphone(t) for t in tokens if t]
     return "_".join(meta_tokens)

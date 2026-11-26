@@ -76,6 +76,9 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
 
             # 1b. Harvest dynamic gazetteer from now-classified structured name columns (TR-DET-5)
             gaz = build_gazetteer(files, policy)
+            # in-memory only: lets the export safety nets (embedded base64, unit-less text)
+            # recognise names harvested from the rest of the dataset
+            policy = {**policy, "_gazetteer": gaz}
 
             # 1c. Full pass to scan free-text and hidden slots using the harvested gazetteer
             for pf in files:
