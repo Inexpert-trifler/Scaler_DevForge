@@ -62,21 +62,34 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
 
         # Pass 1 Detection (Saransh's modules)
         try:
+            # 1a. Initial pass to classify structured columns across tabular files
+            empty_gaz = build_gazetteer([], policy)
+            for pf in files:
+                if pf.status == "pending":
+                    try:
+                        detect_file(pf, empty_gaz, policy)
+                    except Exception as e:
+                        pf.status = "quarantined"
+                        pf.reason = safe_reason(e)
+                        event("file_quarantined", count=1)
+
+            # 1b. Harvest dynamic gazetteer from now-classified structured name columns (TR-DET-5)
             gaz = build_gazetteer(files, policy)
+
+            # 1c. Full pass to scan free-text and hidden slots using the harvested gazetteer
+            for pf in files:
+                if pf.status == "pending":
+                    try:
+                        detect_file(pf, gaz, policy)
+                    except Exception as e:
+                        pf.status = "quarantined"
+                        pf.reason = safe_reason(e)
+                        event("file_quarantined", count=1)
         except Exception as e:
             event("detection_error", count=1)
             # Create a fallback empty gazetteer
             from wardguard.detect import Gazetteer
             gaz = Gazetteer()
-
-        for pf in files:
-            if pf.status == "pending":
-                try:
-                    detect_file(pf, gaz, policy)
-                except Exception as e:
-                    pf.status = "quarantined"
-                    pf.reason = safe_reason(e)
-                    event("file_quarantined", count=1)
 
         # Apply filename renaming for files whose @filename contains PII mentions (TR-EXP-2)
         try:

@@ -4,6 +4,7 @@
 > Format: `- [TASK-ID] (Name) description`
 
 ## [Unreleased]
+- [L-10] (Lakshya) Rewrite engine & M1 integration: right-to-left mention application per slot preventing offset drift, whole-cell replacement for classified columns, JSON numeric primitive type preservation (int/float stay numbers, int age lower bound, 0 for numeric direct IDs), D-010 PSN placement in existing fields (CSV/JSON name or UHID cells without extra columns, document prepending, FHIR Patient.identifier), hidden channel base64 re-encoding, and CSV header PII replacement.
 - [L-09] (Lakshya) Privacy core engine: Crockford Base32 HMAC-SHA256 keyed pseudonym generator (`PSN-XXXXXX`), non-zero deterministic date offset generator, format- and interval-preserving date shifter supporting 8 formats, datetimes, and Devanagari numerals, and age band / PIN prefix generalizers.
 - [L-08] (Lakshya) Hidden channels & filename renaming: added `@filename` (stem), `@header:<index>`, and `@key:<pointer>/<key>` slot extractors, automated printable base64 decoding (`<path>#b64`), multi-scheme escape decoding (`\uXXXX`, `%XX`, HTML entities), metadata channel classification, and deterministic PII filename renaming with collision guard.
 - [L-07] (Lakshya) Format-preserving export writers: RFC 4180 compliant CSV/TSV serialization handling quoted newlines/commas, JSON reconstruction preserving exact structure/key order/primitive types (`int`, `float`, `bool`, `null`), deterministic `records.jsonl` writer sorted by `(file, loc)`, and full SPEC §5 `report.json` reporting honest stats, timing, and peak RSS.

@@ -9,7 +9,7 @@
 | ID | Milestone | Hour | State | Gate |
 |---|---|---|---|---|
 | M0 | Scaffold + contracts frozen | H2 | DONE | CONTRACT OK; both confirm `model.py` + `07_API_CONTRACTS.md` |
-| M1 | Integrated detection v1 | H8 | TODO | 4/4 canaries; recall > 0.9 per script |
+| M1 | Integrated detection v1 | H8 | DONE | 4/4 canaries; recall > 0.9 per script; CONTRACT OK |
 | M2 | Linkage + privacy | H14 | TODO | F0.5 > 0.9; 0 homonym merges; attack_sim numbers logged |
 | M3 | Hardened + feature freeze | H18 | TODO | chaos delta < 10; READY TO SUBMIT |
 | M4 | Release | H22 | TODO | 12_RELEASE_CHECKLIST all ticked |
@@ -27,7 +27,7 @@
 | L-07 | Export writers (format-preserving, UTF-8, header/delimiter, JSON types) + records.jsonl + report.json | H5–8 | L-06 | TR-EXP-1..4 | DONE | format-preserving writers, records.jsonl sorted, SPEC §5 report.json |
 | L-08 | Hidden channels: keys, headers, filenames (rename), metadata, base64, escapes, FHIR narrative | H7–11 | L-06, S-05 | TR-DET-9 | DONE | hidden slots extracted, base64/escapes decoded, PII filenames renamed |
 | L-09 | Privacy core: pseudonym, date_offset, format-preserving date shift, age band, PIN, village → tehsil | H6–10 | L-02 | TR-PRV-1..6, 8 | DONE | Crockford HMAC PSN, non-zero date offsets, 9-day stay preserved, generalizers |
-| L-10 | Rewrite engine: apply mentions, PSN placement, QI generalization | H8–11 | L-07, L-09 | TR-PRV-2, 08 §4 | TODO | **M1 integration** |
+| L-10 | Rewrite engine: apply mentions, PSN placement, QI generalization | H8–11 | L-07, L-09 | TR-PRV-2, 08 §4 | DONE | **M1 integration**: right-to-left mentions, whole-cell replacement, JSON types, D-010 PSN placement; tests green (109/109) |
 | L-11 | `tools/attack_sim.py` (A2–A5 incl. global-shift recovery) | H10–14 | L-10 | TR-TOOL-2 | TODO | raw vs ours numbers logged |
 | L-12 | k-anonymity plan + targeted coarsening; tune k, DOB policy (D-012) | H13–16 | L-11, S-08 | TR-PRV-7 | TODO | A5 < reference 40.1% |
 | L-13 | Performance, memory, determinism; check_submission READY | H15–18 | all | TR-RUN-6, TR-SEC-4 | TODO | **M3** |
