@@ -34,6 +34,15 @@ WEIGHT_RELATIVE = 8.0
 WEIGHT_HOUSE = 2.0
 
 
+def person_id(row: Dict[str, Any], fallback_idx: int = 0) -> str:
+    """Helper to extract person ID across kit (rid) and internal (patient_id/id) formats."""
+    for key in ("rid", "patient_id", "id"):
+        val = row.get(key)
+        if val is not None and str(val).strip():
+            return str(val).strip()
+    return f"p_{fallback_idx}"
+
+
 def parse_date_loose(s: str) -> Optional[datetime]:
     """Parse various date formats into datetime object."""
     clean = s.strip()
@@ -59,9 +68,9 @@ class AttackerData:
     def __init__(self, registry: List[Dict[str, str]], known_facts: List[Dict[str, Any]]):
         self.registry = registry
         self.known_facts = known_facts
-        # Index by patient_id
+        # Index by person_id
         self.by_id: Dict[str, Dict[str, str]] = {
-            r.get("patient_id", r.get("id", f"p_{i}")): r
+            person_id(r, i): r
             for i, r in enumerate(registry)
         }
 
@@ -87,24 +96,24 @@ def load_or_generate_attacker(attacker_dir: Optional[Path], release_dir: Path) -
 
         return AttackerData(registry, known_facts)
 
-    # Synthesize benchmark attacker dataset based on known patient cohort + decoys
-    # This guarantees attack_sim runs deterministically offline
+    # Synthesize benchmark attacker dataset with distinct, realistic visit dates per person
+    # and decoy population for offline testing.
     names_pool = [
-        ("Rajesh Kumar", "M", 45, "1978-04-12", "Varanasi", "229073", "Hypertension", "9876543210"),
-        ("Sunita Devi", "F", 38, "1985-08-15", "Varanasi", "229074", "Type 2 Diabetes", "9123456789"),
-        ("Aarav Sharma", "M", 48, "1975-01-01", "Lucknow", "226001", "Asthma", "9812345678"),
-        ("Pooja Verma", "F", 29, "1994-06-20", "Kanpur", "208001", "Tuberculosis", "9988776655"),
-        ("Vikram Singh", "M", 52, "1971-11-05", "Prayagraj", "211001", "Coronary Artery Disease", "9765432109"),
-        ("Meena Kumari", "F", 64, "1959-03-30", "Gorakhpur", "273001", "Osteoarthritis", "9654321098"),
-        ("Deepak Patel", "M", 34, "1989-09-18", "Varanasi", "221001", "Typhoid", "9543210987"),
-        ("Ananya Mishra", "F", 41, "1982-12-25", "Lucknow", "226010", "Hypothyroidism", "9432109876"),
+        ("Rajesh Kumar", "M", 45, "1978-04-12", "Varanasi", "229073", "Hypertension", "9876543210", "2023-04-12"),
+        ("Sunita Devi", "F", 38, "1985-08-15", "Varanasi", "229074", "Type 2 Diabetes", "9123456789", "2023-04-15"),
+        ("Aarav Sharma", "M", 48, "1975-01-01", "Lucknow", "226001", "Asthma", "9812345678", "2023-05-02"),
+        ("Pooja Verma", "F", 29, "1994-06-20", "Kanpur", "208001", "Tuberculosis", "9988776655", "2023-05-18"),
+        ("Vikram Singh", "M", 52, "1971-11-05", "Prayagraj", "211001", "Coronary Artery Disease", "9765432109", "2023-06-10"),
+        ("Meena Kumari", "F", 64, "1959-03-30", "Gorakhpur", "273001", "Osteoarthritis", "9654321098", "2023-06-25"),
+        ("Deepak Patel", "M", 34, "1989-09-18", "Varanasi", "221001", "Typhoid", "9543210987", "2023-07-04"),
+        ("Ananya Mishra", "F", 41, "1982-12-25", "Lucknow", "226010", "Hypothyroidism", "9432109876", "2023-07-20"),
     ]
 
     registry = []
     known_facts = []
 
     # 1. Base cohort
-    for i, (name, gender, age, dob_str, dist, pin, diag, phone) in enumerate(names_pool):
+    for i, (name, gender, age, dob_str, dist, pin, diag, phone, visit_date) in enumerate(names_pool):
         pid = f"PAT-{i+1:04d}"
         parts = name.split()
         given = parts[0]
@@ -112,6 +121,7 @@ def load_or_generate_attacker(attacker_dir: Optional[Path], release_dir: Path) -
         birth_year = dob_str.split("-")[0]
 
         row = {
+            "rid": pid,
             "patient_id": pid,
             "name": name,
             "given_name": given,
@@ -133,12 +143,14 @@ def load_or_generate_attacker(attacker_dir: Optional[Path], release_dir: Path) -
         }
         registry.append(row)
 
-        # Add known facts for 50% of the cohort
+        # Add known facts for 50% of the cohort with distinct visit dates
         if i % 2 == 0:
             known_facts.append({
+                "rid": pid,
                 "patient_id": pid,
                 "name": name,
-                "visit_date": "2023-04-12",
+                "visit_date": visit_date,
+                "visit_dates": [visit_date],
                 "condition": diag,
                 "length_of_stay": 9,
                 "hospital": "City Hospital",
@@ -161,6 +173,7 @@ def load_or_generate_attacker(attacker_dir: Optional[Path], release_dir: Path) -
             pid = f"PAT-{counter:04d}"
             counter += 1
             registry.append({
+                "rid": pid,
                 "patient_id": pid,
                 "name": f"{gm} {sur}",
                 "given_name": gm,
@@ -186,6 +199,7 @@ def load_or_generate_attacker(attacker_dir: Optional[Path], release_dir: Path) -
             pid = f"PAT-{counter:04d}"
             counter += 1
             registry.append({
+                "rid": pid,
                 "patient_id": pid,
                 "name": f"{gf} {sur}",
                 "given_name": gf,
@@ -210,7 +224,7 @@ def load_or_generate_attacker(attacker_dir: Optional[Path], release_dir: Path) -
 
 
 class ReleaseEvidence:
-    """Extracted evidence from a release record or pooled profile."""
+    """Evidence extracted from a single released record or pooled profile."""
 
     def __init__(self, record_id: str, psn: Optional[str] = None):
         self.record_id = record_id
@@ -268,109 +282,124 @@ def extract_release_evidence(release_dir: Path) -> List[ReleaseEvidence]:
     """Scan release directory (sanitized/ and records.jsonl) and extract records."""
     records_file = release_dir / "records.jsonl"
     sanitized_dir = release_dir / "sanitized"
-    if not sanitized_dir.exists():
-        sanitized_dir = release_dir
 
-    psn_by_loc: Dict[str, str] = {}
+    # Map (file, loc) -> psn from records.jsonl
+    loc_to_psn: Dict[Tuple[str, str], Optional[str]] = {}
     if records_file.exists():
         with open(records_file, "r", encoding="utf-8") as f:
             for line in f:
-                line = line.strip()
-                if line:
-                    rec = json.loads(line)
-                    k = f"{rec.get('file', '')}#{rec.get('loc', '')}"
-                    if rec.get("patient"):
-                        psn_by_loc[k] = rec["patient"]
+                if line.strip():
+                    try:
+                        rec = json.loads(line)
+                        loc_to_psn[(rec["file"], rec["loc"])] = rec.get("patient")
+                    except Exception:
+                        pass
 
     evidence_list: List[ReleaseEvidence] = []
 
-    # Walk files in sanitized_dir
+    if not sanitized_dir.exists():
+        return evidence_list
+
     for p in sorted(sanitized_dir.rglob("*")):
         if not p.is_file():
             continue
         rel = p.relative_to(sanitized_dir).as_posix()
+        file_key = f"sanitized/{rel}"
 
-        # CSV / TSV
-        if p.suffix.lower() in (".csv", ".tsv"):
-            delim = "\t" if p.suffix.lower() == ".tsv" else ","
+        # 1. CSV files
+        if p.suffix.lower() == ".csv":
             try:
-                with open(p, "r", encoding="utf-8", errors="replace") as f:
-                    reader = list(csv.reader(f, delimiter=delim))
-                if len(reader) < 2:
-                    continue
-                header = [h.strip() for h in reader[0]]
-                for idx, row in enumerate(reader[1:]):
-                    loc_key = f"sanitized/{rel}#row:{idx}"
-                    psn = psn_by_loc.get(loc_key)
-                    ev = ReleaseEvidence(record_id=loc_key, psn=psn)
+                with open(p, "r", encoding="utf-8", errors="ignore") as f:
+                    reader = csv.reader(f)
+                    header = next(reader, None)
+                    for row_idx, row in enumerate(reader):
+                        rec_id = f"{file_key}:row:{row_idx}"
+                        psn = loc_to_psn.get((file_key, f"row:{row_idx}"))
+                        ev = ReleaseEvidence(record_id=rec_id, psn=psn)
 
-                    for col_name, val in zip(header, row):
-                        c_low = col_name.lower()
-                        v_str = val.strip()
-                        ev.add_text(v_str)
+                        # Check header cues if present
+                        for col_idx, val in enumerate(row):
+                            h_name = header[col_idx].lower() if header and col_idx < len(header) else ""
+                            v = val.strip()
+                            ev.add_text(v)
 
-                        if any(g in c_low for g in ("gender", "sex")) and v_str:
-                            ev.gender = v_str[0].upper()
-                        elif "district" in c_low and v_str:
-                            ev.district = v_str
-                        elif "tehsil" in c_low and v_str:
-                            ev.tehsil = v_str
-                        elif "village" in c_low and v_str:
-                            ev.village = v_str
-                        elif any(d in c_low for d in ("diag", "disease", "cond")) and v_str:
-                            ev.conditions.append(v_str)
+                            if "gender" in h_name or "sex" in h_name:
+                                if v.upper().startswith("M"):
+                                    ev.gender = "M"
+                                elif v.upper().startswith("F"):
+                                    ev.gender = "F"
+                            elif "age" in h_name:
+                                m = re.search(r"(\d+)-(\d+)", v)
+                                if m:
+                                    ev.age_range = (float(m.group(1)), float(m.group(2)))
+                                elif re.match(r"^\d+$", v):
+                                    ev.age_range = (float(v), float(v))
+                            elif "district" in h_name:
+                                ev.district = v
+                            elif "tehsil" in h_name:
+                                ev.tehsil = v
+                            elif "village" in h_name:
+                                ev.village = v
+                            elif "diagnosis" in h_name or "condition" in h_name:
+                                ev.conditions.append(v)
+                            elif "date" in h_name:
+                                if v and v not in ev.dates:
+                                    ev.dates.append(v)
 
-                        if psn is None and v_str.startswith("PSN-"):
-                            ev.psn = v_str
-
-                    evidence_list.append(ev)
+                        evidence_list.append(ev)
             except Exception:
                 pass
 
-        # JSON
+        # 2. JSON files
         elif p.suffix.lower() == ".json":
             try:
-                with open(p, "r", encoding="utf-8", errors="replace") as f:
+                with open(p, "r", encoding="utf-8", errors="ignore") as f:
                     obj = json.load(f)
 
+                # If array of records
                 if isinstance(obj, list):
                     for idx, item in enumerate(obj):
-                        loc_key = f"sanitized/{rel}#/{idx}"
-                        psn = psn_by_loc.get(loc_key)
-                        ev = ReleaseEvidence(record_id=loc_key, psn=psn)
-                        ev.add_text(json.dumps(item))
-                        if isinstance(item, dict):
-                            for k, v in item.items():
-                                k_low = k.lower()
-                                v_str = str(v).strip()
-                                if "gender" in k_low and v_str:
-                                    ev.gender = v_str[0].upper()
-                                elif "district" in k_low and v_str:
-                                    ev.district = v_str
-                                if psn is None and v_str.startswith("PSN-"):
-                                    ev.psn = v_str
+                        rec_id = f"{file_key}:/{idx}"
+                        psn = loc_to_psn.get((file_key, f"/{idx}")) or loc_to_psn.get((file_key, "doc"))
+                        ev = ReleaseEvidence(record_id=rec_id, psn=psn)
+                        _extract_from_json_dict(item, ev)
                         evidence_list.append(ev)
                 elif isinstance(obj, dict):
-                    loc_key = f"sanitized/{rel}#doc"
-                    psn = psn_by_loc.get(loc_key)
-                    ev = ReleaseEvidence(record_id=loc_key, psn=psn)
-                    ev.add_text(json.dumps(obj))
-                    evidence_list.append(ev)
+                    # Check if FHIR Bundle
+                    if obj.get("resourceType") == "Bundle" and "entry" in obj:
+                        for idx, entry in enumerate(obj["entry"]):
+                            rec_id = f"{file_key}:/entry/{idx}"
+                            psn = loc_to_psn.get((file_key, f"/entry/{idx}")) or loc_to_psn.get((file_key, "doc"))
+                            ev = ReleaseEvidence(record_id=rec_id, psn=psn)
+                            _extract_from_json_dict(entry.get("resource", {}), ev)
+                            evidence_list.append(ev)
+                    else:
+                        rec_id = f"{file_key}:doc"
+                        psn = loc_to_psn.get((file_key, "doc"))
+                        ev = ReleaseEvidence(record_id=rec_id, psn=psn)
+                        _extract_from_json_dict(obj, ev)
+                        evidence_list.append(ev)
             except Exception:
                 pass
 
-        # Text
-        elif p.suffix.lower() in (".txt", ".md"):
+        # 3. Plain text notes
+        else:
             try:
-                text = p.read_text(encoding="utf-8", errors="replace")
-                loc_key = f"sanitized/{rel}#doc"
-                psn = psn_by_loc.get(loc_key)
-                m_psn = re.search(r"\bPSN-[A-Za-z0-9]+\b", text)
-                if m_psn and psn is None:
-                    psn = m_psn.group(0)
-
-                ev = ReleaseEvidence(record_id=loc_key, psn=psn)
+                text = p.read_text(encoding="utf-8", errors="ignore")
+                rec_id = f"{file_key}:doc"
+                psn = loc_to_psn.get((file_key, "doc"))
+                ev = ReleaseEvidence(record_id=rec_id, psn=psn)
                 ev.add_text(text)
+
+                # Heuristic context extractions from free text
+                m_g = re.search(r"\b(male|female|पुरुष|महिला)\b", text, re.IGNORECASE)
+                if m_g:
+                    ev.gender = "M" if m_g.group(1).lower() in ("male", "पुरुष") else "F"
+
+                m_d = re.search(r"(?:Dist(?:rict)?|जिला)[:\s]+([A-Za-z\u0900-\u097F]+)", text, re.IGNORECASE)
+                if m_d:
+                    ev.district = m_d.group(1).strip()
+
                 evidence_list.append(ev)
             except Exception:
                 pass
@@ -378,84 +407,116 @@ def extract_release_evidence(release_dir: Path) -> List[ReleaseEvidence]:
     return evidence_list
 
 
-def filter_candidates(candidates: List[Dict[str, str]], ev: ReleaseEvidence) -> List[Dict[str, str]]:
-    """Filter registry candidates following ATTACKS.md §6 filtering hierarchy.
-    
-    A filter that would empty the candidate set is SKIPPED.
-    """
-    cur = candidates
+def _extract_from_json_dict(d: Any, ev: ReleaseEvidence) -> None:
+    """Recursively harvest evidence fields from JSON structure."""
+    if isinstance(d, dict):
+        for k, v in d.items():
+            k_lower = str(k).lower()
+            if isinstance(v, (dict, list)):
+                _extract_from_json_dict(v, ev)
+            else:
+                s_val = str(v)
+                ev.add_text(s_val)
+                if "gender" in k_lower:
+                    if s_val.upper().startswith("M"):
+                        ev.gender = "M"
+                    elif s_val.upper().startswith("F"):
+                        ev.gender = "F"
+                elif "age" in k_lower:
+                    m = re.search(r"(\d+)-(\d+)", s_val)
+                    if m:
+                        ev.age_range = (float(m.group(1)), float(m.group(2)))
+                    elif s_val.isdigit():
+                        ev.age_range = (float(s_val), float(s_val))
+                elif "district" in k_lower:
+                    ev.district = s_val
+                elif "tehsil" in k_lower:
+                    ev.tehsil = s_val
+                elif "village" in k_lower:
+                    ev.village = s_val
+                elif "diagnosis" in k_lower or "condition" in k_lower:
+                    ev.conditions.append(s_val)
+                elif "date" in k_lower:
+                    if s_val and s_val not in ev.dates:
+                        ev.dates.append(s_val)
+    elif isinstance(d, list):
+        for item in d:
+            _extract_from_json_dict(item, ev)
 
-    # 1. Phone
+
+def filter_candidates(registry: List[Dict[str, str]], ev: ReleaseEvidence) -> List[Dict[str, str]]:
+    """Hierarchical candidate filtering per ATTACKS.md §6.
+    
+    Skips any filter step that would reduce the candidate set to empty.
+    """
+    cur = list(registry)
+
+    # 1. Phone match
     if ev.phone:
-        ph_clean = re.sub(r"\D", "", ev.phone)[-10:]
-        f = [c for c in cur if re.sub(r"\D", "", c.get("phone", ""))[-10:] == ph_clean]
+        f = [c for c in cur if re.sub(r"\D", "", c.get("phone", "")) == ev.phone]
         if f:
             cur = f
 
-    # 2. Email
+    # 2. Email match
     if ev.email:
-        f = [c for c in cur if c.get("email", "").lower() == ev.email.lower()]
+        f = [c for c in cur if c.get("email", "").lower().strip() == ev.email]
         if f:
             cur = f
 
     # 3. Aadhaar last 4
     if ev.aadhaar_last4:
-        f = [c for c in cur if c.get("aadhaar_last4", "") == ev.aadhaar_last4]
+        f = [c for c in cur if c.get("aadhaar_last4") == ev.aadhaar_last4 or c.get("aadhaar", "").endswith(ev.aadhaar_last4)]
         if f:
             cur = f
 
-    # 4. District
+    # 4. District filter
     if ev.district:
-        d_target = ev.district.lower()
-        f = [c for c in cur if c.get("district", "").lower() == d_target]
+        f = [c for c in cur if c.get("district", "").lower().strip() == ev.district.lower().strip()]
         if f:
             cur = f
 
-    # 5. Gender
+    # 5. Gender filter
     if ev.gender:
-        g_target = ev.gender[0].upper()
-        f = [c for c in cur if c.get("gender", "").upper().startswith(g_target)]
+        f = [c for c in cur if c.get("gender", "").upper().startswith(ev.gender)]
         if f:
             cur = f
 
-    # 6. Age range / band
+    # 6. Age range / band filter
     if ev.age_range:
-        min_a, max_a = ev.age_range
+        low, high = ev.age_range
         f = []
         for c in cur:
             try:
-                c_age = float(c.get("age", -99))
-                if min_a <= c_age <= max_a:
+                c_age = float(c.get("age", -1))
+                if low <= c_age <= high:
                     f.append(c)
             except ValueError:
                 pass
         if f:
             cur = f
 
-    # 7. Birth year
+    # 7. Birth year filter
     if ev.birth_year:
-        f = [c for c in cur if str(c.get("birth_year", "")) == str(ev.birth_year)]
+        f = [c for c in cur if c.get("birth_year") == str(ev.birth_year)]
         if f:
             cur = f
 
-    # 8. Tehsil
+    # 8. Tehsil filter
     if ev.tehsil:
-        t_target = ev.tehsil.lower()
-        f = [c for c in cur if c.get("tehsil", "").lower() == t_target]
+        f = [c for c in cur if c.get("tehsil", "").lower().strip() == ev.tehsil.lower().strip()]
         if f:
             cur = f
 
-    # 9. Village
+    # 9. Village filter
     if ev.village:
-        v_target = ev.village.lower()
-        f = [c for c in cur if c.get("village", "").lower() == v_target]
+        f = [c for c in cur if c.get("village", "").lower().strip() == ev.village.lower().strip()]
         if f:
             cur = f
 
-    # 10. PIN / PIN prefix
+    # 10. PIN / PIN prefix filter
     if ev.pin:
-        pin_target = ev.pin.replace("*", "")
-        f = [c for c in cur if c.get("pin", "").startswith(pin_target)]
+        clean_pin = ev.pin.replace("*", "").strip()
+        f = [c for c in cur if c.get("pin", "").startswith(clean_pin)]
         if f:
             cur = f
 
@@ -470,8 +531,8 @@ def score_candidates(candidates: List[Dict[str, str]], all_text: str) -> Dict[st
     norm = all_text.lower()
     weights: Dict[str, float] = {}
 
-    for c in candidates:
-        pid = c.get("patient_id", c.get("id", ""))
+    for i, c in enumerate(candidates):
+        pid = person_id(c, i)
         w = 1.0
 
         full_name = c.get("name", "").lower().strip()
@@ -495,7 +556,7 @@ def score_candidates(candidates: List[Dict[str, str]], all_text: str) -> Dict[st
 
     total = sum(weights.values())
     if total <= 0:
-        return {c.get("patient_id", ""): 1.0 / len(candidates) for c in candidates}
+        return {person_id(c, i): 1.0 / len(candidates) for i, c in enumerate(candidates)}
     return {pid: w / total for pid, w in weights.items()}
 
 
@@ -526,67 +587,112 @@ def pool_evidence_by_psn(records: List[ReleaseEvidence]) -> Dict[str, ReleaseEvi
             prof.village = r.village
         if r.pin and not prof.pin:
             prof.pin = r.pin
+        if r.birth_year and not prof.birth_year:
+            prof.birth_year = r.birth_year
 
-        # Intersect age range if multiple records have bands
+        # Age range intersection
         if r.age_range:
             if prof.age_range is None:
                 prof.age_range = r.age_range
             else:
-                p_min, p_max = prof.age_range
-                r_min, r_max = r.age_range
-                prof.age_range = (max(p_min, r_min), min(p_max, r_max))
+                prof.age_range = (
+                    max(prof.age_range[0], r.age_range[0]),
+                    min(prof.age_range[1], r.age_range[1]),
+                )
 
         for d in r.dates:
             if d not in prof.dates:
                 prof.dates.append(d)
-        for c in r.conditions:
-            if c not in prof.conditions:
-                prof.conditions.append(c)
+
+        for cond in r.conditions:
+            if cond not in prof.conditions:
+                prof.conditions.append(cond)
 
     return profiles
 
 
-def detect_global_shift(known_facts: List[Dict[str, Any]], records: List[ReleaseEvidence]) -> Optional[int]:
-    """A5 Global-shift recovery test.
+def detect_global_shift(
+    known_facts: List[Dict[str, Any]],
+    records: List[ReleaseEvidence],
+    registry: Optional[List[Dict[str, str]]] = None,
+) -> Optional[int]:
+    """A5 Global-shift recovery test per kit docs/ATTACKS.md.
     
-    Checks if released dates match known visit dates by a constant single offset.
-    Returns recovered shift offset in days if majority (>=60%) of known targets agree, else None.
+    Only considers records/profiles re-identified with high confidence (>= 0.9)
+    for a specific person, or direct record-to-person evidence matching.
+    Computes deltas strictly between that person's released dates and THEIR known visit dates.
+    A shift is recovered only if >= 2 DIFFERENT people agree on the same non-zero delta.
+    Never cross-pairs one person's dates with another person's facts.
     """
-    if not known_facts:
+    if not known_facts or not records:
         return None
 
-    released_dates: List[datetime] = []
+    # Step 1: Link records or pooled profiles to person_id with confidence >= 0.9
+    # If registry is provided, use score_candidates / filter_candidates
+    person_to_released_dates: Dict[str, Set[datetime]] = {}
+
     for r in records:
+        r_dts: List[datetime] = []
         for ds in r.dates:
             dt = parse_date_loose(ds)
             if dt:
-                released_dates.append(dt)
+                r_dts.append(dt)
+        if not r_dts:
+            continue
 
-    if not released_dates:
-        return None
+        full_text = " ".join(r.text_snippets)
+        if registry:
+            filtered = filter_candidates(registry, r)
+            probs = score_candidates(filtered, full_text)
+            for pid, prob in probs.items():
+                if prob >= 0.90:
+                    person_to_released_dates.setdefault(pid, set()).update(r_dts)
+        else:
+            # Fallback when registry not directly passed: match on record_id or known_facts name
+            for kf in known_facts:
+                pid = person_id(kf)
+                kf_name = kf.get("name", "").lower()
+                if (kf_name and kf_name in full_text.lower()) or (pid in r.record_id):
+                    person_to_released_dates.setdefault(pid, set()).update(r_dts)
 
-    target_deltas: List[Set[int]] = []
+    # Step 2: For each person with both known visit dates and released dates, compute deltas
+    person_deltas: Dict[str, Set[int]] = {}
+
     for kf in known_facts:
-        kf_date_str = kf.get("visit_date")
-        if not kf_date_str:
-            continue
-        kf_dt = parse_date_loose(kf_date_str)
-        if not kf_dt:
+        pid = person_id(kf)
+        if pid not in person_to_released_dates:
             continue
 
-        deltas_for_target: Set[int] = set()
-        for rd in released_dates:
-            diff_days = (rd - kf_dt).days
-            if -180 <= diff_days <= 180 and diff_days != 0:
-                deltas_for_target.add(diff_days)
-        if deltas_for_target:
-            target_deltas.append(deltas_for_target)
+        # Extract visit dates from known facts (accepts "visit_dates" list or "visit_date" str)
+        raw_dates = kf.get("visit_dates", [])
+        if not raw_dates and kf.get("visit_date"):
+            raw_dates = [kf.get("visit_date")]
 
-    if not target_deltas:
+        kf_dts: List[datetime] = []
+        for ds in raw_dates:
+            dt = parse_date_loose(ds)
+            if dt:
+                kf_dts.append(dt)
+
+        if not kf_dts:
+            continue
+
+        deltas: Set[int] = set()
+        for rd in person_to_released_dates[pid]:
+            for kd in kf_dts:
+                diff_days = (rd - kd).days
+                if -180 <= diff_days <= 180 and diff_days != 0:
+                    deltas.add(diff_days)
+
+        if deltas:
+            person_deltas.setdefault(pid, set()).update(deltas)
+
+    # Step 3: Shift is recovered only if >= 2 DIFFERENT people agree on the same delta
+    if len(person_deltas) < 2:
         return None
 
     delta_votes: Dict[int, int] = {}
-    for dset in target_deltas:
+    for pid, dset in person_deltas.items():
         for d in dset:
             delta_votes[d] = delta_votes.get(d, 0) + 1
 
@@ -594,7 +700,7 @@ def detect_global_shift(known_facts: List[Dict[str, Any]], records: List[Release
         return None
 
     best_delta, best_count = max(delta_votes.items(), key=lambda item: item[1])
-    if best_count >= 3 and (best_count / len(target_deltas)) >= 0.60:
+    if best_count >= 2 and (best_count / len(person_deltas)) >= 0.60:
         return best_delta
     return None
 
@@ -630,8 +736,7 @@ def run_attack_simulation(
     # -------------------------------------------------------------
     # Attack A2 & A3: Single-Record Quasi-Identifier Linkage Risk
     # -------------------------------------------------------------
-    # For each target person, max probability across all records
-    patient_probs: Dict[str, float] = {p["patient_id"]: 0.0 for p in attacker.registry}
+    patient_probs: Dict[str, float] = {person_id(p, i): 0.0 for i, p in enumerate(attacker.registry)}
 
     for r in records:
         full_text = " ".join(r.text_snippets)
@@ -647,7 +752,7 @@ def run_attack_simulation(
     # -------------------------------------------------------------
     # Attack A4: Profile Pooling by PSN
     # -------------------------------------------------------------
-    pooled_patient_probs: Dict[str, float] = {p["patient_id"]: 0.0 for p in attacker.registry}
+    pooled_patient_probs: Dict[str, float] = {person_id(p, i): 0.0 for i, p in enumerate(attacker.registry)}
 
     for prof in profiles.values():
         full_text = " ".join(prof.text_snippets)
@@ -662,15 +767,15 @@ def run_attack_simulation(
     # -------------------------------------------------------------
     # Attack A5: Targeted Known-Facts & Global Shift Attack
     # -------------------------------------------------------------
-    recovered_shift = detect_global_shift(attacker.known_facts, records)
+    recovered_shift = detect_global_shift(attacker.known_facts, records, attacker.registry)
     global_shift_vulnerable = recovered_shift is not None
 
     # Targeted matching for known facts cohort
     targeted_probs: List[float] = []
     for kf in attacker.known_facts:
-        target_pid = kf.get("patient_id")
+        target_pid = person_id(kf)
         target_person = attacker.by_id.get(target_pid, {})
-        target_cond = kf.get("condition", "").lower()
+        target_cond = (kf.get("condition") or kf.get("condition_hint") or "").lower()
 
         # Attacker matches against pooled profiles
         matching_profiles = []

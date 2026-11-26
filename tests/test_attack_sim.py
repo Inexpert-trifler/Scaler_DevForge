@@ -158,6 +158,53 @@ def test_global_shift_detection_recovered_on_constant_offset():
     assert recovered == 10  # Constant shift recovered!
 
 
+def test_global_shift_detection_recovered_with_registry():
+    """Test global shift recovery when candidate registry is supplied."""
+    registry = [
+        {"rid": "R1", "name": "Rajesh Kumar"},
+        {"rid": "R2", "name": "Sunita Devi"},
+    ]
+    known_facts = [
+        {"rid": "R1", "visit_dates": ["2023-04-10"]},
+        {"rid": "R2", "visit_dates": ["2023-04-15"]},
+    ]
+    r1 = ReleaseEvidence(record_id="rec1")
+    r1.text_snippets.append("Patient Rajesh Kumar OPD note")
+    r1.dates.append("2023-04-20")  # +10 days
+    r2 = ReleaseEvidence(record_id="rec2")
+    r2.text_snippets.append("Follow-up Sunita Devi clinic")
+    r2.dates.append("2023-04-25")  # +10 days
+
+    recovered = detect_global_shift(known_facts, [r1, r2], registry)
+    assert recovered == 10
+
+
+def test_attack_sim_kit_format_does_not_crash():
+    """Verify load_or_generate_attacker and run_attack_simulation accept kit format (rid, visit_dates)."""
+    with tempfile.TemporaryDirectory() as att_dir, tempfile.TemporaryDirectory() as rel_dir:
+        att = Path(att_dir)
+        rel = Path(rel_dir)
+        (rel / "sanitized").mkdir()
+        (rel / "records.jsonl").write_text("", encoding="utf-8")
+
+        # Kit registry format
+        (att / "registry.csv").write_text(
+            "rid,name,relation,relative_name,gender,age,house_no,mohalla,village,tehsil,district,pin,phone,email,aadhaar_last4\n"
+            "PAT-1,Aarav Singh,S/O,Balram,M,30,H1,M1,V1,T1,Lucknow,226001,9812345678,aarav@test.org,1234\n",
+            encoding="utf-8",
+        )
+        # Kit known facts format
+        (att / "known_facts.jsonl").write_text(
+            json.dumps({"rid": "PAT-1", "visit_dates": ["2023-01-01"], "hospital": "HospA"}) + "\n",
+            encoding="utf-8",
+        )
+
+        res = run_attack_simulation(rel, att)
+        assert res["A1_direct_leak_risk"] == 0.0
+        assert res["cohort_size"] == 1
+
+
+
 def test_global_shift_detection_fails_on_random_offsets():
     """When dates are shifted by keyed per-patient offsets, global recovery fails."""
     known_facts = [
