@@ -1,0 +1,45 @@
+# Relationship markers (relations.txt)
+s/o
+d/o
+w/o
+c/o
+h/o
+f/o
+m/o
+son of
+daughter of
+wife of
+care of
+husband of
+father of
+mother of
+so
+do
+wo
+co
+ho
+fo
+mo
+पुत्र
+सुपुत्र
+पुत्री
+सुपुत्री
+पत्नी
+पति
+पिता
+माता
+अभिभावक
+भाई
+बहन
+valad
+ولد
+zauja
+زوجه
+shri
+श्रीमती
+shrimati
+late
+स्व
+स्व.
+स्वर्गीय
+swargiya

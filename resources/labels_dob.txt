@@ -1,0 +1,10 @@
+# Generic DOB & date labels
+dob
+birth date
+date of birth
+d.o.b
+जन्म तिथि
+जन्म दिनांक
+जन्म तारीख
+b'day
+birthday
