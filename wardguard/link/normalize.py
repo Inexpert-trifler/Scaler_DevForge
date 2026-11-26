@@ -25,8 +25,9 @@ def phonetic_key(name: str) -> str:
         # Aspiration and spelling noise that differs between scripts / clerks:
         # kh->k, th->t, bh->b ... ; a silent h before a consonant (Mehboob/Mahbub);
         # any leading vowel collapses to "a" (Anthony / Enthoni).
+        t = t.replace("chh", "ch")
         t = re.sub(r'(?<=[bcdgjklmnprstv])h', '', t)
-        t = re.sub(r'h(?=[bcdfgjklmnpqrstvwxyz])', '', t)
+        t = re.sub(r'(?<=[aeiou])h(?=[bcdfgjklmnpqrstvwxyz])', '', t)
         t = re.sub(r'^[aeiou]+', 'a', t)
         if t:
             tokens.append(t)

@@ -108,6 +108,7 @@ def canonical_name(name: str) -> str:
         return ""
 
     lat = deva_to_latin(name)
+    lat = re.sub(r"['\u2019]", "", lat)
     lat = re.sub(r'[^a-zA-Z\s]', ' ', lat).lower()
     tokens = [t.strip() for t in lat.split() if t.strip()]
 

@@ -240,6 +240,19 @@ def test_independent_attack_arena_a1_a6_a7(tmp_path):
     assert m["global_shift_recovered"] is None
 
 
+def test_cross_script_aspiration_and_apostrophe_linkage():
+    from wardguard.detect.evidence import _norm_id_core
+    assert phonetic_key("Chhedi") == phonetic_key("छेदी")
+    assert phonetic_key("Kavita D'Souza") == phonetic_key("कविता डिसूज़ा")
+    assert phonetic_key("Hmar") == phonetic_key("हमार")
+    assert _norm_id_core("PHONE", "९१८३८३५७८०") == "9183835780"
+
+
+def test_metamorphic_relations_smoke(tmp_path):
+    from tools.torture.mr import check_mr_seed
+    assert check_mr_seed(1, tmp_path) == []
+
+
 def test_torture_smoke(tmp_path):
     """Two generated torture datasets must have zero leaks and zero false merges."""
     from tools.torture.check import check_seed

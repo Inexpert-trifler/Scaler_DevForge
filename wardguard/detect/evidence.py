@@ -49,11 +49,15 @@ RE_REL_PREFIX_STRIP = re.compile(
 )
 
 
+_DEVA_TO_ASCII = str.maketrans("०१२३४५६७८९", "0123456789")
+
+
 def _norm_id_core(etype_val: str, raw: str) -> str:
-    """Normalize strong identifier core uniformly (strips +91/0 prefix on 10-digit Indian phones)."""
-    core = re.sub(r'[^A-Za-z0-9]', '', raw).upper()
+    """Normalize strong identifier core uniformly (Devanagari digits -> ASCII, strips +91/0 on Indian phones)."""
+    ascii_raw = raw.translate(_DEVA_TO_ASCII)
+    core = re.sub(r'[^A-Za-z0-9]', '', ascii_raw).upper()
     if etype_val == "PHONE":
-        digits = re.sub(r'\D', '', raw)
+        digits = re.sub(r'\D', '', ascii_raw)
         if len(digits) >= 10 and digits[-10] in "6789":
             return digits[-10:]
         return digits
