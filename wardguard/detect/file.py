@@ -40,6 +40,166 @@ def _emit_whole_cell_mention(slot: Slot, etype: EType) -> Optional[Mention]:
     )
 
 
+def _has_whole_cell_mention(slot: Slot, etype: EType) -> bool:
+    return any(
+        m.etype == etype and m.source == "column" and m.start == 0 and m.end == len(slot.text)
+        for m in slot.mentions
+    )
+
+
+def _fhir_resource_types(pf: ParsedFile) -> dict[int, str]:
+    """Map Bundle entry index -> FHIR resourceType."""
+    out: dict[int, str] = {}
+    if isinstance(pf.obj, dict) and pf.obj.get("resourceType") == "Bundle":
+        for idx, entry in enumerate(pf.obj.get("entry") or []):
+            if isinstance(entry, dict):
+                res = entry.get("resource")
+                if isinstance(res, dict) and isinstance(res.get("resourceType"), str):
+                    out[idx] = res["resourceType"]
+    return out
+
+
+_JSON_SKIP_SUBTREES = {
+    "facility", "hospital", "lab", "panels", "organization", "practitioner",
+    "rx", "diagnosis", "vitals", "medication", "coding", "type", "system",
+    "loinc", "range", "unit", "status", "schema",
+}
+
+
+def _classify_fhir_slot(pf: ParsedFile, slot: Slot, res_types: dict[int, str]) -> Optional[EType]:
+    """Classify a FHIR R4 leaf slot path using resourceType and FHIR property paths."""
+    p = slot.path
+    if p.endswith(("#b64", "#decoded")) or not slot.text.strip():
+        return None
+
+    # Determine resourceType and relative path inside resource
+    m_ent = re.match(r'^/entry/(\d+)/resource(/.*)$', p)
+    if m_ent:
+        idx = int(m_ent.group(1))
+        rtype = res_types.get(idx, "")
+        sub = m_ent.group(2)
+    elif isinstance(pf.obj, dict) and pf.obj.get("resourceType") == "Patient":
+        rtype = "Patient"
+        sub = p
+    else:
+        return None
+
+    if rtype in ("Composition", "Encounter", "Observation", "MedicationRequest", "Condition"):
+        if sub == "/subject/display":
+            return EType.PATIENT_NAME
+        if sub == "/date" or sub == "/effectiveDateTime" or sub == "/authoredOn" or sub == "/period/start" or sub == "/period/end":
+            return EType.DATE
+        return None
+
+    if rtype != "Patient":
+        return None
+
+    # Inside Patient resource
+    if sub == "/birthDate":
+        return EType.DOB
+    if sub == "/gender":
+        return EType.GENDER
+    if re.match(r'^/name/\d+/(?:text|family|given/\d+)$', sub):
+        return EType.PATIENT_NAME
+    if re.match(r'^/contact/\d+/name/(?:text|family|given/\d+)$', sub):
+        return EType.RELATIVE_NAME
+    if re.match(r'^/address/\d+/postalCode$', sub):
+        return EType.PIN
+    if re.match(r'^/address/\d+/city$', sub):
+        return EType.VILLAGE
+    if re.match(r'^/address/\d+/district$', sub):
+        return EType.DISTRICT
+    if re.match(r'^/telecom/\d+/value$', sub):
+        return EType.EMAIL if "@" in slot.text else EType.PHONE
+    if "/extension/" in sub and sub.endswith("/valueString"):
+        # Check extension URL in pf.obj to distinguish mother/father/guardian extensions
+        m_ext = re.search(r'/extension/(\d+)/valueString$', sub)
+        if m_ext and m_ent:
+            ext_idx = int(m_ext.group(1))
+            try:
+                ext_obj = pf.obj["entry"][int(m_ent.group(1))]["resource"]["extension"][ext_idx]
+                url = str(ext_obj.get("url", "")).lower()
+                if any(k in url for k in ("mother", "father", "guardian", "relative", "spouse", "kin")):
+                    return EType.RELATIVE_NAME
+            except Exception:
+                pass
+    return None
+
+
+def _classify_json_slot(slot: Slot) -> Optional[EType]:
+    """Classify structured JSON leaf paths while protecting clinical/facility subtrees."""
+    p = slot.path
+    if p.endswith(("#b64", "#decoded")) or not slot.text.strip():
+        return None
+
+    segs = [s.lower() for s in p.split("/") if s and not s.isdigit()]
+    if not segs:
+        return None
+
+    leaf = segs[-1]
+    ancestors = set(segs[:-1])
+
+    # Never classify facility/lab/medication/diagnosis subtrees as patient PII
+    if ancestors & _JSON_SKIP_SUBTREES:
+        return None
+    if leaf in ("doctor", "referred_by", "hospital", "facility", "department"):
+        return None
+
+    # Guardian / relative subtree
+    if ancestors & {"guardian", "relative", "next_of_kin", "attendant"}:
+        if leaf in ("name", "full_name", "text"):
+            return EType.RELATIVE_NAME
+        if leaf in ("mobile", "phone", "contact"):
+            return EType.PHONE
+        return None
+
+    # Metadata / ticket / raised_by person
+    if "raised_by" in ancestors:
+        if leaf in ("name", "full_name"):
+            return EType.OTHER_PERSON
+        if leaf in ("callback", "phone", "mobile"):
+            return EType.PHONE
+
+    # Patient/person fields
+    if leaf in ("dob", "birth_date", "birthdate", "date_of_birth"):
+        return EType.DOB
+    if leaf == "age":
+        return EType.AGE
+    if leaf in ("gender", "sex"):
+        return EType.GENDER
+    if leaf in ("registered_on", "visit_date", "collected", "reported", "admission_date", "discharge_date"):
+        return EType.DATE
+    if leaf in ("pin", "pincode", "postalcode", "zip", "pin_code"):
+        return EType.PIN
+    if leaf in ("village", "gram", "gaon"):
+        return EType.VILLAGE
+    if leaf in ("tehsil", "taluka", "taluk"):
+        return EType.TEHSIL
+    if leaf in ("district", "jila", "zilla"):
+        return EType.DISTRICT
+    if leaf in ("uhid", "mrn", "patient_ref", "hospital_uhid", "patient_id"):
+        return EType.MRN
+    if leaf in ("mobile", "phone", "callback", "contact_no"):
+        return EType.PHONE
+    if leaf == "email":
+        return EType.EMAIL
+    if leaf in ("aadhar_no", "aadhaar_no", "aadhaar", "aadhar"):
+        return EType.AADHAAR
+    if leaf in ("abha", "abha_no", "abha_number"):
+        return EType.ABHA_NUMBER
+    if leaf == "abha_address":
+        return EType.ABHA_ADDRESS
+    if leaf in ("patient_name", "relative_name"):
+        return EType.RELATIVE_NAME if leaf == "relative_name" else EType.PATIENT_NAME
+    if leaf in ("first", "last", "local", "full_name") and "name" in ancestors:
+        return EType.PATIENT_NAME
+    if leaf == "name" and (ancestors & {"patient", "patients"}):
+        # Match /patient/name or /patients/0/name (when string leaf)
+        return EType.PATIENT_NAME
+
+    return None
+
+
 def detect_file(pf: ParsedFile, gaz: Gazetteer, policy: Optional[dict] = None) -> None:
     """Orchestrate detection for a parsed file.
     
@@ -76,29 +236,55 @@ def detect_file(pf: ParsedFile, gaz: Gazetteer, policy: Optional[dict] = None) -
                     ctype = col_types.get(col_name)
                     if ctype:
                         s.column_type = ctype
+                        if not _has_whole_cell_mention(s, ctype):
+                            m = _emit_whole_cell_mention(s, ctype)
+                            if m:
+                                s.mentions.append(m)
+
+    # 1b. Structured Key Classification for JSON & FHIR
+    elif pf.fmt == "fhir":
+        res_types = _fhir_resource_types(pf)
+        for u in pf.units:
+            for s in u.slots:
+                ctype = _classify_fhir_slot(pf, s, res_types)
+                if ctype:
+                    s.column_type = ctype
+                    if not _has_whole_cell_mention(s, ctype):
+                        m = _emit_whole_cell_mention(s, ctype)
+                        if m:
+                            s.mentions.append(m)
+    elif pf.fmt == "json":
+        for u in pf.units:
+            for s in u.slots:
+                ctype = _classify_json_slot(s)
+                if ctype:
+                    s.column_type = ctype
+                    if not _has_whole_cell_mention(s, ctype):
                         m = _emit_whole_cell_mention(s, ctype)
                         if m:
                             s.mentions.append(m)
 
     # 2. Free-text scanning & Hidden channel scanning for each slot
+    _WHOLE_CELL_TYPES = {
+        EType.PATIENT_NAME, EType.RELATIVE_NAME, EType.OTHER_PERSON, EType.PHONE,
+        EType.AADHAAR, EType.AADHAAR_MASKED, EType.PAN, EType.MRN,
+        EType.ABHA_NUMBER, EType.ABHA_ADDRESS, EType.INSURANCE_ID, EType.EMAIL,
+        EType.DOB, EType.DATE, EType.AGE, EType.PIN, EType.VILLAGE,
+        EType.TEHSIL, EType.DISTRICT, EType.GENDER,
+    }
     for u in pf.units:
         for s in u.slots:
-            # If slot was already classified as a whole-cell direct identifier, skip free-text regex
-            if s.column_type in (
-                EType.PATIENT_NAME, EType.RELATIVE_NAME, EType.PHONE,
-                EType.AADHAAR, EType.AADHAAR_MASKED, EType.PAN, EType.MRN,
-                EType.ABHA_NUMBER, EType.ABHA_ADDRESS, EType.INSURANCE_ID, EType.EMAIL
-            ):
+            # Skip free-text regex on slots already handled cleanly as atomic structured cells
+            if s.column_type in _WHOLE_CELL_TYPES:
                 continue
 
             # Run free-text detector with gazetteer and context rules
             text_mentions = detect_text(s.text, channel=s.channel, gaz=gaz, policy=policy)
             if text_mentions:
-                # Combine existing with new, resolving overlaps
                 combined = s.mentions + text_mentions
                 s.mentions = resolve_overlaps(combined)
 
-    # 3. Scan file-level slots (e.g. @filename, @header)
+    # 3. Scan file-level slots (e.g. @filename, @header, @key)
     for fs in pf.file_slots:
         fs_mentions = detect_text(fs.text, channel=fs.channel, gaz=gaz, policy=policy)
         if fs_mentions:

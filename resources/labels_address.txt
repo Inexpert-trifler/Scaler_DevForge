@@ -27,3 +27,30 @@ landmark
 near
 opp
 opposite
+# Romanized Hinglish column header variants (common in rural HIS)
+pata
+niwas
+ghar
+makan
+mohalla
+basti
+gali
+# Full address column variants
+full address
+patient address
+complete address
+residential address
+पूरा पता
+स्थायी पता
+# Landmark column headers
+landmark
+nearby
+near landmark
+nikatatam
+# Locality / sub-locality column headers
+locality
+sub-locality
+area name
+colony name
+ward name
+mohalla name

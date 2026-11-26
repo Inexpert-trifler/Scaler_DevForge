@@ -29,13 +29,25 @@ from wardguard.detect.patterns import (
     validate_verhoeff,
 )
 
-# Relative indicators in column headers
+# Relative indicators in column headers (English, Devanagari, Romanized Hindi)
 RE_RELATIVE_HEADER = re.compile(
-    r'(?i)\b('
+    r'(?i)(?<![A-Za-z])('
     r'relative|guardian|father|husband|mother|caregiver|s/o|d/o|w/o|c/o|h/o|f/o|m/o|'
+    r'pita|pati|mata|putra|putri|abhibhavak|rishtedar|'
     r'पिता|पति|माता|अभिभावक|पुत्र|पुत्री|wali|valad'
-    r')\b'
+    r')(?![A-Za-z])'
 )
+
+# Column headers that are NEVER patient names even if values look like alphabetic words
+NON_NAME_HEADERS = {
+    "procedure", "status", "category", "from", "to", "source", "destination",
+    "remarks", "notes", "note", "diagnosis", "complaints", "history", "department",
+    "dept", "hospital", "facility", "state", "country", "drug", "medicine", "rx",
+    "test", "unit", "range", "loinc", "code", "display", "type", "role", "system",
+    "visits", "bed", "ward", "trip", "gender", "sex", "ling", "district", "jila",
+    "tehsil", "taluka", "village", "gaon", "city", "town", "relation", "relationship",
+    "payer", "scheme", "bill_type", "outcome", "severity", "result", "specimen",
+}
 
 # Date/DOB regex for values: DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY, etc.
 # POS: "12/04/1977", "1985-06-20", "25-11-2001" | NEG: "650mg", "1-0-1"
@@ -57,12 +69,26 @@ def load_header_lexicons() -> dict[EType, set[str]]:
         EType.RELATIVE_NAME: set(),
         EType.PHONE: set(),
         EType.MRN: set(),
+        EType.AADHAAR: set(),
+        EType.ABHA_NUMBER: set(),
+        EType.ABHA_ADDRESS: set(),
+        EType.INSURANCE_ID: set(),
         EType.DOB: set(),
+        EType.DATE: {
+            "date", "visit date", "visit_date", "admission date", "admission_date",
+            "discharge date", "discharge_date", "collected on", "collected_on",
+            "reported on", "reported_on", "registered on", "registered_on",
+            "registration date", "reg date", "registered", "तारीख", "दिनांक",
+        },
         EType.AGE: set(),
         EType.VILLAGE: set(),
+        EType.TEHSIL: set(),
+        EType.DISTRICT: set(),
         EType.HOUSE: set(),
+        EType.LOCALITY: set(),
+        EType.LANDMARK: set(),
         EType.PIN: set(),
-        EType.GENDER: {"gender", "sex", "लिंग", "gender/sex"},
+        EType.GENDER: {"gender", "sex", "लिंग", "gender/sex", "ling"},
     }
 
     res_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "resources")
@@ -87,17 +113,49 @@ def load_header_lexicons() -> dict[EType, set[str]]:
             lex_map[EType.PATIENT_NAME].add(lbl)
 
     lex_map[EType.PHONE] = _read_lines("labels_phone.txt")
-    lex_map[EType.MRN] = _read_lines("labels_id.txt")
+    for lbl in _read_lines("labels_id.txt"):
+        if any(k in lbl for k in ("policy", "insurance", "beneficiary")):
+            lex_map[EType.INSURANCE_ID].add(lbl)
+        elif "aadhar" in lbl or "aadhaar" in lbl or "आधार" in lbl:
+            lex_map[EType.AADHAAR].add(lbl)
+        elif "abha address" in lbl:
+            lex_map[EType.ABHA_ADDRESS].add(lbl)
+        elif "abha" in lbl:
+            lex_map[EType.ABHA_NUMBER].add(lbl)
+        else:
+            lex_map[EType.MRN].add(lbl)
     lex_map[EType.DOB] = _read_lines("labels_dob.txt")
     lex_map[EType.AGE] = _read_lines("labels_age.txt")
-    lex_map[EType.VILLAGE] = _read_lines("labels_village.txt")
+
+    for lbl in _read_lines("labels_village.txt"):
+        if any(k in lbl for k in ("tehsil", "taluka", "taluk", "तहसील")):
+            lex_map[EType.TEHSIL].add(lbl)
+        elif any(k in lbl for k in ("district", "jila", "zilla", "जिला")):
+            lex_map[EType.DISTRICT].add(lbl)
+        elif "village" in lbl or "gaon" in lbl or "gram" in lbl:
+            lex_map[EType.VILLAGE].add(lbl)
+        elif any(k in lbl for k in ("mohalla", "ward", "colony", "मोहल्ला", "वार्ड")):
+            lex_map[EType.LOCALITY].add(lbl)
+        else:
+            lex_map[EType.VILLAGE].add(lbl)
 
     addr_labels = _read_lines("labels_address.txt")
     for lbl in addr_labels:
-        if "pin" in lbl:
+        if "pin" in lbl or "pincode" in lbl or "zip" in lbl:
             lex_map[EType.PIN].add(lbl)
-        elif any(k in lbl for k in ["h.no", "house", "मकान"]):
+        elif any(k in lbl for k in ["tehsil", "taluka", "taluk", "तहसील"]):
+            lex_map[EType.TEHSIL].add(lbl)
+        elif any(k in lbl for k in ["district", "jila", "zilla", "जिला"]):
+            lex_map[EType.DISTRICT].add(lbl)
+        elif any(k in lbl for k in ["h.no", "house", "मकान", "makan", "flat", "plot",
+                                     "pata", "address", "addr", "residence", "permanent",
+                                     "present", "निवास", "पता"]):
             lex_map[EType.HOUSE].add(lbl)
+        elif any(k in lbl for k in ["landmark", "near", "opp", "opposite", "निशान", "nikatatam"]):
+            lex_map[EType.LANDMARK].add(lbl)
+        elif any(k in lbl for k in ["ward", "mohalla", "colony", "locality", "area",
+                                     "street", "gali", "मोहल्ला", "वार्ड", "कॉलोनी"]):
+            lex_map[EType.LOCALITY].add(lbl)
         else:
             lex_map[EType.VILLAGE].add(lbl)
 
@@ -121,47 +179,57 @@ def load_medical_terms() -> set[str]:
 
 
 def _match_header_lexicon(norm_header: str) -> Optional[EType]:
-    """Match cleaned header against known label lexicons (exact + fuzzy)."""
+    """Match cleaned header against known label lexicons (exact + substring + fuzzy)."""
     if not norm_header:
         return None
 
+    # Strip trailing format parenthetical like "registered (mm/dd/yyyy)" or "age (yrs)"
+    base_header = re.sub(r'\s*\([^)]*\)\s*$', '', norm_header).strip()
+    candidates = [norm_header] + ([base_header] if base_header and base_header != norm_header else [])
+
     # Check for relative header explicitly
     if RE_RELATIVE_HEADER.search(norm_header):
-        if any(w in norm_header for w in ["name", "naam", "नाम", "nm"]):
+        if any(w in norm_header for w in ["name", "naam", "नाम", "nm"]) or len(norm_header.split()) <= 2:
             return EType.RELATIVE_NAME
 
     lex_map = load_header_lexicons()
 
-    # 1. Exact match or token containment
-    for etype, labels in lex_map.items():
-        if norm_header in labels:
-            return etype
-        # Substring/token match: e.g. "patient name (in english)" -> "patient name"
-        for lbl in labels:
-            if lbl and (lbl in norm_header or norm_header in lbl):
-                # Guard against short token misfires
-                if len(lbl) >= 3 and len(norm_header) >= 3:
-                    if len(lbl) / max(len(norm_header), 1) > 0.5:
-                        return etype
+    # 1a. Exact match across all types first (prevents "sex" substring matching "age/sex")
+    for cand in candidates:
+        for etype, labels in lex_map.items():
+            if cand in labels or cand.replace("_", " ") in labels:
+                return etype
 
-    # 2. Fuzzy match with rapidfuzz (> 85% similarity)
+    # 1b. Substring/token match: e.g. "patient name (in english)" -> "patient name"
+    for cand in candidates:
+        cand_sp = cand.replace("_", " ")
+        for etype, labels in lex_map.items():
+            for lbl in labels:
+                if lbl and (lbl in cand_sp or cand_sp in lbl):
+                    if len(lbl) >= 3 and len(cand_sp) >= 3:
+                        if len(lbl) / max(len(cand_sp), 1) > 0.55:
+                            return etype
+
+    # 2. Fuzzy match with rapidfuzz (>= 86% similarity)
     best_type: Optional[EType] = None
     best_score = 0.0
 
-    for etype, labels in lex_map.items():
-        for lbl in labels:
-            if not lbl or len(lbl) < 3:
-                continue
-            score = fuzz.ratio(norm_header, lbl)
-            if score > best_score and score >= 85:
-                best_score = score
-                best_type = etype
+    for cand in candidates:
+        cand_sp = cand.replace("_", " ")
+        for etype, labels in lex_map.items():
+            for lbl in labels:
+                if not lbl or len(lbl) < 3:
+                    continue
+                score = fuzz.ratio(cand_sp, lbl)
+                if score > best_score and score >= 86:
+                    best_score = score
+                    best_type = etype
 
     return best_type
 
 
-def _is_name_like(val: str, med_terms: set[str]) -> bool:
-    """Check if value is name-like: 1-4 alphabetic tokens, not a sentence, not a medical term."""
+def _is_name_like(val: str, med_terms: set[str], min_tokens: int = 2) -> bool:
+    """Check if value is name-like: multi-token alphabetic words, not a sentence, not a medical term."""
     norm = normalize_for_match(val.strip())
     if not norm or len(norm) < 2:
         return False
@@ -169,7 +237,7 @@ def _is_name_like(val: str, med_terms: set[str]) -> bool:
     if re.search(r'[0-9@#$%^&*()_+={}\[\]|\\:;"<>,?/~`!.]', norm):
         return False
     tokens = norm.split()
-    if not (1 <= len(tokens) <= 4):
+    if not (min_tokens <= len(tokens) <= 4):
         return False
     lower_norm = norm.lower()
     if lower_norm in med_terms:
@@ -210,7 +278,7 @@ def profile_values(values: list[str]) -> Optional[EType]:
         EType.MRN: 0,
         EType.INSURANCE_ID: 0,
         EType.EMAIL: 0,
-        EType.DOB: 0,
+        EType.DATE: 0,
         EType.AGE: 0,
         EType.PIN: 0,
         EType.GENDER: 0,
@@ -263,9 +331,9 @@ def profile_values(values: list[str]) -> Optional[EType]:
             counts[EType.EMAIL] += 1
             continue
 
-        # Date / DOB
+        # Date / DOB (value profiling classifies as generic DATE; header decides DOB)
         if RE_DATE_VALUE.fullmatch(norm):
-            counts[EType.DOB] += 1
+            counts[EType.DATE] += 1
             continue
 
         # PIN (exactly 6 digits starting 1-8)
@@ -317,6 +385,22 @@ def classify_column(header: str, values: list[str]) -> Optional[EType]:
     if hdr_type == EType.RELATIVE_NAME or RE_RELATIVE_HEADER.search(clean_hdr):
         return EType.RELATIVE_NAME
 
+    # If header explicitly says non-name (procedure, status, category, from, to, etc.),
+    # never infer PATIENT_NAME from alphabetic values alone.
+    base_hdr = re.sub(r'\s*\([^)]*\)\s*$', '', clean_hdr).strip()
+    if val_type == EType.PATIENT_NAME and hdr_type is None:
+        hdr_tokens = set(re.split(r'[\s_/-]+', base_hdr))
+        if clean_hdr in NON_NAME_HEADERS or bool(hdr_tokens & NON_NAME_HEADERS):
+            return None
+
+    # If header is DOB and values are dates -> DOB
+    if hdr_type == EType.DOB and val_type == EType.DATE:
+        return EType.DOB
+
+    # If header is DATE (admission_date, visit_date, collected_on, etc.) -> DATE
+    if hdr_type == EType.DATE:
+        return EType.DATE
+
     # If header and values agree
     if hdr_type and val_type and hdr_type == val_type:
         return hdr_type
@@ -336,6 +420,9 @@ def classify_column(header: str, values: list[str]) -> Optional[EType]:
     }
 
     if val_type in strong_ids:
+        # Preserve INSURANCE_ID if header explicitly matched insurance/policy
+        if hdr_type == EType.INSURANCE_ID and val_type == EType.MRN:
+            return EType.INSURANCE_ID
         # Trust value profiling for strong IDs even if header is generic/obfuscated
         return val_type
 
@@ -343,7 +430,7 @@ def classify_column(header: str, values: list[str]) -> Optional[EType]:
         # Trust header for names
         return hdr_type
 
-    # If header matched a quasi-identifier (DOB, AGE, VILLAGE, PIN, GENDER)
+    # If header matched a quasi-identifier (DOB, AGE, VILLAGE, TEHSIL, DISTRICT, PIN, GENDER) or address
     if hdr_type:
         return hdr_type
 

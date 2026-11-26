@@ -483,7 +483,6 @@ phlebotomist
 counselor
 dietician
 social worker
-asha
 asha didi
 asha worker
 anm

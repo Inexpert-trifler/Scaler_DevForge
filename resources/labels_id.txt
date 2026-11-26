@@ -25,3 +25,20 @@ registration no
 admission no
 admission_id
 patient_id
+# Romanized Hinglish ID column variants (common in rural HIS)
+aadhar
+aadhar no
+aadhar number
+aadhaar no
+aadhaar number
+abha number
+abha no
+abha id
+# MRN / registration number variants
+reg. no
+regno
+registration number
+hospital id
+patient id
+uhid no
+crno

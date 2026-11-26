@@ -8,3 +8,11 @@ d.o.b
 जन्म तारीख
 b'day
 birthday
+# Romanized Hinglish DOB variants (common in rural HIS)
+janm tithi
+janam tithi
+janm tariikh
+janm date
+janm din
+dob/age
+date of birth/age
