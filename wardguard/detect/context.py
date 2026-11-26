@@ -31,9 +31,9 @@ RE_LABEL_NAME = re.compile(
 )
 
 # 2. Names after relations -> RELATIVE_NAME
-# POS: "S/o Shyam Patel", "W/O Ramesh Kumar", "D/o Mohan Lal", "पत्नी: रेखा देवी"
+# POS: "S/o Shyam Patel", "W/O Ramesh Kumar", "D/o Mohan Lal", "wife: Rekha Devi", "husband Naresh Chauhan", "father Babu Ram"
 RE_RELATION_NAME = re.compile(
-    r'(?i)(?:^|[\s,;:(])(?:s/o|d/o|w/o|c/o|h/o|f/o|m/o|son\s+of|daughter\s+of|wife\s+of|husband\s+of|father\s+of|care\s+of|guardian|अभिभावक|पुत्र|पुत्री|पत्नी|पति|पिता|माता)\s*[:=-]?\s*'
+    r'(?i)(?:^|[\s,;:(])(?:s/o|d/o|w/o|c/o|h/o|f/o|m/o|son\s+of|daughter\s+of|wife\s+of|husband\s+of|father\s+of|mother\s+of|care\s+of|guardian|husband|wife|father|mother|brother|sister|अभिभावक|पुत्र|पुत्री|पत्नी|पति|पिता|माता)\s*[:=-]?\s*'
     r'([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){0,3})'
 )
 
