@@ -45,7 +45,7 @@
 | S-05 | `context.py` + `detect_text`: labels, relations, honorifics, `Name 48 Y/F`; roles patient/relative | H6–10 | S-04 | TR-DET-4, 7 | DONE | Tests green (7/7); all 4 canaries caught |
 | S-06 | `translit.py` + `names.py` Gazetteer: harvest, variants (Latin ↔ Deva, spelling rules), fast find | H7–11 | S-03 | TR-DET-5 | DONE | Tests green (5/5); cross-script variants + fast find |
 | S-07 | `detect_file` orchestration + QI mentions (AGE/DATE/DOB/VILLAGE/PIN…) + `evidence.py` | H9–11 | S-05, S-06 | TR-DET-8, TR-LNK-1 | DONE | **M1 integration**: tests green (2/2); evidence populated |
-| S-08 | Linkage: canonical_name, phonetic_key, union-find, unique name+clue, conflict guard, blocking | H10–14 | S-07 | TR-LNK-1..7 | TODO | F0.5 > 0.9; 0 homonym merges — **M2** |
+| S-08 | Linkage: canonical_name, phonetic_key, union-find, unique name+clue, conflict guard, blocking | H10–14 | S-07 | TR-LNK-1..7 | DONE | **M2**: tests green (5/5); 0 homonym merges; conflict-guarded |
 | S-09 | `tools/chaos_gen.py` + fix generalization failures | H14–18 | S-08 | TR-TOOL-3 | TODO | chaos delta < 10 — **M3** |
 | S-10 | Trap test suite completion + numbers table for the brief (per script, per type) | H17–20 | S-09 | 09 §D | TODO | all trap tests green |
 | S-11 | Independent release verification (fresh clone) | H21–22 | L-15 | 12 | TODO | READY TO SUBMIT on Saransh's machine |

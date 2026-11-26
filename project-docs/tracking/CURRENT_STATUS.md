@@ -35,7 +35,7 @@
 | Person | Task | State |
 |---|---|---|
 | Lakshya | L-01 Scaffold | TODO |
-| Saransh | S-08 Linkage engine | TODO |
+| Saransh | S-09 Chaos generator | TODO |
 
 ## Blockers
 None.
