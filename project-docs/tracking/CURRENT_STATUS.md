@@ -35,7 +35,7 @@
 | Person | Task | State |
 |---|---|---|
 | Lakshya | L-01 Scaffold | TODO |
-| Saransh | S-04 Meaning-trap guards | TODO |
+| Saransh | S-05 Context rules & detect_text | TODO |
 
 ## Blockers
 None.
