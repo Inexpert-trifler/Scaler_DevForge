@@ -134,3 +134,24 @@ def test_secret_never_leaked_in_output():
             if p.is_file():
                 content = p.read_bytes()
                 assert canary_secret not in content, f"Secret leaked in {p}"
+
+
+def test_brief_pdf_and_readme_constraints():
+    """L-14 Documentation validation: README complete, docs/brief.pdf <= 2 pages."""
+    repo_root = Path(__file__).resolve().parent.parent
+    readme_file = repo_root / "README.md"
+    assert readme_file.exists()
+    readme_text = readme_file.read_text(encoding="utf-8")
+    assert "_TBD_" not in readme_text, "README.md still contains _TBD_ placeholders"
+    assert "Models Used" in readme_text
+    assert "Architecture" in readme_text
+    assert "CONTRACT OK" in readme_text
+
+    brief_pdf = repo_root / "docs" / "brief.pdf"
+    assert brief_pdf.exists()
+    assert brief_pdf.stat().st_size > 1000
+
+    import pypdf
+    reader = pypdf.PdfReader(str(brief_pdf))
+    assert 1 <= len(reader.pages) <= 2, f"docs/brief.pdf must be <= 2 pages, found {len(reader.pages)}"
+

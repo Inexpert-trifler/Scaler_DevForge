@@ -31,8 +31,8 @@
 | L-11 | `tools/attack_sim.py` (A2–A5 incl. global-shift recovery) | H10–14 | L-10 | TR-TOOL-2 | DONE | raw vs ours numbers logged; A3 4.5%, A4 4.5%, A5 25.0% (all pass); tests green (116/116) |
 | L-12 | k-anonymity plan + targeted coarsening; tune k, DOB policy (D-012) | H13–16 | L-11, S-08 | TR-PRV-7 | DONE | **M2**: equivalence classes over QIs, wider age band (10y), village/tehsil/district drop; tests green (123/123) |
 | L-13 | Performance, memory, determinism; check_submission READY | H15–18 | all | TR-RUN-6, TR-SEC-4 | DONE | **M3**: import <0.2s, bulk x10 (60 files, 1.8s, RSS 35.4MB), byte-identical determinism; check_submission READY TO SUBMIT; tests green (127/127) |
-| L-14 | README + 2-page brief (numbers from both) | H18–21 | L-13 | R16 | TODO | docs/brief.pdf ≤ 2 pages |
-| L-15 | Release checklist, cleanup, final push | H21–23 | L-14 | 12 | TODO | **M4** |
+| L-14 | README + 2-page brief (numbers from both) | H18–21 | L-13 | R16 | DONE | docs/brief.pdf ≤ 2 pages (2/2 verified); README complete |
+| L-15 | Release checklist, cleanup, final push | H21–23 | L-14 | 12 | IN_PROGRESS | **M4** |
 
 ## Saransh: Intelligence (Detection + Linkage)
 
