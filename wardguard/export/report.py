@@ -1,4 +1,16 @@
-"""report.json generator conforming to schema raksha-report/1."""
+"""report.json generator conforming to schema raksha-report/1.
+
+Implements TR-EXP-3:
+- Schema: raksha-report/1
+- Files: every input by SHA-256, output path (or null), status, and generic reason token
+- Honest counts: files_total, files_sanitized, files_quarantined, records_processed,
+  identifiers_detected, records_linked, records_generalized, records_suppressed, records_quarantined
+- Entities breakdown: EType counts
+- Timing: seconds taken
+- Resources: peak_rss_mb
+- Deterministic output
+"""
+from __future__ import annotations
 import json
 from pathlib import Path
 import resource
@@ -31,11 +43,14 @@ def write_report(
     duration = round(time.time() - t0, 3)
     peak_rss = get_peak_rss_mb()
 
+    # Deterministic order for file entries: sort by sha256, then rel
+    sorted_files = sorted(files, key=lambda f: (f.sha256, f.rel))
+
     file_entries = []
     sanitized_count = 0
     quarantined_count = 0
 
-    for pf in files:
+    for pf in sorted_files:
         if pf.status == "sanitized":
             sanitized_count += 1
             file_entries.append(
@@ -57,6 +72,9 @@ def write_report(
                 }
             )
 
+    # Sort entities deterministically by key
+    sorted_entities = {k: v for k, v in sorted(stats.entities.items())}
+
     report_data = {
         "schema": "raksha-report/1",
         "files": file_entries,
@@ -71,7 +89,7 @@ def write_report(
             "records_suppressed": stats.records_suppressed,
             "records_quarantined": stats.records_quarantined,
         },
-        "entities": stats.entities,
+        "entities": sorted_entities,
         "timing": {
             "seconds": duration,
         },
@@ -83,4 +101,5 @@ def write_report(
     out_path = output_dir / "report.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
-        json.dump(report_data, f, indent=2)
+        json.dump(report_data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
