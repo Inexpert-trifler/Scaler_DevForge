@@ -15,3 +15,4 @@
 - [2026-11-26 20:33] [H6] Lakshya [L-08] Hidden channels: @filename stem, @header, @key slots, metadata pointers, base64 / escape decoding, and collision-safe PII file renaming | CONTRACT: ok | tests: 93 passed | 0.016s 35.28MB
 - [2026-11-26 20:39] [H7] Lakshya [L-09] Privacy core: Crockford Base32 HMAC pseudonyms, non-zero date offsets, format & interval preserving date shifter (9-day stay preserved), age band, PIN prefix | CONTRACT: ok | tests: 98 passed | 0.016s 35.27MB
 - [2026-11-26 20:50] [H8] Lakshya [L-10] Rewrite engine (H8–11), M1 integration: right-to-left mentions, whole-cell replacement, JSON numeric types preserved, D-010 PSN placement, base64 re-encoding | CONTRACT: ok | tests: 109 passed | 0.021s 35.41MB
+- [2026-11-26 20:57] [H10] Lakshya [L-11] tools: attack simulator A2-A5, profile pooling, global-shift recovery | CONTRACT: ok | A3 4.5% (<27.7%), A4 4.5% (<16.7%), A5 25.0% (<40.1%) | tests: 116 passed | 0.021s 35.38MB
