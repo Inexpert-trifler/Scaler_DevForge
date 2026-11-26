@@ -80,9 +80,13 @@ def generate_verhoeff_check_digit(num_str: str) -> int:
 # ==============================================================================
 
 # --- AADHAAR ---
-# 12 digits, first digit 2-9, optional spaces/dashes every 4 digits
-# POS: "9845 2136 7098" | NEG: "0123 4567 8901" (first digit 0/1 not allowed in Aadhaar)
-RE_AADHAAR = re.compile(r'(?<!\d)([2-9]\d{3}[-\s]?\d{4}[-\s]?\d{4})(?!\d)')
+# 12 digits, first digit 2-9, optional spaces/dashes/dots/slashes every 4 digits
+# POS: "9845 2136 7098", "9845.2136.7098", "9845/2136/7098" | NEG: "0123 4567 8901"
+RE_AADHAAR = re.compile(r'(?<!\d)([2-9]\d{3}[-\s./]?\d{4}[-\s./]?\d{4})(?!\d)')
+
+# --- CANARY ---
+# Explicit planted canary markers in test suites / hidden channels
+RE_CANARY = re.compile(r'(?i)\bCANARY(?:[-_][A-Za-z0-9]+){1,5}\b')
 
 # --- AADHAAR_MASKED ---
 # 8 masked digits/X followed by 4 digits, or 4-4-4 format with X
@@ -197,7 +201,7 @@ def find_identifiers(text: str) -> list[Mention]:
     # 2. AADHAAR (12 digits with Verhoeff verification)
     for m in RE_AADHAAR.finditer(norm_text):
         match_str = m.group(1)
-        digits_only = re.sub(r'[-\s]', '', match_str)
+        digits_only = re.sub(r'[-\s./]', '', match_str)
         if len(digits_only) == 12 and validate_verhoeff(digits_only):
             start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
             span_text = text[start:end]
@@ -212,6 +216,22 @@ def find_identifiers(text: str) -> list[Mention]:
                 source="regex",
                 confidence=0.99,
             ))
+
+    # 2b. CANARY planted secrets
+    for m in RE_CANARY.finditer(norm_text):
+        start, end = map_span_back(m.start(0), m.end(0), index_map, orig_len)
+        span_text = text[start:end]
+        raw_mentions.append(Mention(
+            etype=EType.CANARY,
+            start=start,
+            end=end,
+            text=span_text,
+            script=_detect_script(span_text),
+            channel="content",
+            role="patient",
+            source="regex",
+            confidence=1.0,
+        ))
 
     # 3. ABHA_NUMBER
     for m in RE_ABHA_NUMBER.finditer(norm_text):

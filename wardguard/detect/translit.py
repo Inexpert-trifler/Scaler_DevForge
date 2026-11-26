@@ -18,14 +18,14 @@ RE_DEVA = re.compile(r'[\u0900-\u097f]')
 
 
 @lru_cache(maxsize=1)
-def load_translit_variants() -> dict[str, set[str]]:
+def load_translit_variants() -> dict[str, str]:
     """Load canonical to variant token mappings from resources/translit_variants.tsv."""
     res_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         "resources",
         "translit_variants.tsv"
     )
-    var_map: dict[str, set[str]] = {}
+    var_map: dict[str, str] = {}
     if not os.path.exists(res_path):
         return var_map
 
@@ -36,11 +36,11 @@ def load_translit_variants() -> dict[str, set[str]]:
                 continue
             parts = [p.strip().lower() for p in line.split("\t") if p.strip()]
             if parts:
-                all_parts = set(parts)
+                canon_tok = parts[0]
                 for p in parts:
                     clean_p = p.replace('.', '')
-                    var_map[clean_p] = all_parts
-                    var_map[p] = all_parts
+                    var_map[clean_p] = canon_tok
+                    var_map[p] = canon_tok
     return var_map
 
 
@@ -107,13 +107,7 @@ def canonical_name(name: str) -> str:
     for t in tokens:
         clean_t = t.replace('.', '')
         if clean_t in var_map:
-            # Pick canonical English alphabetic variant
-            candidates = [v for v in var_map[clean_t] if v.isascii() and v.isalpha()]
-            if candidates:
-                # Pick shortest or first
-                norm_tokens.append(min(candidates, key=len))
-            else:
-                norm_tokens.append(clean_t)
+            norm_tokens.append(var_map[clean_t])
         else:
             norm_tokens.append(simplify_latin_phonetics(clean_t))
 

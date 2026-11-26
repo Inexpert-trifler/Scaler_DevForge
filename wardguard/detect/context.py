@@ -30,10 +30,17 @@ RE_LABEL_NAME = re.compile(
     r'([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){0,3})'
 )
 
+# 1b. Patient prefix without delimiter: "Patient Sunita Devi ko...", "Pt. Rajesh was admitted"
+RE_PATIENT_PREFIX_NAME = re.compile(
+    r'(?i:\b(?:patient|pt\.?|मरीज़|मरीज|रोगी)\s+(?!name\b|naam\b|id\b|no\b|number\b|details\b|info\b))'
+    r'([A-Z\u0900-\u097f][a-z\u0900-\u097f]*(?:\s+[A-Z\u0900-\u097f][a-z\u0900-\u097f]*){0,2})'
+)
+
 # 2. Names after relations -> RELATIVE_NAME
-# POS: "S/o Shyam Patel", "W/O Ramesh Kumar", "D/o Mohan Lal", "wife: Rekha Devi", "husband Naresh Chauhan", "father Babu Ram"
+# POS: "S/o Shyam Patel", "W/O Ramesh Kumar", "D/o Mohan Lal", "wife: Rekha Devi", "husband Naresh Chauhan", "father Babu Ram", "पत्नी स्व. श्री रामेश्वर दयाल"
 RE_RELATION_NAME = re.compile(
     r'(?i)(?:^|[\s,;:(])(?:s/o|d/o|w/o|c/o|h/o|f/o|m/o|son\s+of|daughter\s+of|wife\s+of|husband\s+of|father\s+of|mother\s+of|care\s+of|guardian|husband|wife|father|mother|brother|sister|अभिभावक|पुत्र|पुत्री|पत्नी|पति|पिता|माता)\s*[:=-]?\s*'
+    r'(?:(?:late|swargiya|swargwasi|shri|smt\.?|shrimati|mr\.?|mrs\.?|ms\.?|dr\.?|स्व\.?|स्वर्गीय|श्री|श्रीमती|पं\.?)\s+)*'
     r'([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){0,3})'
 )
 
@@ -74,6 +81,12 @@ RE_HINDI_SENTENCE_NAME = re.compile(
     r'(?:^|[\s।,\n])([\u0900-\u097f]{2,15}\s+[\u0900-\u097f]{2,15})\s+(?:को|ने|का|की|के|द्वारा)\b'
 )
 
+# 7b. Hinglish sentence structure: Capitalized Name + Surname before Hindi postposition
+# POS: "Sunita Patel ko bukhar hai", "Ramesh Kumar ne bataya"
+RE_HINGLISH_SENTENCE_NAME = re.compile(
+    r'(?:^|[\s।,\n])([A-Z][a-z]{1,15}\s+[A-Z][a-z]{1,15})\s+(?:ko|ne|ka|ke|ki|dwara)\b'
+)
+
 
 class GazetteerProtocol(Protocol):
     def find(self, text: str) -> list[tuple[int, int, Role, str]]:
@@ -107,6 +120,14 @@ def load_census_and_tokens() -> tuple[set[str], set[str]]:
     return all_names, surnames
 
 
+DISALLOWED_NAME_TOKENS = {
+    "name", "naam", "patient", "pt", "details", "info", "record", "case",
+    "status", "hospital", "clinic", "ward", "bed", "unit", "male", "female",
+    "age", "years", "year", "yrs", "yr", "address", "residence", "village",
+    "district", "city", "state", "date", "time", "dr", "doctor",
+}
+
+
 def _is_valid_name_span(span: str) -> bool:
     """Validate that candidate string is indeed name-like and not clinical/system words."""
     norm = normalize_for_match(span.strip())
@@ -119,8 +140,8 @@ def _is_valid_name_span(span: str) -> bool:
 
     eponyms, clinical_terms = load_eponyms_and_clinical_terms()
 
-    # Reject if entire span is clinical/eponym
-    if norm.lower() in eponyms or norm.lower() in clinical_terms:
+    # Reject if entire span is clinical/eponym or structural word
+    if norm.lower() in eponyms or norm.lower() in clinical_terms or norm.lower() in DISALLOWED_NAME_TOKENS:
         return False
 
     # Check that tokens are purely alphabetic (Latin or Devanagari)
@@ -128,7 +149,7 @@ def _is_valid_name_span(span: str) -> bool:
         clean_tok = tok.replace('.', '')
         if not (clean_tok.isalpha() or all('\u0900' <= ch <= '\u097f' for ch in clean_tok)):
             return False
-        if clean_tok.lower() in clinical_terms or clean_tok.lower() in eponyms:
+        if clean_tok.lower() in clinical_terms or clean_tok.lower() in eponyms or clean_tok.lower() in DISALLOWED_NAME_TOKENS:
             return False
 
     return True
@@ -166,6 +187,9 @@ def find_context_mentions(text: str) -> list[Mention]:
     for m in RE_LABEL_NAME.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
+    for m in RE_PATIENT_PREFIX_NAME.finditer(norm_text):
+        _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+
     # 2. Names after relation
     for m in RE_RELATION_NAME.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.RELATIVE_NAME, "relative")
@@ -191,6 +215,9 @@ def find_context_mentions(text: str) -> list[Mention]:
 
     # 7. Hindi sentence structure
     for m in RE_HINDI_SENTENCE_NAME.finditer(norm_text):
+        _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+
+    for m in RE_HINGLISH_SENTENCE_NAME.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
     return mentions

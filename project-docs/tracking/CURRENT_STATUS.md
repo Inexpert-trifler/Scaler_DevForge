@@ -35,7 +35,7 @@
 | Person | Task | State |
 |---|---|---|
 | Lakshya | L-01 Scaffold | TODO |
-| Saransh | S-09 Chaos generator | TODO |
+| Saransh | S-STRESS Stress Hardening & Adversarial Testing | DONE |
 
 ## Blockers
 None.
