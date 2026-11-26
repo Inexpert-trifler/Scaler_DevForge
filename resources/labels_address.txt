@@ -1,0 +1,29 @@
+# Generic address & location labels
+address
+addr
+residence
+permanent address
+present address
+पता
+स्थान
+ग्राम
+मोहल्ला
+वार्ड
+निवासी
+street
+locality
+area
+colony
+ward
+tehsil
+district
+pincode
+pin
+h.no
+house no
+मकान नं
+मकान संख्या
+landmark
+near
+opp
+opposite

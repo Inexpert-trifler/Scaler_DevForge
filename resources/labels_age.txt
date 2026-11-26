@@ -1,0 +1,14 @@
+# Generic age labels
+age
+umar
+aayu
+उम्र
+आयु
+वय
+age/sex
+age/gender
+age (yrs)
+age (years)
+age_years
+वर्ष
+साल

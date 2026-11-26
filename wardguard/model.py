@@ -1,6 +1,6 @@
-"""wardguard.model: Core data models for WardGuard.
+"""Single source of truth data models for WardGuard.
 
-Single source of truth matching 06_DATA_MODELS.md.
+Matches project-docs/06_DATA_MODELS.md exactly.
 """
 from __future__ import annotations
 from dataclasses import dataclass, field

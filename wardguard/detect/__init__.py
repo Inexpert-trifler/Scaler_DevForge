@@ -1,50 +1,44 @@
-"""Detection package stubs (Saransh's domain)."""
-from typing import List, Set, Tuple
-from wardguard.model import Channel, EType, Mention, ParsedFile, Role
+"""Detection module initialization and public exports."""
+from __future__ import annotations
 
-
-class Gazetteer:
-    """Stub gazetteer for names and spelling variants."""
-    def add(self, name: str, role: Role) -> None:
-        pass
-
-    def variants(self, name: str) -> Set[str]:
-        return set()
-
-    def find(self, text: str) -> List[Tuple[int, int, Role, str]]:
-        return []
-
-
-def build_gazetteer(files: List[ParsedFile], policy: dict) -> Gazetteer:
-    """Stub: harvest names from slots."""
-    return Gazetteer()
+from typing import List
+from wardguard.model import ParsedFile
+from wardguard.detect.normalize import normalize_for_match, normalize_with_map
+from wardguard.detect.patterns import find_identifiers
+from wardguard.detect.columns import classify_column
+from wardguard.detect.guards import is_protected
+from wardguard.detect.context import detect_text
+from wardguard.detect.translit import deva_to_latin, canonical_name
+from wardguard.detect.names import Gazetteer, build_gazetteer
 
 
 def detect_file(pf: ParsedFile, gaz: Gazetteer, policy: dict) -> None:
-    """Stub: detection pass for a file."""
-    pass
+    """Detection pass for a parsed file using Saransh's detection components."""
+    # Detect in unit slots
+    for unit in pf.units:
+        for slot in unit.slots:
+            mentions = detect_text(slot.text, slot.channel, gaz, policy)
+            if mentions:
+                slot.mentions.extend(mentions)
+                unit.patient_bearing = True
+
+    # Detect in file slots (headers, filename, etc.)
+    for slot in pf.file_slots:
+        mentions = detect_text(slot.text, slot.channel, gaz, policy)
+        if mentions:
+            slot.mentions.extend(mentions)
 
 
-def detect_text(text: str, channel: Channel, gaz: Gazetteer, policy: dict) -> List[Mention]:
-    """Stub: free-text detection."""
-    return []
-
-
-def classify_column(header: str, values: List[str]) -> EType | None:
-    """Stub: column classification."""
-    return None
-
-
-def find_identifiers(text: str) -> List[Mention]:
-    """Stub: regex pattern identifier finder."""
-    return []
-
-
-def is_protected(text: str, start: int, end: int) -> bool:
-    """Stub: guard checking."""
-    return False
-
-
-def normalize_for_match(text: str) -> str:
-    """Stub: normalization."""
-    return text
+__all__ = [
+    "normalize_for_match",
+    "normalize_with_map",
+    "find_identifiers",
+    "classify_column",
+    "is_protected",
+    "detect_text",
+    "deva_to_latin",
+    "canonical_name",
+    "Gazetteer",
+    "build_gazetteer",
+    "detect_file",
+]
