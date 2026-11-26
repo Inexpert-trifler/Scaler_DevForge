@@ -27,3 +27,16 @@ khurd
 खुर्द
 dehat
 देहात
+# Romanized Hinglish village column variants
+gaon ka naam
+gaaon
+gram panchayat
+graam
+# Village column headers
+village name
+village/mohalla
+village/town
+mohalla/village
+tehsil
+taluka
+taluk

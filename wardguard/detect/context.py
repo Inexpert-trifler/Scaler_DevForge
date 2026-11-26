@@ -37,11 +37,15 @@ RE_PATIENT_PREFIX_NAME = re.compile(
 )
 
 # 2. Names after relations -> RELATIVE_NAME
-# POS: "S/o Shyam Patel", "W/O Ramesh Kumar", "D/o Mohan Lal", "wife: Rekha Devi", "husband Naresh Chauhan", "father Babu Ram", "पत्नी स्व. श्री रामेश्वर दयाल"
+# POS: "S/o Shyam Patel", "W/O Ramesh Kumar", "D/o Mohan Lal", "wife: Rekha Devi", "pita: Shyam", "पत्नी स्व. श्री रामेश्वर दयाल"
+# Note: c/o and h/o require Title Case or Devanagari start (never lowercase "C/O loose stools" or "H/O asthma"!).
 RE_RELATION_NAME = re.compile(
-    r'(?i)(?:^|[\s,;:(])(?:s/o|d/o|w/o|c/o|h/o|f/o|m/o|son\s+of|daughter\s+of|wife\s+of|husband\s+of|father\s+of|mother\s+of|care\s+of|guardian|husband|wife|father|mother|brother|sister|अभिभावक|पुत्र|पुत्री|पत्नी|पति|पिता|माता)\s*[:=-]?\s*'
-    r'(?:(?:late|swargiya|swargwasi|shri|smt\.?|shrimati|mr\.?|mrs\.?|ms\.?|dr\.?|स्व\.?|स्वर्गीय|श्री|श्रीमती|पं\.?)\s+)*'
-    r'([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){0,3})'
+    r'(?:(?i:(?:^|[\s,;:(])(?:s/o|d/o|w/o|f/o|m/o|son\s+of|daughter\s+of|wife\s+of|husband\s+of|father\s+of|mother\s+of|guardian|husband|wife|father|mother|brother|sister|अभिभावक|पुत्र|पुत्री|पत्नी|पति|पिता|माता)\s*[:=-]?\s*'
+    r'(?:(?:late|swargiya|swargwasi|shri|smt\.?|shrimati|mr\.?|mrs\.?|ms\.?|dr\.?|स्व\.?|स्वर्गीय|श्री|श्रीमती|पं\.?)\s+)*)'
+    r'([A-Za-z\u0900-\u097f]+(?:[ \t]+[A-Za-z\u0900-\u097f]+){0,3})'
+    r'|(?i:(?:^|[\s,;:(])(?:c/o|care\s+of|h/o)\s*[:=-]?\s*)'
+    r'((?:(?:Late|Shri|Smt\.?|Shrimati|Mr\.?|Mrs\.?|Ms\.?|श्री|श्रीमती)\s+)*'
+    r'[A-Z\u0900-\u097f][a-z\u0900-\u097f]+(?:[ \t]+[A-Z\u0900-\u097f][a-z\u0900-\u097f]+){0,3}))'
 )
 
 # 3. Honorifics before name: Shri, Smt, Mr, Mrs, Ms, श्रीमती, श्री, etc.
@@ -51,28 +55,56 @@ RE_HONORIFIC_PREFIX_NAME = re.compile(
     r'([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){0,2})'
 )
 
-# 4. Honorifics after name: <Name> ji, <Name> sahab, <Name> saheb, <Name> बाबू
-# POS: "Shahid sahab", "Asha ji", "Sunil babu", "शाहिद साहब", "सुनील बाबू", "आशा जी"
+# 4. Honorifics after name: <Name> ji, <Name> sahab, <Name> saheb, <Name> bhai, <Name> behenji
+# POS: "Shahid sahab", "Asha ji", "Sunil babu", "Mahesh bhai", "Anita behenji", "शाहिद साहब"
 RE_HONORIFIC_SUFFIX_NAME = re.compile(
     r'(?i)(?:^|[\s,;:(])([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){0,2})\s+'
-    r'(?:sahab|saheb|ji|babu|साहब|जी|बाबू)(?:[\s,;:\n।.]|$)'
+    r'(?:sahab|saheb|ji|babu|bhai|bhaiya|behen|behenji|ben|didi|amma|abbu|dadi|dada|nani|nana|chacha|chachi|kaka|bua|mausi|uncle|aunty|साहब|जी|बाबू|भाई|भैया|बहन|दीदी|अम्मा)(?:[\s,;:\n।.]|$)'
 )
 
-# 5. Demographic pattern: <Name> 48 Y / F, <Name>, 45/M, <Name> 54 वर्ष
+# 4b. Single/short name immediately preceding relation marker: "Asha, W/o Kamal", "Ramu S/o Hari"
+RE_BEFORE_RELATION_NAME = re.compile(
+    r'(?:^|[\s,;:(])([A-Za-z\u0900-\u097f]{2,20}(?:[ \t]+[A-Za-z\u0900-\u097f]{2,20})?)\s*,\s*(?i:s/o|d/o|w/o|c/o|h/o|f/o|m/o)\b'
+)
+
+# 4c. Possessive patient reference before relative/attendant: "Asha's attendant", "Anita's husband"
+RE_POSSESSIVE_PERSON = re.compile(
+    r'(?:^|[\s,;:(])([A-Z\u0900-\u097f][a-z\u0900-\u097f]{1,20}(?:[ \t]+[A-Z\u0900-\u097f][a-z\u0900-\u097f]{1,20})?)\s*[\'\u2019]s\s+'
+    r'(?i:attendant|relative|husband|wife|father|mother|son|daughter|brother|sister|family|guardian)\b'
+)
+
+# 5. Demographic pattern: <Name> 48 Y / F, <Name>, 45/M, <Name> 54 वर्ष, <div>Zainab Siddiqui, 23 yrs
 # POS: "Sunita Patel 48 Y / F", "Ramesh Kumar 52/M", "सुनीता 45 वर्ष"
 RE_DEMOGRAPHIC_NAME = re.compile(
-    r'(?i)(?:^|[\s,;:(])([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){1,3})\s*'
+    r'(?i)(?:^|[\s,;:(>])([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){1,3})\s*'
     r'(?:,\s*)?\b\d{1,3}\s*(?:y(?:ears?|rs?)?|वर्ष|साल)?\s*(?:[/-]\s*(?:m(?:ale)?|f(?:emale)?|पुरुष|महिला))?\b'
 )
 
-# 6. Attendant / Called-by / Contact person pattern (Visitor logs, transport, tickets)
-# POS: "called by Kaveri Nambiar", "Zorawar Qadri (attendant", "raised by Ilavenil Bhattacharya"
+# 6. Attendant / Called-by / Contact person pattern (Visitor logs, transport, tickets, consent)
+# POS: "called by Kaveri Nambiar", "witnessed by Tsering Wangmo", "Zorawar Qadri (attendant", "raised by Ilavenil Bhattacharya"
 RE_CONTACT_PERSON = re.compile(
-    r'(?i)(?:^|[\s,;:(])(?:called\s+by|raised\s+by(?:\s*[:,-])?|contact\s+person(?:\s*[:,-])?)\s*'
-    r'([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){1,3})'
+    r'(?i)(?:^|[\s,;:(])(?:called\s+by|raised\s+by(?:\s*[:,-])?|witnessed\s+by|signed\s+by|brought\s+by|verified\s+by|reported\s+by|submitted\s+by|informed\s+by|accompanied\s+by(?!\s+(?:husband|wife|father|mother|son|daughter|relative|brother|sister|guardian)\b)|contact\s+person(?:\s*[:,-])?)\s*'
+    r'([A-Za-z\u0900-\u097f]+(?:[ \t]+[A-Za-z\u0900-\u097f]+){1,3})'
+)
+RE_ATTENDANT_LABEL = re.compile(
+    r'(?i)(?:^|[\s,;:(])attendant\s*[:=-]\s*([A-Za-z\u0900-\u097f]+(?:[ \t]+[A-Za-z\u0900-\u097f]+){0,3})'
 )
 RE_ATTENDANT_NAME = re.compile(
     r'(?i)(?:^|[\s,;:(-])\s*([A-Za-z\u0900-\u097f]+(?:\s+[A-Za-z\u0900-\u097f]+){1,3})\s*\(\s*(?:attendant|visitor|relative)'
+)
+
+# 8. Quasi-Identifier context regexes for free text: DOB, Clinical DATE, VILLAGE, AGE
+RE_DOB_CONTEXT = re.compile(
+    r'(?i)(?:^|[\s,;:(])(?:dob|date\s+of\s+birth|birth\s+date|janm\s+tithi|जन्म\s*(?:तिथि|दिनांक|तारीख))\s*[:=-]\s*'
+    r'(\d{1,4}[-/]\d{1,2}[-/]\d{2,4})'
+)
+RE_DATE_CONTEXT = re.compile(
+    r'(?i)(?:^|[\s,;:(])(?:date(?:\s+of\s+(?:admission|discharge|visit|collection|report))?|admitted(?:\s+on)?|discharged(?:\s+on)?|visit|collected|reported|भर्ती\s+की\s+तारीख|छुट्टी\s+की\s+तारीख|तारीख|दिनांक)\s*[:=-]\s*'
+    r'(\d{1,4}[-/]\d{1,2}[-/]\d{2,4}|\d{1,2}\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)(?:\s+\d{4})?)'
+)
+RE_VILLAGE_CONTEXT = re.compile(
+    r'(?i)(?:^|[\s,;:(])(?:village|gram|gaon|ग्राम|गाँव|गांव)\s*[:=-]?\s*'
+    r'([A-Za-z\u0900-\u097f][A-Za-z\u0900-\u097f\s]{1,35}?)(?=[,\n।;]|$|\s+(?:tehsil|taluka|dist|distt|तहसील|जिला))'
 )
 
 # 7. Hindi sentence structure: <Name> <Surname> को ... / ने ...
@@ -81,15 +113,15 @@ RE_HINDI_SENTENCE_NAME = re.compile(
     r'(?:^|[\s।,\n])([\u0900-\u097f]{2,15}\s+[\u0900-\u097f]{2,15})\s+(?:को|ने|का|की|के|द्वारा)\b'
 )
 
-# 7b. Hinglish sentence structure: Capitalized Name + Surname before Hindi postposition
-# POS: "Sunita Patel ko bukhar hai", "Ramesh Kumar ne bataya"
+# 7b. Hinglish sentence structure: Capitalized Name (+ optional Surname) before Hindi postposition
+# POS: "Sunita Patel ko bukhar hai", "Ramesh Kumar ne bataya", "Manoj ka BP 111/78"
 RE_HINGLISH_SENTENCE_NAME = re.compile(
-    r'(?:^|[\s।,\n])([A-Z][a-z]{1,15}\s+[A-Z][a-z]{1,15})\s+(?:ko|ne|ka|ke|ki|dwara)\b'
+    r'(?:^|[\s।,\n])([A-Z][a-z]{2,15}(?:[ \t]+[A-Z][a-z]{1,15})?)\s+(?:ko|ne|ka|ke|ki|dwara)\b'
 )
 
 
 class GazetteerProtocol(Protocol):
-    def find(self, text: str) -> list[tuple[int, int, Role, str]]:
+    def find(self, text: str, channel: Channel = "content") -> list[tuple[int, int, Role, str]]:
         ...
 
 
@@ -192,23 +224,35 @@ def find_context_mentions(text: str) -> list[Mention]:
 
     # 2. Names after relation
     for m in RE_RELATION_NAME.finditer(norm_text):
-        _add_mention(m.start(1), m.end(1), EType.RELATIVE_NAME, "relative")
+        grp = 1 if m.group(1) is not None else 2
+        _add_mention(m.start(grp), m.end(grp), EType.RELATIVE_NAME, "relative")
 
     # 3. Honorific prefix
     for m in RE_HONORIFIC_PREFIX_NAME.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
-    # 4. Honorific suffix (<Name> ji, <Name> sahab)
+    # 4. Honorific suffix (<Name> ji, <Name> sahab, <Name> bhai, <Name> behenji)
     for m in RE_HONORIFIC_SUFFIX_NAME.finditer(norm_text):
+        _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+
+    # 4b. Name preceding relation ("Asha, W/o Kamal")
+    for m in RE_BEFORE_RELATION_NAME.finditer(norm_text):
+        _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+
+    # 4c. Possessive patient before attendant/relative ("Asha's attendant")
+    for m in RE_POSSESSIVE_PERSON.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
     # 5. Demographic pattern (<Name> 48 Y / F)
     for m in RE_DEMOGRAPHIC_NAME.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
 
-    # 6. Contact / visitor / attendant person (Zorawar Qadri, Kaveri Nambiar, Ilavenil Bhattacharya)
+    # 6. Contact / visitor / attendant person (Zorawar Qadri, Kaveri Nambiar, Ilavenil Bhattacharya, Tsering Wangmo)
     for m in RE_CONTACT_PERSON.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+
+    for m in RE_ATTENDANT_LABEL.finditer(norm_text):
+        _add_mention(m.start(1), m.end(1), EType.RELATIVE_NAME, "relative")
 
     for m in RE_ATTENDANT_NAME.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
@@ -219,6 +263,59 @@ def find_context_mentions(text: str) -> list[Mention]:
 
     for m in RE_HINGLISH_SENTENCE_NAME.finditer(norm_text):
         _add_mention(m.start(1), m.end(1), EType.PATIENT_NAME, "patient")
+
+    # 8. Contextual Quasi-Identifiers: DOB, DATE, VILLAGE
+    for m in RE_DOB_CONTEXT.finditer(norm_text):
+        start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
+        span_str = text[start:end].strip()
+        if span_str:
+            mentions.append(Mention(
+                etype=EType.DOB,
+                start=start,
+                end=end,
+                text=span_str,
+                script=_detect_script(span_str),
+                channel="content",
+                role="patient",
+                source="context",
+                confidence=0.95,
+            ))
+
+    for m in RE_DATE_CONTEXT.finditer(norm_text):
+        start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
+        span_str = text[start:end].strip()
+        if span_str:
+            mentions.append(Mention(
+                etype=EType.DATE,
+                start=start,
+                end=end,
+                text=span_str,
+                script=_detect_script(span_str),
+                channel="content",
+                role="patient",
+                source="context",
+                confidence=0.90,
+            ))
+
+    for m in RE_VILLAGE_CONTEXT.finditer(norm_text):
+        start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
+        span_str = text[start:end].strip()
+        # Trim trailing whitespace back
+        while end > start and text[end - 1].isspace():
+            end -= 1
+        span_str = text[start:end]
+        if len(span_str) >= 3 and not is_protected(text, start, end):
+            mentions.append(Mention(
+                etype=EType.VILLAGE,
+                start=start,
+                end=end,
+                text=span_str,
+                script=_detect_script(span_str),
+                channel="content",
+                role="patient",
+                source="context",
+                confidence=0.88,
+            ))
 
     return mentions
 
@@ -260,11 +357,19 @@ def detect_text(
 
     # 3. Dynamic Gazetteer matches
     if gaz is not None:
-        gaz_hits = gaz.find(text)
-        for g_start, g_end, g_role, _ in gaz_hits:
+        try:
+            gaz_hits = gaz.find(text, channel=channel)
+        except TypeError:
+            gaz_hits = gaz.find(text)
+        for g_start, g_end, g_role, g_canon in gaz_hits:
             if not is_protected(text, g_start, g_end):
                 span_str = text[g_start:g_end]
-                etype = EType.RELATIVE_NAME if g_role == "relative" else EType.PATIENT_NAME
+                if g_canon == "__MRN__":
+                    etype = EType.MRN
+                elif g_role == "relative":
+                    etype = EType.RELATIVE_NAME
+                else:
+                    etype = EType.PATIENT_NAME
                 all_mentions.append(Mention(
                     etype=etype,
                     start=g_start,

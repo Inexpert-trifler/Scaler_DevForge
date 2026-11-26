@@ -40,6 +40,24 @@ RE_DATE_EXTRACT = re.compile(
 RE_AGE_EXTRACT = re.compile(
     r'(?i)\b(?:age\s*[:=-]?\s*)?(\d{1,3})\s*(?:y(?:ears?|rs?)?|वर्ष|साल)?(?:\s*/\s*[mfMF])?\b'
 )
+# Strict age regex for free-text / un-typed slots: requires explicit age indicator (never matches dates/bills!)
+RE_AGE_EXPLICIT = re.compile(
+    r'(?i)(?:\b(?:age|उम्र|आयु)\s*[:=-]\s*(\d{1,3})\b|\b(\d{1,3})\s*(?:y(?:ears?|rs?)?\b|वर्ष|साल)(?:\s*/\s*(?:m(?:ale)?|f(?:emale)?))?|\b(\d{1,3})\s*/\s*(?:m(?:ale)?|f(?:emale)?)\b)'
+)
+RE_REL_PREFIX_STRIP = re.compile(
+    r'(?i)^(?:s/o|d/o|w/o|c/o|h/o|f/o|m/o|son\s+of|daughter\s+of|wife\s+of|husband\s+of|father\s+of|mother\s+of|guardian|पत्नी|पति|पिता|पुत्र|पुत्री)\s*[:.-]?\s*'
+)
+
+
+def _norm_id_core(etype_val: str, raw: str) -> str:
+    """Normalize strong identifier core uniformly (strips +91/0 prefix on 10-digit Indian phones)."""
+    core = re.sub(r'[^A-Za-z0-9]', '', raw).upper()
+    if etype_val == "PHONE":
+        digits = re.sub(r'\D', '', raw)
+        if len(digits) >= 10 and digits[-10] in "6789":
+            return digits[-10:]
+        return digits
+    return core
 
 # Regex for gender
 RE_GENDER_M = re.compile(r'(?i)\b(?:m|male|पुरुष|purush)\b')
@@ -131,7 +149,10 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
 
     tehsil_to_dist, districts, _ = load_admin_areas()
 
-    # 1. Process Structured Column Types
+    # 1. Process Structured Column Types (and group split first/last JSON/CSV name fields)
+    first_parts: list[str] = []
+    last_parts: list[str] = []
+
     for slot in unit.slots:
         val = slot.text.strip()
         if not val:
@@ -139,22 +160,35 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
 
         ctype = slot.column_type
         if ctype == EType.PATIENT_NAME:
-            canon = canonical_name(val)
-            if canon:
-                name_keys.append(canon)
-                tokens = canon.split()
-                if len(tokens) >= 1:
-                    given_keys.append(tokens[0])
-                if len(tokens) >= 2:
-                    surname_keys.append(tokens[-1])
+            lp = slot.path.lower()
+            is_first = lp.endswith(("/first", "/given/0", "col:firstname", "col:first_name")) or lp == "/first"
+            is_last = lp.endswith(("/last", "/family", "col:lastname", "col:last_name")) or lp == "/last"
+            if is_first:
+                first_parts.append(val)
+            elif is_last:
+                last_parts.append(val)
+            else:
+                canon = canonical_name(val)
+                if canon:
+                    name_keys.append(canon)
+                    tokens = canon.split()
+                    if len(tokens) >= 1:
+                        given_keys.append(tokens[0])
+                    if len(tokens) >= 2:
+                        surname_keys.append(tokens[-1])
         elif ctype == EType.RELATIVE_NAME:
-            canon = canonical_name(val)
+            cleaned_rel = RE_REL_PREFIX_STRIP.sub("", val).strip()
+            canon = canonical_name(cleaned_rel or val)
             if canon:
                 relative_keys.append(canon)
         elif ctype == EType.DOB:
             iso = parse_iso_date(val)
             if iso and not dob_val:
                 dob_val = iso
+        elif ctype == EType.DATE:
+            iso = parse_iso_date(val)
+            if iso:
+                dates.append(iso)
         elif ctype == EType.AGE:
             parsed_a = parse_age(val)
             if parsed_a is not None and age_val is None:
@@ -165,21 +199,50 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
                 gender_val = g
         elif ctype == EType.VILLAGE:
             village_key = canonical_name(val)
+        elif ctype == EType.TEHSIL:
+            teh_canon = canonical_name(val)
+            if not district_key and teh_canon in tehsil_to_dist:
+                district_key = tehsil_to_dist[teh_canon]
         elif ctype == EType.DISTRICT:
-            district_key = val.lower().strip()
+            district_key = (canonical_name(val) or val.lower().strip())
         elif ctype in (EType.PHONE, EType.AADHAAR, EType.ABHA_NUMBER, EType.PAN, EType.MRN):
-            # Extract digit/alphanumeric core
-            core = re.sub(r'[^A-Za-z0-9]', '', val).upper()
+            core = _norm_id_core(ctype.value, val)
             if core:
                 strong_ids.append((ctype.value, core))
 
+    # Combine split first + last name parts into a composite full canonical name
+    if first_parts and last_parts:
+        full_combined = f"{first_parts[0]} {last_parts[0]}"
+        canon_full = canonical_name(full_combined)
+        if canon_full:
+            name_keys.append(canon_full)
+            toks = canon_full.split()
+            if toks:
+                given_keys.append(toks[0])
+            if len(toks) >= 2:
+                surname_keys.append(toks[-1])
+    elif first_parts and not name_keys:
+        canon_f = canonical_name(first_parts[0])
+        if canon_f:
+            given_keys.append(canon_f)
+    elif last_parts and not name_keys:
+        canon_l = canonical_name(last_parts[0])
+        if canon_l:
+            surname_keys.append(canon_l)
+
     # 2. Process Mentions in Slots (free-text / hidden channels / regex hits)
     for slot in unit.slots:
-        # Also inspect slot.text directly for age and gender if not already found
-        if age_val is None:
-            parsed_a = parse_age(slot.text)
-            if parsed_a is not None:
-                age_val = parsed_a
+        # Inspect un-typed free-text slots ONLY with strict explicit age pattern (avoids dates like 2026-05-26 -> age=26!)
+        if age_val is None and slot.column_type is None and slot.value_type == "str":
+            m_explicit = RE_AGE_EXPLICIT.search(slot.text)
+            if m_explicit:
+                num_str = m_explicit.group(1) or m_explicit.group(2) or m_explicit.group(3)
+                try:
+                    cand_a = int(num_str)
+                    if 0 <= cand_a <= 120:
+                        age_val = cand_a
+                except ValueError:
+                    pass
         if not gender_val:
             g = parse_gender(slot.text)
             if g:
@@ -192,15 +255,18 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
 
             if m.etype == EType.PATIENT_NAME and m.role != "relative":
                 canon = canonical_name(m_text)
+                # Only add multi-token or standalone doc-level name keys; avoid 1-token noise when full name exists
                 if canon and canon not in name_keys:
-                    name_keys.append(canon)
+                    if len(canon.split()) >= 2 or not any(len(nk.split()) >= 2 for nk in name_keys):
+                        name_keys.append(canon)
                     toks = canon.split()
                     if len(toks) >= 1:
                         given_keys.append(toks[0])
                     if len(toks) >= 2:
                         surname_keys.append(toks[-1])
             elif m.etype == EType.RELATIVE_NAME or m.role == "relative":
-                canon = canonical_name(m_text)
+                cleaned_rel = RE_REL_PREFIX_STRIP.sub("", m_text).strip()
+                canon = canonical_name(cleaned_rel or m_text)
                 if canon and canon not in relative_keys:
                     relative_keys.append(canon)
             elif m.etype == EType.DOB and not dob_val:
@@ -212,7 +278,9 @@ def extract_unit_evidence(unit: Unit) -> Evidence:
                 if parsed_a is not None:
                     age_val = parsed_a
             elif m.etype in (EType.PHONE, EType.AADHAAR, EType.ABHA_NUMBER, EType.PAN, EType.MRN):
-                core = re.sub(r'[^A-Za-z0-9]', '', m_text).upper()
+                # Do not treat metadata/filename-level ID mentions on @file/#doc as primary unit identity if unit already has content IDs,
+                # except normalize PHONE/MRN uniformly.
+                core = _norm_id_core(m.etype.value, m_text)
                 if core:
                     item = (m.etype.value, core)
                     if item not in strong_ids:

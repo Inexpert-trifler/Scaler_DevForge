@@ -36,3 +36,27 @@ c/o
 h/o
 f/o
 m/o
+# Romanized Hinglish name column variants (common in rural HIS)
+naam
+naam (patient)
+marij ka naam
+rogi ka naam
+marz ka naam
+# Relative/guardian column variants
+pita ka naam
+pati ka naam
+mata ka naam
+pita/pati ka naam
+pita / pati ka naam
+guardian ka naam
+# Column header variants
+full name
+fullname
+patient full name
+first name
+firstname
+last name
+lastname
+surname
+given name
+family name

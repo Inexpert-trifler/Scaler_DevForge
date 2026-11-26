@@ -51,7 +51,7 @@ RE_VITALS_CONTEXT = re.compile(
     r'(?i)(?:^|[\s,;:(])(?:bp|blood\s*pressure|pulse|pr|hr|heart\s*rate|spo2|temp|temperature|rbs|fbs|ppbs|hb|tlc|platelets?|esr|crp)\s*[:=]?\s*$'
 )
 RE_LAB_UNITS_SUFFIX = re.compile(
-    r'(?i)^\s*(?:mmhg|bpm|/min|%|f|c|mg/dl|mmol/l|g/dl|/cumm|cells/cumm|iu/l|u/l|ng/ml|pg/ml|meq/l)\b'
+    r'(?i)^\s*(?:mmhg|bpm|/min|%|mg/dl|mmol/l|g/dl|/cumm|cells/cumm|iu/l|u/l|ng/ml|pg/ml|meq/l|(?:°\s*|deg\s*)?[fc](?![A-Za-z/]))\b'
 )
 
 # 4. Clinical prefixes (C/O, K/C/O, H/O, O/E)
@@ -72,7 +72,7 @@ RE_WARD_BED = re.compile(
 # 6. Healthcare worker roles (ASHA worker, ASHA didi, ANM)
 # POS: "ASHA didi", "ASHA worker", "ANM didi", "आशा वर्कर", "आशा दीदी"
 RE_HEALTH_ROLE = re.compile(
-    r'(?i)^\s*(?:asha\s*(?:worker|didi|didi ji)?|anm|anganwadi\s*worker|आशा\s*(?:वर्कर|दीदी))\s*$'
+    r'(?i)^\s*(?:asha\s+(?:worker|didi(?:\s+ji)?)|anm(?:\s+didi)?|anganwadi\s*worker|आशा\s+(?:वर्कर|दीदी))\s*$'
 )
 
 
@@ -129,9 +129,15 @@ def is_protected(text: str, start: int, end: int) -> bool:
     if RE_DOSE_STRICT.match(span_text):
         return True
 
-    # 4. Check for Ward / Bed references
+    # 4. Check for Ward / Bed references (Hospital wards ONLY, never residential address "Ward 6, Mohalla...")
     if RE_WARD_BED.match(span_text):
-        return True
+        ctx_window = text[max(0, start - 60):min(len(text), end + 80)]
+        is_address_ctx = re.search(
+            r'(?i)(?:H\.?\s*No|House|Makan|Flat|Plot|Mohalla|Colony|Tehsil|Distt|District|Address|Pata|near\s+|opp\.?|behind|c/o|s/o|w/o|d/o|मकान|मोहल्ला|तहसील|जिला|पता)',
+            ctx_window,
+        )
+        if not is_address_ctx:
+            return True
 
     # 5. Check for Health worker role (ASHA worker / didi)
     if RE_HEALTH_ROLE.match(span_text):
@@ -153,7 +159,9 @@ def is_protected(text: str, start: int, end: int) -> bool:
             return True
 
     # Vitals context: preceded by "BP", "Pulse", "SpO2", "Temp", etc.
-    if RE_VITALS_CONTEXT.search(ctx_before) or RE_LAB_UNITS_SUFFIX.search(ctx_after):
+    # Never suppress 10+ digit identifiers/phones as vitals!
+    digits_in_span = re.sub(r'\D', '', span_text)
+    if len(digits_in_span) <= 5 and (RE_VITALS_CONTEXT.search(ctx_before) or RE_LAB_UNITS_SUFFIX.search(ctx_after)):
         return True
 
     # Followed by disease / syndrome / palsy / test (e.g. "<Name>'s disease", "<Name>'s syndrome")

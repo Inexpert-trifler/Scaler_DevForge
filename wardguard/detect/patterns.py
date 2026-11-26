@@ -11,6 +11,8 @@ Implements TR-DET-1, TR-DET-2:
 - MRN / UHID / IPD hospital identifiers
 - PIN (6 digits with context or standalone boundary)
 - House / Address tokens
+- Locality (Ward, Mohalla, Colony, Nagar, etc.)
+- Landmark (near/opp/behind a known place)
 """
 from __future__ import annotations
 import re
@@ -94,9 +96,11 @@ RE_CANARY = re.compile(r'(?i)\bCANARY(?:[-_][A-Za-z0-9]+){1,5}\b')
 RE_AADHAAR_MASKED = re.compile(r'(?<![A-Za-z0-9])([xX*]{4}[-\s]?[xX*]{4}[-\s]?\d{4}|[xX*]{8}[-\s]?\d{4})(?!\d)')
 
 # --- ABHA_NUMBER ---
-# 14 digits, typically in 2-digit groups or 2-4-4-4 format: 14-1234-5678-9012 or 14123456789012
-# POS: "14-1234-5678-9012" | NEG: "12345"
-RE_ABHA_NUMBER = re.compile(r'(?<!\d)(1[1-9][-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4})(?!\d)')
+# 14 digits, typically 2-4-4-4 format: 91-1234-5678-9012 or 14-1234-5678-9012
+# POS: "91-6009-6930-8506", "14-1234-5678-9012" | NEG: "12345"
+RE_ABHA_NUMBER = re.compile(
+    r'(?<!\d)([1-9]\d[-\s]\d{4}[-\s]\d{4}[-\s]\d{4}|(?:91|1[1-9])\d{12})(?!\d)'
+)
 
 # --- ABHA_ADDRESS ---
 # Username at abdm/sbx/phr
@@ -121,40 +125,67 @@ RE_EMAIL = re.compile(r'(?i)\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b
 
 # --- MRN / HOSPITAL IDENTIFIERS ---
 # Generic healthcare identifier formats:
-# UHID-123456, ADM/24/1234, IP-23-4567, SNJ/26/064127, CR-987654, REGNO-123456
-# POS: "SNJ/26/064127", "UHID-9876543", "IP-24-9081", "ADM2024001" | NEG: "BP 120/80", "1-0-1"
+# UHID-123456, ADM/24/1234, IP-23-4567, SNJ/26/064127, DHH2026-084999, DHH-IPD-00591, adm000161
+# Uses alphanumeric boundaries so underscore-delimited filenames/paths (_JJH-0076928, _adm000161) match!
+# POS: "SNJ/26/064127", "UHID-9876543", "IP-24-9081", "ADM2024001", "DHH2026-084999" | NEG: "BP 120/80", "1-0-1"
 RE_MRN = re.compile(
-    r'(?i)\b('
-    r'(?:UHID|MRN|IPD?|OPD|ADM|REG|CR|PAT|IP)[-\s#/:]*[A-Z0-9]{2,6}(?:[/-][A-Z0-9]+){1,3}'
-    r'|(?:UHID|MRN|IPD?|OPD|ADM|CRNO?)[-\s#/:]*\d{4,10}'
-    r'|[A-Z]{2,4}/\d{2}/\d{4,8}'
+    r'(?i)(?<![A-Za-z0-9])('
+    r'(?:UHID|MRN|IPD?|OPD|ADM|REG|CR|PAT|JJH|SNJ|DHH|ARG)[-\s#/:]*[A-Z0-9]{2,6}(?:[/-][A-Z0-9]*\d[A-Z0-9]*){1,3}'
+    r'|(?:UHID|MRN|IPD?|OPD|ADM|CRNO?|JJH|SNJ|DHH|ARG)[-\s#/:]*\d{4,10}'
+    r'|[A-Z]{2,5}\d{2,4}[-/]\d{4,10}'
+    r'|[A-Z]{2,5}(?:[/-][A-Z0-9]*\d[A-Z0-9]*){1,3}'
     r'|[A-Z]{2,5}-\d{4,10}'
-    r')\b'
+    r')(?![A-Za-z0-9])'
 )
 
 # --- INSURANCE_ID ---
 # Ayushman Bharat PM-JAY (e.g., PMJAY-..., AB-PMJAY-...), or policy numbers
 # POS: "PMJAY-123456789", "ABPMJAY-987654321", "POL-987654321" | NEG: "OD 1 tab"
 RE_INSURANCE = re.compile(
-    r'(?i)\b('
+    r'(?i)(?<![A-Za-z0-9])('
     r'(?:PMJAY|AB-?PMJAY|INS|POLICY)[-\s#/:]*[A-Z0-9]{6,16}'
     r'|[A-Z]{2,4}/POL/\d{4,12}'
-    r')\b'
+    r')(?![A-Za-z0-9])'
 )
 
 # --- HOUSE / RESIDENTIAL TOKENS ---
-# H.No. 123, House No 45/A, Flat 3B, Plot No. 89, मकान नं 45
-# POS: "H.No. 364", "House No. 12/A", "Flat No 4B", "मकान नं. 78" | NEG: "x 5 days"
+# H.No. 123, House No 45/A, House 163, Makan No. 235, Flat 3B, Plot No. 89, मकान नं 45
+# POS: "H.No. 364", "House 163", "Makan No. 235", "मकान नं. 78" | NEG: "x 5 days"
 RE_HOUSE = re.compile(
     r'(?i)\b('
-    r'(?:H\.?\s*No\.?|House\s*No\.?|Flat\s*No\.?|Plot\s*No\.?|मकान\s*नं\.?|मकान\s*नंबर)\s*[:#-]?\s*[A-Za-z0-9/,-]+'
+    r'(?:H\.?\s*No\.?|House(?:\s*No\.?)?|Makan\s*(?:No\.?)?|Flat(?:\s*No\.?)?|Plot(?:\s*No\.?)?|मकान\s*नं\.?|मकान\s*नंबर)\s*[:#-]?\s*\d+[A-Za-z0-9/-]*'
     r')\b'
 )
 
+# --- LOCALITY ---
+# Mohalla, Ward, Colony, Nagar, Basti, etc. (excludes hospital "Ward 4 (Medicine) / Bed 24")
+# POS: "Ward 6", "Mohalla Kashiram Colony", "मोहल्ला गांधी नगर" | NEG: "ward rounds", "Ward 4 Bed 12"
+RE_LOCALITY = re.compile(
+    r'(?i)(?<![A-Za-z\u0900-\u097F])('
+    r'(?:Mohalla|Colony|मोहल्ला|कॉलोनी)\s+[A-Za-z\u0900-\u097F0-9][A-Za-z\u0900-\u097F0-9\s]{1,45}?'
+    r'|Ward\s+(?:No\.?\s*)?\d+[A-Za-z]?(?!\s*(?:\([^)]+\))?\s*/?\s*Bed\b)(?=[,\t\n।]|$)'
+    r'|वार्ड\s*(?:नं\.?\s*)?\d+(?=[,\t\n।]|$)'
+    r')(?=[,\t\n।]|$)',
+    re.UNICODE
+)
+
+# --- LANDMARK ---
+# English: "near Hanuman Mandir", "opp. Primary School", "behind Jama Masjid"
+# Hindi postposition: "जामा मस्जिद के पीछे", "गुरुद्वारे के पास"
+RE_LANDMARK = re.compile(
+    r'(?i)(?:'
+    r'(?<![A-Za-z\u0900-\u097F])((?:near|opp(?:osite)?\.?|behind|adjacent\s+to|next\s+to|in\s+front\s+of)\s+[A-Za-z0-9.\u0900-\u097F][A-Za-z0-9.\u0900-\u097F\s]{1,50}?)(?=[,\t\n।]|$)'
+    r'|([\u0900-\u097F][A-Za-z0-9\u0900-\u097F\s]{1,45}?\s+के\s+(?:पास|पीछे|सामने|नज़दीक|निकट))(?=[,\t\n।]|$)'
+    r')',
+    re.UNICODE
+)
+
 # --- PIN CODE ---
-# 6 digits: first digit 1-8, with context or specific pin indicators
-# POS: "PIN: 229073", "Pin code 226001", "Pincode: 208016" | NEG: "100000" (round number), "250000"
-RE_PIN_WITH_LABEL = re.compile(r'(?i)\b(?:pin(?:\s*code)?|pincode|पिन\s*कोड?)\s*[:#-]?\s*([1-8]\d{5})\b')
+# 6 digits: first digit 1-8, with context or at end of address ("- 229073", ", 228076")
+# POS: "PIN: 229073", "Pin code 226001", "Distt. Rae Bareli - 229073" | NEG: "100000", "250000"
+RE_PIN_WITH_LABEL = re.compile(
+    r'(?i)(?:\b(?:pin(?:\s*code)?|pincode|पिन\s*कोड?)\s*[:#-]?\s*|(?:,\s*|-\s*))([1-8]\d{5})(?!\d)'
+)
 RE_PIN_STANDALONE = re.compile(r'(?<!\d)([1-8]\d{5})(?!\d)')
 
 
@@ -341,6 +372,16 @@ def find_identifiers(text: str) -> list[Mention]:
 
     # 9. MRN
     for m in RE_MRN.finditer(norm_text):
+        # Skip matches embedded inside URLs (e.g. https://.../fhir/r4/.../icd-10)
+        prefix_ctx = norm_text[max(0, m.start(1) - 12):m.start(1)]
+        if "://" in norm_text[max(0, m.start(1) - 60):m.start(1)] and not re.search(r'\s', norm_text[max(0, m.start(1) - 60):m.start(1)]):
+            continue
+        m_val = m.group(1)
+        # Require at least 4 digits for generic codes not starting with an explicit hospital MRN prefix
+        # so medical standard codes like ICD-10, FHIR/R4, DSM-5, COVID-19 never match as MRNs.
+        digit_count = sum(c.isdigit() for c in m_val)
+        if digit_count < 4 and not re.match(r'(?i)^(?:UHID|MRN|IPD?|OPD|ADM|REG|CR|JJH|SNJ|DHH|ARG)[-/#: ]', m_val):
+            continue
         start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
         span_text = text[start:end]
         raw_mentions.append(Mention(
@@ -387,6 +428,41 @@ def find_identifiers(text: str) -> list[Mention]:
             confidence=0.95,
         ))
 
+    # 12. LOCALITY (Ward, Mohalla, Colony, etc.)
+    for m in RE_LOCALITY.finditer(norm_text):
+        start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
+        span_text = text[start:end].strip()
+        if len(span_text) >= 5:
+            raw_mentions.append(Mention(
+                etype=EType.LOCALITY,
+                start=start,
+                end=end,
+                text=span_text,
+                script=_detect_script(span_text),
+                channel="content",
+                role="patient",
+                source="regex",
+                confidence=0.90,
+            ))
+
+    # 13. LANDMARK (near/opp/behind a place, or Hindi postposition)
+    for m in RE_LANDMARK.finditer(norm_text):
+        grp = 1 if m.group(1) is not None else 2
+        start, end = map_span_back(m.start(grp), m.end(grp), index_map, orig_len)
+        span_text = text[start:end].strip()
+        if len(span_text) >= 8:
+            raw_mentions.append(Mention(
+                etype=EType.LANDMARK,
+                start=start,
+                end=end,
+                text=span_text,
+                script=_detect_script(span_text),
+                channel="content",
+                role="patient",
+                source="regex",
+                confidence=0.90,
+            ))
+
     # Resolve overlapping spans (longest span wins; on tie, highest priority EType wins)
     return resolve_overlaps(raw_mentions)
 
@@ -404,6 +480,14 @@ _ETYPE_PRIORITY = {
     EType.EMAIL: 60,
     EType.HOUSE: 55,
     EType.PIN: 50,
+    EType.LOCALITY: 45,
+    EType.LANDMARK: 40,
+    EType.RELATIVE_NAME: 39,
+    EType.PATIENT_NAME: 38,
+    EType.DOB: 34,
+    EType.VILLAGE: 32,
+    EType.AGE: 30,
+    EType.DATE: 28,
 }
 
 
