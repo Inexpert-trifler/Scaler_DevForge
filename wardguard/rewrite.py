@@ -366,10 +366,7 @@ def set_json_pointer(obj: Any, pointer: str, val_text: str, val_type: str) -> No
 
 
 def rename_json_key(obj: Any, parent_ptr: str, orig_key: str, new_key: str) -> None:
-    """Rename a key in a JSON object at parent_ptr, preserving key order."""
-    if orig_key == new_key:
-        return
-
+    """Rename a key in a JSON object at parent_ptr, preserving key order and resolving collisions."""
     if not parent_ptr.startswith("/"):
         parent_dict = obj if isinstance(obj, dict) else None
     else:
@@ -390,15 +387,38 @@ def rename_json_key(obj: Any, parent_ptr: str, orig_key: str, new_key: str) -> N
                 return
         parent_dict = cur if isinstance(cur, dict) else None
 
-    if parent_dict and isinstance(parent_dict, dict) and orig_key in parent_dict:
+    # Unescape orig_key in case it is still RFC 6901 escaped (~1 -> /, then ~0 -> ~)
+    orig_key_unescaped = orig_key.replace("~1", "/").replace("~0", "~")
+
+    if parent_dict and isinstance(parent_dict, dict):
+        # Look for orig_key or orig_key_unescaped
+        actual_key = None
+        if orig_key in parent_dict:
+            actual_key = orig_key
+        elif orig_key_unescaped in parent_dict:
+            actual_key = orig_key_unescaped
+        else:
+            return
+
+        if actual_key == new_key:
+            return
+
+        # Collision-safe target key generation
+        final_key = new_key
+        suffix_idx = 2
+        while final_key in parent_dict and final_key != actual_key:
+            final_key = f"{new_key}_{suffix_idx}"
+            suffix_idx += 1
+
         new_items = []
         for k, v in parent_dict.items():
-            if k == orig_key:
-                new_items.append((new_key, v))
+            if k == actual_key:
+                new_items.append((final_key, v))
             else:
                 new_items.append((k, v))
         parent_dict.clear()
         parent_dict.update(new_items)
+
 
 
 def place_fhir_psn(obj: Any, psn_val: str) -> None:
@@ -478,14 +498,19 @@ def render(pf: ParsedFile, policy: dict) -> bytes:
                 if s.path.startswith("/"):
                     set_json_pointer(obj_to_write, s.path, s.text, s.value_type)
 
-            # Key renaming for @key slots
-            for s in pf.file_slots:
-                if s.path.startswith("@key:"):
-                    ptr_and_key = s.path[5:]
-                    if "/" in ptr_and_key:
-                        parent_ptr, orig_key = ptr_and_key.rsplit("/", 1)
-                        if s.text != orig_key:
-                            rename_json_key(obj_to_write, parent_ptr, orig_key, s.text)
+            # Key renaming for @key slots: deepest-pointer-first (by segment count desc),
+            # while preserving original encounter order for ties
+            key_slots = [s for s in pf.file_slots if s.path.startswith("@key:")]
+            key_slots.sort(key=lambda s: s.path.count("/"), reverse=True)
+
+            for s in key_slots:
+                ptr_and_key = s.path[5:]
+                if "/" in ptr_and_key:
+                    parent_ptr, orig_key = ptr_and_key.rsplit("/", 1)
+                    # Unescape orig_key (~1 -> /, then ~0 -> ~)
+                    unescaped_orig_key = orig_key.replace("~1", "/").replace("~0", "~")
+                    if s.text != orig_key and s.text != unescaped_orig_key:
+                        rename_json_key(obj_to_write, parent_ptr, orig_key, s.text)
 
             # FHIR PSN placement (D-010)
             if pf.fmt == "fhir" and pf.units and pf.units[0].psn:
