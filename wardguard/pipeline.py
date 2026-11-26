@@ -105,6 +105,24 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
                     pf.reason = safe_reason(e)
                     event("file_quarantined", count=1)
 
+        # Tally honest stats for report.json
+        for pf in files:
+            for u in pf.units:
+                for s in u.slots:
+                    for m in s.mentions:
+                        stats.identifiers_detected += 1
+                        etype_val = m.etype.value if hasattr(m.etype, "value") else str(m.etype)
+                        stats.entities[etype_val] = stats.entities.get(etype_val, 0) + 1
+            for s in pf.file_slots:
+                for m in s.mentions:
+                    stats.identifiers_detected += 1
+                    etype_val = m.etype.value if hasattr(m.etype, "value") else str(m.etype)
+                    stats.entities[etype_val] = stats.entities.get(etype_val, 0) + 1
+
+        stats.records_linked = sum(1 for u in active_units if u.cluster is not None)
+        stats.records_generalized = sum(1 for u in active_units if u.date_offset is not None or u.coarsen)
+        stats.records_suppressed = sum(1 for u in active_units if u.coarsen)
+
         try:
             write_records(files, output_dir)
         except Exception as e:

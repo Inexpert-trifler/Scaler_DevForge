@@ -1,4 +1,11 @@
-"""records.jsonl writer."""
+"""records.jsonl writer.
+
+Implements TR-EXP-4:
+- One line per patient-bearing unit of a WRITTEN file.
+- loc = input locator, patient = PSN or null.
+- Sorted deterministically by (file, loc).
+"""
+from __future__ import annotations
 import json
 from pathlib import Path
 from typing import List
@@ -12,7 +19,7 @@ def write_records(files: List[ParsedFile], output_dir: Path) -> None:
         if pf.status != "sanitized" or not pf.out_rel:
             continue
         for u in pf.units:
-            if u.patient_bearing or u.psn:
+            if u.patient_bearing or u.psn is not None:
                 records.append(
                     {
                         "file": pf.out_rel,

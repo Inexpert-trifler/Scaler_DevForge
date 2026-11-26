@@ -24,7 +24,7 @@
 | L-04 | Safety: `log.event`, `safe_reason`, top-level try/except, report in `finally` | H2–3 | L-01 | TR-SEC-2, 3 | DONE | crash test → still exit 0 + report |
 | L-05 | Ingest: sniff, decode, CSV/TSV/JSON/FHIR/text readers, deep JSON, quarantine | H2.5–5.5 | L-04 | TR-ING-1..8 | DONE | all formats sniffed/decoded/parsed, deep JSON safe, generic quarantine |
 | L-06 | Unit enumeration + content slots (`row:N`, pointers, `doc`) | H4–6 | L-05 | TR-ING-9 | DONE | locs match specification (row:N, pointers, doc), slots retain types |
-| L-07 | Export writers (format-preserving, UTF-8, header/delimiter, JSON types) + records.jsonl + report.json | H5–8 | L-06 | TR-EXP-1..4 | TODO | CONTRACT OK with real data |
+| L-07 | Export writers (format-preserving, UTF-8, header/delimiter, JSON types) + records.jsonl + report.json | H5–8 | L-06 | TR-EXP-1..4 | DONE | format-preserving writers, records.jsonl sorted, SPEC §5 report.json |
 | L-08 | Hidden channels: keys, headers, filenames (rename), metadata, base64, escapes, FHIR narrative | H7–11 | L-06, S-05 | TR-DET-9 | TODO | channel leaks = 0 on dev |
 | L-09 | Privacy core: pseudonym, date_offset, format-preserving date shift, age band, PIN, village → tehsil | H6–10 | L-02 | TR-PRV-1..6, 8 | TODO | interval test; A7 different-secret test |
 | L-10 | Rewrite engine: apply mentions, PSN placement, QI generalization | H8–11 | L-07, L-09 | TR-PRV-2, 08 §4 | TODO | **M1 integration** |
