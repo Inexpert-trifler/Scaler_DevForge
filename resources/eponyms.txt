@@ -1,0 +1,2297 @@
+# Medical eponyms (must be preserved: never treat as person names)
+parkinson
+parkinson's
+alzheimer
+alzheimer's
+hodgkin
+hodgkin's
+non-hodgkin
+non-hodgkin's
+crohn
+crohn's
+cushing
+cushing's
+graves
+graves'
+down
+down's
+down syndrome
+turner
+turner's
+klinefelter
+klinefelter's
+bell
+bell's
+bell's palsy
+guillain-barre
+guillain barre
+gbs
+hashimoto
+hashimoto's
+huntington
+huntington's
+marfan
+marfan's
+wilson
+wilson's
+raynaud
+raynaud's
+meniere
+meniere's
+sjögren
+sjogren
+sjogren's
+addison
+addison's
+paget
+paget's
+kaposi
+kaposi's
+barrett
+barrett's
+ewing
+ewing's
+wilms
+wilms'
+hirschsprung
+hirschsprung's
+kawasaki
+kawasaki's
+behcet
+behcet's
+takayasu
+takayasu's
+wernicke
+wernicke's
+korsakoff
+korsakoff's
+apgar
+babinski
+trousseau
+chvostek
+mcburney
+mcburney's
+murphy
+murphy's
+morris
+fallot
+tetralogy of fallot
+ebstein
+ebstein's
+fanconi
+fanconi's
+nephrotic
+burkitt
+burkitt's
+pott
+pott's
+pott's spine
+hansen
+hansen's
+hansen's disease
+coomb
+coomb's
+coombs
+mantoux
+widal
+weill
+charcot
+charcot's
+goodpasture
+goodpasture's
+zellweger
+gaucher
+gaucher's
+niemann-pick
+niemann pick
+tay-sachs
+tay sachs
+alport
+alport's
+stokes-adams
+stokes adams
+cheyne-stokes
+cheyne stokes
+creutzfeldt-jakob
+creutzfeldt jakob
+cjd
+pick
+pick's
+duchenne
+duchenne's
+becker
+becker's
+erb
+erb's
+erb's palsy
+klumpke
+klumpke's
+brown-sequard
+brown sequard
+horner
+horner's
+webber
+weber
+wallenberg
+wallenberg's
+osler-weber-rendu
+osler weber rendu
+henoch-schonlein
+henoch schonlein
+hsp
+steven-johnson
+stevens-johnson
+sjs
+lyell
+lyell's
+dressler
+dressler's
+budd-chiari
+budd chiari
+mallory-weiss
+mallory weiss
+boerhaave
+boerhaave's
+plummar-vinson
+plummer vinson
+zollinger-ellison
+zollinger ellison
+meigs
+meigs'
+sheehan
+sheehan's
+kallmann
+kallmann's
+prader-willi
+prader willi
+angelman
+angelman's
+ehlers-danlos
+ehlers danlos
+osteogenesis imperfecta
+von willebrand
+vwd
+von hippel-lindau
+vhl
+peutz-jeghers
+gardner
+gardner's
+turcot
+turcot's
+lynch
+lynch syndrome
+cowden
+cowden's
+li-fraumeni
+roux-en-y
+billroth
+whipple
+whipple's
+hartmann
+hartmann's
+graham
+graham steel
+austin flint
+corrigan
+water hammer
+de musset
+quincke
+d顧erin
+dejerine
+landau-kleffner
+west syndrome
+lennox-gastaut
+tourette
+tourette's
+asperger
+asperger's
+kanner
+rett
+rett's
+munchausen
+munchausen's
+capgras
+fregoli
+cotard
+ekbom
+othello
+diogenes
+ganser
+kleine-levin
+charcot-marie-tooth
+cmt
+friedreich
+friedreich's
+ataxia
+arnold-chiari
+chiari
+dandy-walker
+sturge-weber
+von recklinghausen
+neurofibromatosis
+tuberous sclerosis
+bourneville
+von gierke
+pompe
+cori
+andersen
+mcardle
+hers
+tarui
+lesch-nyhan
+maple syrup
+hartnup
+cystinuria
+phenylketonuria
+alkaptonuria
+homocystinuria
+albinism
+kartagener
+kartagener's
+ch鑞iak
+celiac
+tropical sprue
+whipple
+crohn
+ulcerative colitis
+gilbert
+gilbert's
+crigler-najjar
+dubin-johnson
+rotor
+byler
+caroli
+wilson
+hemochromatosis
+alpha-1 antitrypsin
+reye
+reye's
+heyes
+cholelithiasis
+choledocholithiasis
+cholangitis
+pancreatitis
+appendicitis
+diverticulitis
+meckel
+meckel's
+hirschsprung
+intussusception
+volvulus
+hirschsprung's
+omphalocele
+gastroschisis
+hypertrophic pyloric stenosis
+biliary atresia
+choledochal cyst
+annular pancreas
+meckels
+zenker
+zenker's
+killian
+epiphrenic
+traction
+pulsation
+achalasia
+diffuse esophageal spasm
+nutcracker esophagus
+gerd
+barretts
+esophagitis
+candida
+herpes
+cmv
+pill esophagitis
+corrosive
+mallory weiss tear
+boerhaave syndrome
+varices
+portal hypertension
+gastritis
+peptic ulcer
+h pylori
+gastric adenocarcinoma
+gist
+lymphoma
+carcinoid
+menetrier
+menetrier's
+gastroparesis
+dumping syndrome
+blind loop
+afferent loop
+short bowel
+sibo
+celiac sprue
+whipples
+tropical sprue
+giardiasis
+cryptosporidiosis
+microsporidiosis
+isosporiasis
+strongyloides
+ascaris
+hookworm
+tapeworm
+taenia
+echinococcus
+hydatid
+amebiasis
+shigellosis
+salmonellosis
+campylobacter
+yersinia
+cholera
+e coli
+c difficile
+pseudomembranous colitis
+cmv colitis
+ischemic colitis
+radiation colitis
+microscopic colitis
+collagenous colitis
+lymphocytic colitis
+ulcerative colitis
+crohns
+toxic megacolon
+peritonitis
+spontaneous bacterial peritonitis
+appendicitis
+diverticulitis
+diverticulosis
+polyps
+adenoma
+familial adenomatous polyposis
+fap
+gardners
+turcots
+peutz jeghers
+juvenile polyposis
+lynch
+hereditary nonpolyposis colorectal cancer
+hnpcc
+colorectal cancer
+adenocarcinoma
+hemorrhoids
+anal fissure
+fistula in ano
+perianal abscess
+pilonidal sinus
+rectal prolapse
+solitary rectal ulcer
+pruritus ani
+proctitis
+constipation
+irritable bowel syndrome
+ibs
+fecal impaction
+hirschsprungs
+chagas
+chagas disease
+ogilvie
+ogilvie's
+pseudo-obstruction
+ileus
+intussusception
+volvulus
+cecal volvulus
+sigmoid volvulus
+hernia
+inguinal hernia
+femoral hernia
+umbilical hernia
+incisional hernia
+epigastric hernia
+hiatal hernia
+paraesophageal hernia
+sliding hernia
+spigelian hernia
+obturator hernia
+lumbar hernia
+diaphragmatic hernia
+bochdalek
+morgagni
+eventration
+cholecystitis
+acute cholecystitis
+chronic cholecystitis
+acalculous cholecystitis
+cholangitis
+ascending cholangitis
+reynolds
+reynolds pentad
+charcot triad
+choledocholithiasis
+gallstone pancreatitis
+gallstone ileus
+mirizzi
+mirizzi's
+mirizzi syndrome
+biliary colic
+porcelain gallbladder
+hydrops
+empyema of gallbladder
+gallbladder cancer
+cholangiocarcinoma
+klatskin
+klatskin tumor
+biliary stricture
+primary sclerosing cholangitis
+psc
+primary biliary cholangitis
+pbc
+autoimmune hepatitis
+airoldi
+biliary atresia
+choledochal cyst
+carolis
+caroli disease
+byler disease
+progressive familial intrahepatic cholestasis
+pfic
+benign recurrent intrahepatic cholestasis
+bric
+alagille
+alagille syndrome
+acute liver failure
+fulminant hepatic failure
+cirrhosis
+portal hypertension
+esophageal varices
+gastric varices
+portal hypertensive gastropathy
+ascites
+spontaneous bacterial peritonitis
+sbp
+hepatic encephalopathy
+west haven
+hepatorenal syndrome
+hrs
+hepatopulmonary syndrome
+hps
+portopulmonary hypertension
+pph
+hepatic hydrothorax
+hypersplenism
+coagulopathy
+jaundice
+prehepatic
+hepatic
+posthepatic
+gilberts
+crigler najjar
+dubin johnson
+rotors
+viral hepatitis
+hepatitis a
+hepatitis b
+hepatitis c
+hepatitis d
+hepatitis e
+alcoholic liver disease
+fatty liver
+steatohepatitis
+nash
+nafld
+masld
+mash
+nash cirrhosis
+autoimmune hepatitis
+hemochromatosis
+wilsons
+alpha 1 antitrypsin deficiency
+glycogen storage disease
+gaucher disease
+niemann pick disease
+amyloidosis
+budd chiari syndrome
+veno-occlusive disease
+sinusoidal obstruction syndrome
+portal vein thrombosis
+pylephlebitis
+peliosis hepatis
+pyogenic liver abscess
+amebic liver abscess
+hydatid cyst
+focal nodular hyperplasia
+fnh
+hepatic adenoma
+hemangioma
+cavernous hemangioma
+hepatocellular carcinoma
+hcc
+fibrolamellar hcc
+hepatoblastoma
+angiosarcoma
+metastatic liver disease
+acute pancreatitis
+chronic pancreatitis
+autoimmune pancreatitis
+pancreatic pseudocyst
+pancreatic necrosis
+walled-off necrosis
+won
+pancreatic abscess
+pancreatic ascites
+pancreatic fistula
+pancreatic adenocarcinoma
+pancreatic neuroendocrine tumor
+pnet
+insulinoma
+gastrinoma
+vipoma
+glucagonoma
+somatostatinoma
+carcinoid tumor
+cystic neoplasms of pancreas
+serous cystadenoma
+mucinous cystic neoplasm
+mcn
+ipmn
+intraductal papillary mucinous neoplasm
+solid pseudopapillary neoplasm
+spn
+annular pancreas
+pancreas divisum
+ectopic pancreas
+cystic fibrosis
+shwachman-diamond
+shwachman diamond
+johanson-blizzard
+johanson blizzard
+nesidioblastosis
+congenital hyperinsulinism
+multiple endocrine neoplasia
+men 1
+men 2a
+men 2b
+men 4
+zollinger ellison syndrome
+verner-morrison
+verner morrison
+wdha syndrome
+carcinoid syndrome
+waterhouse-friderichsen
+waterhouse friderichsen
+nelson
+nelson's
+sheehans
+simmonds
+empty sella
+kallmanns
+craniopharyngioma
+pituitary adenoma
+prolactinoma
+acromegaly
+gigantism
+cushings
+cushing disease
+cushing syndrome
+siadh
+diabetes insipidus
+central di
+nephrogenic di
+hashimotos
+graves disease
+toxic multinodular goiter
+plummers
+plummer disease
+toxic adenoma
+subacute thyroiditis
+de quervain
+de quervains
+painless thyroiditis
+silent thyroiditis
+postpartum thyroiditis
+riedel
+riedel thyroiditis
+struma ovarii
+myxedema coma
+thyroid storm
+euthyroid sick
+pendred
+pendred syndrome
+papillary thyroid carcinoma
+follicular thyroid carcinoma
+medullary thyroid carcinoma
+anaplastic thyroid carcinoma
+thyroid lymphoma
+hypoparathyroidism
+pseudohypoparathyroidism
+albright
+albright hereditary osteodystrophy
+pseudopseudohypoparathyroidism
+hyperparathyroidism
+primary hyperparathyroidism
+secondary hyperparathyroidism
+tertiary hyperparathyroidism
+parathyroid adenoma
+parathyroid hyperplasia
+parathyroid carcinoma
+familial hypocalciuric hypercalcemia
+fhh
+hungry bone syndrome
+osteitis fibrosa cystica
+brown tumor
+rickets
+osteomalacia
+osteoporosis
+osteopenia
+pagets
+paget disease
+osteopetrosis
+albers-schonberg
+albers schonberg
+fibrous dysplasia
+mccune-albright
+mccune albright
+osteogenesis imperfecta
+hypophosphatasia
+adrenal insufficiency
+addisons
+addison disease
+secondary adrenal insufficiency
+tertiary adrenal insufficiency
+adrenal crisis
+waterhouse friderichsen syndrome
+congenital adrenal hyperplasia
+cah
+21-hydroxylase deficiency
+11-beta-hydroxylase deficiency
+17-alpha-hydroxylase deficiency
+3-beta-hydroxysteroid dehydrogenase deficiency
+cushing syndrome
+pseudo-cushing
+hyperaldosteronism
+primary hyperaldosteronism
+conn
+conn's
+conn syndrome
+secondary hyperaldosteronism
+bartter
+bartter syndrome
+gitelman
+gitelman syndrome
+liddle
+liddle syndrome
+same syndrome
+syndrome of apparent mineralocorticoid excess
+pheochromocytoma
+paraganglioma
+multiple endocrine neoplasia
+von hippel lindau disease
+neurofibromatosis type 1
+succinate dehydrogenase
+adrenal incidentaloma
+adrenocortical carcinoma
+myelolipoma
+adrenal cyst
+diabetes mellitus
+type 1 diabetes
+type 2 diabetes
+gestational diabetes
+gdm
+mody
+maturity onset diabetes of the young
+lada
+latent autoimmune diabetes in adults
+diabetic ketoacidosis
+dka
+hyperosmolar hyperglycemic state
+hhs
+hypoglycemia
+whipple triad
+diabetic retinopathy
+diabetic nephropathy
+diabetic neuropathy
+diabetic foot
+charcot foot
+charcot arthropathy
+necrobiosis lipoidica
+diabetic dermopathy
+acanthosis nigricans
+dyslipidemia
+hypercholesterolemia
+hypertriglyceridemia
+mixed dyslipidemia
+familial hypercholesterolemia
+fh
+fredrickson
+fredrickson classification
+tangier
+tangier disease
+abetalipoproteinemia
+niemann pick
+gaucher
+fabry
+fabry disease
+krebbe
+krabbe
+krabbe disease
+metachromatic leukodystrophy
+mld
+hurler
+hurler syndrome
+hunter
+hunter syndrome
+sanfilippo
+morquio
+maroteaux-lamy
+sly syndrome
+mucopolysaccharidosis
+mps
+porphyria
+acute intermittent porphyria
+aip
+porphyria cutanea tarda
+pct
+erythropoietic protoporphyria
+epp
+variegate porphyria
+hereditary coproporphyria
+congenital erythropoietic porphyria
+gunther
+gunther disease
+gout
+pseudogout
+chondrocalcinosis
+cppd
+calcium pyrophosphate dihydrate
+hemochromatosis
+wilson disease
+menkes
+menkes kinky hair syndrome
+amyloidosis
+al amyloidosis
+aa amyloidosis
+attr amyloidosis
+dialysis-related amyloidosis
+leukemia
+acute lymphoblastic leukemia
+all
+acute myeloid leukemia
+aml
+chronic lymphocytic leukemia
+cll
+chronic myeloid leukemia
+cml
+philadelphia chromosome
+bcr-abl
+hairy cell leukemia
+myelodysplastic syndrome
+mds
+myeloproliferative neoplasm
+mpn
+polycythemia vera
+essential thrombocythemia
+primary myelofibrosis
+hodgkin lymphoma
+nodular sclerosis
+mixed cellularity
+lymphocyte rich
+lymphocyte depleted
+nodular lymphocyte predominant
+nlphl
+reed-sternberg
+reed sternberg
+non-hodgkin lymphoma
+diffuse large b-cell lymphoma
+dlbcl
+follicular lymphoma
+burkitt lymphoma
+mantle cell lymphoma
+marginal zone lymphoma
+malt lymphoma
+t-cell lymphoma
+cutaneous t-cell lymphoma
+mycosis fungoides
+sezary
+sezary syndrome
+anaplastic large cell lymphoma
+peripheral t-cell lymphoma
+angioimmunoblastic
+adult t-cell leukemia/lymphoma
+atll
+multiple myeloma
+plasma cell myeloma
+smoldering myeloma
+mgus
+monoclonal gammopathy of undetermined significance
+waldenstrom
+waldenstrom macroglobulinemia
+heavy chain disease
+solitary plasmacytoma
+poem syndrome
+poems
+poems syndrome
+anemia
+iron deficiency anemia
+anemia of chronic disease
+megaloblastic anemia
+pernicious anemia
+folate deficiency anemia
+aplastic anemia
+fanconi anemia
+diamond-blackfan
+diamond blackfan
+pure red cell aplasia
+hemolytic anemia
+autoimmune hemolytic anemia
+aiha
+warm aiha
+cold agglutinin
+paroxysmal cold hemoglobinuria
+pch
+donath-landsteiner
+paroxysmal nocturnal hemoglobinuria
+pnh
+hereditary spherocytosis
+hereditary elliptocytosis
+hereditary stomatocytosis
+g6pd deficiency
+pyruvate kinase deficiency
+sickle cell anemia
+sickle cell disease
+sickle cell trait
+hemoglobin c
+hemoglobin sc
+hemoglobin e
+thalassemia
+alpha thalassemia
+beta thalassemia
+thalassemia major
+thalassemia intermedia
+thalassemia minor
+cooley
+cooley's anemia
+hydrops fetalis
+microangiopathic hemolytic anemia
+maha
+thrombotic thrombocytopenic purpura
+ttp
+moschcowitz
+hemolytic uremic syndrome
+hus
+atypical hus
+ahus
+disseminated intravascular coagulation
+dic
+kasabach-merritt
+kasabach merritt
+immune thrombocytopenia
+itp
+evans
+evans syndrome
+heparin-induced thrombocytopenia
+hit
+bernard-soulier
+bernard soulier
+glanzmann
+glanzmann thrombasthenia
+von willebrand disease
+hemophilia a
+hemophilia b
+christmas disease
+hemophilia c
+factor v leiden
+prothrombin g20210a
+antithrombin deficiency
+protein c deficiency
+protein s deficiency
+antiphospholipid syndrome
+aps
+catastrophic antiphospholipid syndrome
+caps
+sneddon
+sneddon syndrome
+churg-strauss
+churg strauss
+egpa
+granulomatosis with polyangiitis
+gpa
+wegener
+wegener granulomatosis
+microscopic polyangiitis
+mpa
+polyarteritis nodosa
+pan
+kawasaki disease
+takayasu arteritis
+giant cell arteritis
+gca
+temporal arteritis
+polymyalgia rheumatica
+pmr
+behcet disease
+buerger
+buerger's
+buerger disease
+thromboangiitis obliterans
+cryoglobulinemic vasculitis
+ige vasculitis
+henoch schonlein purpura
+cogan
+cogan syndrome
+erythema nodosum
+pyoderma gangrenosum
+sweet
+sweet syndrome
+rheumatoid arthritis
+ra
+felty
+felty syndrome
+caplan
+caplan syndrome
+still
+still disease
+adult onset still disease
+aosd
+juvenile idiopathic arthritis
+jia
+systemic lupus erythematosus
+sle
+lupus nephritis
+discoid lupus
+drug-induced lupus
+subacute cutaneous lupus
+neonatal lupus
+systemic sclerosis
+scleroderma
+diffuse cutaneous systemic sclerosis
+limited cutaneous systemic sclerosis
+crest
+crest syndrome
+morphea
+eosinophilic fasciitis
+shulman
+shulman syndrome
+polymyositis
+dermatomyositis
+gottron
+gottron papules
+heliotrope rash
+inclusion body myositis
+ibm
+antisynthetase syndrome
+mixed connective tissue disease
+mctd
+sharp
+sharp syndrome
+sjogren syndrome
+sicca syndrome
+mikulicz
+mikulicz disease
+igg4-related disease
+retroperitoneal fibrosis
+ormond
+ormond disease
+riedel thyroiditis
+ankylosing spondylitis
+bechterew
+bechterew disease
+reactive arthritis
+reiter
+reiter syndrome
+psoriatic arthritis
+enteropathic arthritis
+undifferentiated spondyloarthritis
+relapsing polychondritis
+sarcoidosis
+lofren
+lofgren syndrome
+heerfordt
+heerfordt syndrome
+fibromyalgia
+chronic fatigue syndrome
+myalgic encephalomyelitis
+complex regional pain syndrome
+crps
+reflex sympathetic dystrophy
+rsd
+causalgia
+osteoarthritis
+heberden
+heberden nodes
+bouchard
+bouchard nodes
+scoliosis
+kyphosis
+lordosis
+spondylolisthesis
+spondylolysis
+spinal stenosis
+cauda equina syndrome
+conus medullaris syndrome
+cervical myelopathy
+radiculopathy
+carpal tunnel syndrome
+cubital tunnel syndrome
+guyon
+guyon canal syndrome
+tarsal tunnel syndrome
+meralgia paresthetica
+thoracic outlet syndrome
+tos
+frozen shoulder
+adhesive capsulitis
+rotator cuff tear
+impingement syndrome
+tennis elbow
+lateral epicondylitis
+golfer elbow
+medial epicondylitis
+de quervain tenosynovitis
+trigger finger
+dupuytren
+dupuytren contracture
+ganglion cyst
+baker cyst
+popliteal cyst
+meniscal tear
+anterior cruciate ligament
+acl
+pcl
+mcl
+lcl
+patellofemoral syndrome
+osgood-schlatter
+osgood schlatter
+sever
+sever disease
+plantar fasciitis
+morton
+morton neuroma
+hallux valgus
+bunion
+osteomyelitis
+septic arthritis
+tuberculosis
+pott spine
+pott disease
+gonococcal arthritis
+lyme
+lyme disease
+erythema migrans
+chikungunya
+dengue
+malaria
+typhoid
+enteric fever
+leptospirosis
+scrub typhus
+brucellosis
+q fever
+rabies
+tetanus
+botulism
+cholera
+diphtheria
+pertussis
+whooping cough
+measles
+rubeola
+mumps
+rubella
+german measles
+varicella
+chickenpox
+herpes zoster
+shingles
+ebv
+infectious mononucleosis
+kissing disease
+cmv
+hiv
+aids
+covid-19
+sars-cov-2
+influenza
+swine flu
+h1n1
+bird flu
+h5n1
+rsv
+bronchiolitis
+croup
+laryngotracheobronchitis
+epiglottitis
+pertussis
+pneumonia
+cap
+hap
+vap
+aspiration pneumonia
+pneumocystis
+pcp
+jovecii
+tuberculosis
+tb
+latent tb
+mdr-tb
+xdr-tb
+mycobacterium avium complex
+mac
+leprosy
+hansens disease
+actinomycosis
+nocardiosis
+aspergillosis
+aspergillus
+mucormycosis
+zygomycosis
+rhinocerebral mucormycosis
+blastomycosis
+coccidioidomycosis
+histoplasmosis
+paracoccidioidomycosis
+cryptococcosis
+cryptococcal meningitis
+candidiasis
+thrush
+pneumothorax
+tension pneumothorax
+hemothorax
+pleural effusion
+empyema
+chylothorax
+mesothelioma
+pleurisy
+atelectasis
+ards
+acute respiratory distress syndrome
+copd
+chronic obstructive pulmonary disease
+emphysema
+chronic bronchitis
+asthma
+status asthmaticus
+bronchiectasis
+cystic fibrosis
+kartageners
+kartagener syndrome
+ciliary dyskinesia
+idiopathic pulmonary fibrosis
+ipf
+usual interstitial pneumonia
+uip
+nsip
+cop
+cryptogenic organizing pneumonia
+boop
+hypersensitivity pneumonitis
+sarcoidosis
+silicosis
+asbestosis
+coal workers pneumoconiosis
+berylliosis
+pulmonary hypertension
+pah
+pulmonary embolism
+pe
+deep vein thrombosis
+dvt
+cor pulmonale
+obstructive sleep apnea
+osa
+central sleep apnea
+csa
+obesity hypoventilation syndrome
+pickwickian
+pickwickian syndrome
+hyperventilation syndrome
+vocal cord dysfunction
+laryngeal cancer
+lung cancer
+non-small cell lung cancer
+nsclc
+small cell lung cancer
+sclc
+squamous cell carcinoma
+adenocarcinoma
+large cell carcinoma
+carcinoid
+pancoast
+pancoast tumor
+horners
+horner syndrome
+superior vena cava syndrome
+svcs
+coronary artery disease
+cad
+angina
+stable angina
+unstable angina
+prinzmetal
+prinzmetal angina
+vasospastic angina
+myocardial infarction
+mi
+stemi
+nstemi
+acute coronary syndrome
+acs
+dressler syndrome
+ventricular septal rupture
+free wall rupture
+papillary muscle rupture
+ventricular aneurysm
+dresslers
+heart failure
+chf
+hfref
+hfpef
+acute decompensated heart failure
+pulmonary edema
+cardiogenic shock
+hypertrophic cardiomyopathy
+hcm
+hocm
+dilated cardiomyopathy
+dcm
+restrictive cardiomyopathy
+rcm
+arrhythmogenic right ventricular cardiomyopathy
+arvc
+takotsubo
+takotsubo cardiomyopathy
+broken heart syndrome
+myocarditis
+pericarditis
+constrictive pericarditis
+cardiac tamponade
+beck
+becks triad
+pulsus paradoxus
+electrical alternans
+infective endocarditis
+duke
+duke criteria
+osler
+osler nodes
+janeway
+janeway lesions
+roth
+roth spots
+rheumatic fever
+jones
+jones criteria
+rheumatic heart disease
+rhd
+mitral stenosis
+mitral regurgitation
+mitral valve prolapse
+barlow
+barlow syndrome
+aortic stenosis
+aortic regurgitation
+tricuspid stenosis
+tricuspid regurgitation
+pulmonary stenosis
+pulmonary regurgitation
+carcinoid heart disease
+bicuspid aortic valve
+atrial septal defect
+asd
+ostium secundum
+ostium primum
+sinus venosus
+ventricular septal defect
+vsd
+patent ductus arteriosus
+pda
+coarctation of the aorta
+tetralogy of fallot
+transposition of the great arteries
+tga
+truncus arteriosus
+tricuspid atresia
+total anomalous pulmonary venous return
+tapvr
+ebstein anomaly
+eisenmenger
+eisenmenger syndrome
+hypoplastic left heart syndrome
+hlhs
+sinus bradycardia
+sinus tachycardia
+sick sinus syndrome
+sss
+atrial fibrillation
+afib
+atrial flutter
+aflutter
+supraventricular tachycardia
+svt
+av nodal reentrant tachycardia
+avnrt
+av reentrant tachycardia
+avrt
+wolff-parkinson-white
+wpw
+wpw syndrome
+lown-ganong-levine
+lgl
+ventricular tachycardia
+vt
+ventricular fibrillation
+vfib
+torsades de pointes
+tdp
+long qt syndrome
+romano-ward
+jervell and lange-nielsen
+short qt syndrome
+brugada
+brugada syndrome
+catecholaminergic polymorphic vt
+cpvt
+first-degree av block
+second-degree av block
+mobitz type 1
+wenckebach
+mobitz type 2
+third-degree av block
+complete heart block
+chb
+right bundle branch block
+rbbb
+left bundle branch block
+lbbb
+left anterior fascicular block
+lafb
+left posterior fascicular block
+lpfb
+bifascicular block
+trifascicular block
+hypertension
+essential hypertension
+secondary hypertension
+resistant hypertension
+white coat hypertension
+masked hypertension
+hypertensive urgency
+hypertensive emergency
+malignant hypertension
+aortic aneurysm
+abdominal aortic aneurysm
+aaa
+thoracic aortic aneurysm
+taa
+aortic dissection
+stanford
+stanford type a
+stanford type b
+de bakey
+debakey
+marfans
+ehlers danlos
+loey-dietz
+loeys-dietz
+bicuspid aortic valve
+atherosclerosis
+peripheral artery disease
+pad
+claudication
+leriche
+leriche syndrome
+acute limb ischemia
+raynauds
+raynaud phenomenon
+raynaud disease
+thromboangiitis obliterans
+buergers
+buerger disease
+deep venous thrombosis
+dvt
+chronic venous insufficiency
+cvi
+varicose veins
+superficial thrombophlebitis
+phlegmasia cerulea dolens
+phlegmasia alba dolens
+may-thurner
+may-thurner syndrome
+lymphedema
+filariasis
+elephantiasis
+ischemic stroke
+cva
+tia
+transient ischemic attack
+middle cerebral artery
+mca
+anterior cerebral artery
+aca
+posterior cerebral artery
+pca
+basilar artery
+vertebral artery
+lacunar stroke
+pure motor stroke
+pure sensory stroke
+hemorrhagic stroke
+intracerebral hemorrhage
+ich
+subarachnoid hemorrhage
+sah
+berry aneurysm
+avm
+arteriovenous malformation
+cavernous hemangioma
+subdural hematoma
+sdh
+epidural hematoma
+edh
+lucid interval
+cerebral amyloid angiopathy
+caa
+venous sinus thrombosis
+cvst
+epilepsy
+status epilepticus
+focal seizure
+generalized seizure
+tonic-clonic
+grand mal
+absence
+petit mal
+myoclonic
+atonic
+drop attack
+febrile seizure
+west
+lennox gastaut
+dravet
+dravet syndrome
+juvenile myoclonic epilepsy
+jme
+janz
+janz syndrome
+landau kleffner
+rolandic epilepsy
+headache
+migraine
+migraine with aura
+migraine without aura
+hemiplegic migraine
+tension headache
+cluster headache
+trigeminal autonomic cephalgia
+paroxysmal hemicrania
+sunct
+trigeminal neuralgia
+tic douloureux
+glossopharyngeal neuralgia
+occipital neuralgia
+postherpetic neuralgia
+temporal arteritis
+giant cell arteritis
+idiopathic intracranial hypertension
+iih
+pseudotumor cerebri
+normal pressure hydrocephalus
+nph
+hakim
+hakim triad
+hydrocephalus
+communicating hydrocephalus
+non-communicating hydrocephalus
+dandy walker
+chiari malformation
+syringomyelia
+syrinx
+multiple sclerosis
+ms
+relapsing-remitting
+secondary progressive
+primary progressive
+progressive-relapsing
+devic
+devic disease
+neuromyelitis optica
+nmo
+acute disseminated encephalomyelitis
+adem
+transverse myelitis
+guillain barre syndrome
+aidp
+aman
+amsan
+miller fisher
+miller-fisher syndrome
+cidp
+chronic inflammatory demyelinating polyneuropathy
+charcot-marie-tooth disease
+hereditary motor sensory neuropathy
+amyotrophic lateral sclerosis
+als
+lou gehrig
+lou gehrig's disease
+progressive bulbar palsy
+primary lateral sclerosis
+spinal muscular atrophy
+sma
+werdnig-hoffmann
+kugelberg-welander
+parkinsons
+parkinson disease
+parkinsonism
+multiple system atrophy
+msa
+shy-drager
+shy-drager syndrome
+progressive supranuclear palsy
+psp
+steele-richardson-olszewski
+corticobasal degeneration
+cbd
+dementia with lewy bodies
+dlb
+lewy body dementia
+alzheimers
+alzheimer disease
+frontotemporal dementia
+ftd
+picks
+pick disease
+vascular dementia
+multi-infarct dementia
+binswanger
+binswanger disease
+normal pressure hydrocephalus
+creutzfeldt jakob disease
+prion disease
+kuru
+fatal familial insomnia
+gerstmann-straussler-scheinker
+huntingtons
+huntington disease
+sydenham
+sydenham chorea
+st vitus dance
+chorea
+ballismus
+hemiballismus
+athetosis
+dystonia
+focal dystonia
+torticollis
+blepharospasm
+writer's cramp
+essential tremor
+intention tremor
+resting tremor
+tardive dyskinesia
+neuroleptic malignant syndrome
+nms
+serotonin syndrome
+malignant hyperthermia
+myasthenia gravis
+tensilon
+eaton-lambert
+lambert-eaton
+lambert-eaton myasthenic syndrome
+lems
+botulism
+duchenne muscular dystrophy
+dmd
+becker muscular dystrophy
+bmd
+myotonic dystrophy
+steinert
+facioscapulohumeral
+fshd
+limb-girdle
+emery-dreifuss
+congenital myopathy
+mitochondrial myopathy
+melas
+merrf
+kearns-sayre
+cpeo
+bell palsy
+facial palsy
+ramsay hunt
+ramsay hunt syndrome
+horner syndrome
+argyll robertson
+argyll robertson pupil
+adie
+adie tonic pupil
+marcus gunn
+marcus gunn pupil
+optic neuritis
+papilledema
+optic atrophy
+glaucoma
+open angle glaucoma
+angle closure glaucoma
+cataract
+macular degeneration
+amd
+diabetic retinopathy
+retinal detachment
+central retinal artery occlusion
+crao
+cherry red spot
+central retinal vein occlusion
+crvo
+blood and thunder
+uveitis
+iritis
+scleritis
+episcleritis
+conjunctivitis
+keratitis
+corneal ulcer
+dacryocystitis
+blepharitis
+chalazion
+hordeolum
+stye
+pterygium
+pinguecula
+otitis media
+acute otitis media
+serous otitis media
+chronic suppurative otitis media
+csom
+otitis externa
+swimmer's ear
+malignant otitis externa
+mastoiditis
+cholesteatoma
+tympanic membrane perforation
+otosclerosis
+menieres
+meniere disease
+vestibular neuritis
+labyrinthitis
+benign paroxysmal positional vertigo
+bppv
+dix-hallpike
+epley
+acoustic neuroma
+vestibular schwannoma
+presbycusis
+tinnitus
+sinusitis
+acute rhinosinusitis
+chronic rhinosinusitis
+allergic rhinitis
+hay fever
+nasal polyps
+epistaxis
+kiesselbach
+little's area
+woodruff
+pharyngitis
+tonsillitis
+quinsy
+peritonsillar abscess
+retropharyngeal abscess
+parapharyngeal abscess
+laryngitis
+croup
+epiglottitis
+vocal cord polyps
+vocal cord nodules
+laryngeal papillomatosis
+stridor
+sleep apnea
+acute kidney injury
+aki
+prerenal aki
+intrinsic aki
+acute tubular necrosis
+atn
+acute interstitial nephritis
+ain
+glomerulonephritis
+postrenal aki
+chronic kidney disease
+ckd
+end-stage renal disease
+esrd
+uremia
+uremic syndrome
+nephrotic syndrome
+minimal change disease
+mcd
+nil disease
+focal segmental glomerulosclerosis
+fsgs
+membranous nephropathy
+diabetic nephropathy
+kimmelstiel-wilson
+kimmelstiel-wilson disease
+amyloidosis
+nephritic syndrome
+post-streptococcal glomerulonephritis
+psgn
+iga nephropathy
+berger
+berger disease
+henoch-schonlein purpura
+alport syndrome
+thin basement membrane disease
+membranoproliferative glomerulonephritis
+mpgn
+dense deposit disease
+lupus nephritis
+rapidly progressive glomerulonephritis
+rpgn
+crescentic glomerulonephritis
+anti-gbm
+goodpasture syndrome
+anca-associated vasculitis
+granulomatosis with polyangiitis
+microscopic polyangiitis
+eosinophilic granulomatosis with polyangiitis
+pauci-immune
+renal tubular acidosis
+rta
+type 1 rta
+distal rta
+type 2 rta
+proximal rta
+fanconi syndrome
+type 4 rta
+hyperkalemic rta
+polycystic kidney disease
+adpkd
+arpkd
+medullary cystic kidney disease
+medullary sponge kidney
+nephrolithiasis
+urolithiasis
+kidney stones
+calcium oxalate
+calcium phosphate
+struvite
+triple phosphate
+infection stone
+staghorn calculus
+uric acid stone
+cystine stone
+renal colic
+hydronephrosis
+urinary tract infection
+uti
+cystitis
+pyelonephritis
+acute pyelonephritis
+chronic pyelonephritis
+xanthogranulomatous pyelonephritis
+emphysematous pyelonephritis
+renal abscess
+perinephric abscess
+prostatitis
+acute bacterial prostatitis
+chronic bacterial prostatitis
+chronic pelvic pain syndrome
+benign prostatic hyperplasia
+bph
+prostate cancer
+adenocarcinoma of prostate
+gleason
+gleason score
+erectile dysfunction
+ed
+priapism
+peyronie
+peyronie disease
+phimosis
+paraphimosis
+balanitis
+balanoposthitis
+urethritis
+gonococcal urethritis
+non-gonococcal urethritis
+chlamydia
+urethral stricture
+hydrocele
+varicocele
+bag of worms
+spermatocele
+epididymitis
+orchitis
+epididymo-orchitis
+testicular torsion
+bell clapper deformity
+testicular cancer
+seminoma
+non-seminomatous germ cell tumor
+embryonal carcinoma
+yolk sac tumor
+choriocarcinoma
+teratoma
+leydig cell tumor
+sertoli cell tumor
+cryptorchidism
+undescended testis
+bladder cancer
+urothelial carcinoma
+transitional cell carcinoma
+squamous cell carcinoma of bladder
+schistosomiasis
+renal cell carcinoma
+rcc
+clear cell rcc
+von hippel lindau
+papillary rcc
+chromophobe rcc
+oncocytoma
+wilms tumor
+nephroblastoma
+denys-drash
+denys-drash syndrome
+beckwith-wiedemann
+beckwith-wiedemann syndrome
+wagr
+wagr syndrome
+neurogenic bladder
+urinary incontinence
+stress incontinence
+urge incontinence
+overflow incontinence
+functional incontinence
+vesicoureteral reflux
+vur
+posterior urethral valves
+puv
+hypospadias
+epispadias
+ambiguous genitalia
+hermaphroditism
+intersex
+turner syndrome
+klinefelter syndrome
+swyer
+swyer syndrome
+androgen insensitivity syndrome
+ais
+morris syndrome
+5-alpha-reductase deficiency
+kallmann syndrome
+pcos
+polycystic ovary syndrome
+stein-leventhal
+stein-leventhal syndrome
+endometriosis
+adenomyosis
+uterine fibroids
+leiomyoma
+myoma
+endometrial hyperplasia
+endometrial cancer
+adenocarcinoma of endometrium
+cervical dysplasia
+cin
+hpv
+cervical cancer
+squamous cell carcinoma of cervix
+ovarian cyst
+follicular cyst
+corpus luteum cyst
+dermoid cyst
+mature cystic teratoma
+theca lutein cyst
+ovarian torsion
+ovarian cancer
+epithelial ovarian cancer
+serous carcinoma
+mucinous carcinoma
+endometrioid carcinoma
+clear cell carcinoma
+granulosa cell tumor
+dysgerminoma
+krukenberg
+krukenberg tumor
+pelvic inflammatory disease
+pid
+salpingitis
+oophoritis
+tubo-ovarian abscess
+fitz-hugh-curtis
+fitz-hugh-curtis syndrome
+ectopic pregnancy
+tubal pregnancy
+miscarriage
+spontaneous abortion
+threatened abortion
+inevitable abortion
+incomplete abortion
+complete abortion
+missed abortion
+septic abortion
+recurrent pregnancy loss
+hydatidiform mole
+molar pregnancy
+complete mole
+partial mole
+choriocarcinoma
+gestational trophoblastic disease
+gtd
+hyperemesis gravidarum
+preeclampsia
+eclampsia
+hellp
+hellp syndrome
+gestational diabetes
+gdm
+placenta previa
+placental abruption
+abruptio placentae
+placenta accreta
+placenta increta
+placenta percreta
+vasa previa
+uterine rupture
+postpartum hemorrhage
+pph
+uterine atony
+retained placenta
+amniotic fluid embolism
+afe
+puerperal sepsis
+mastitis
+breast abscess
+fibrocystic breast changes
+fibroadenoma
+phylloides
+phyllodes tumor
+intraductal papilloma
+breast cancer
+ductal carcinoma in situ
+dcis
+lobular carcinoma in situ
+lcis
+invasive ductal carcinoma
+idc
+invasive lobular carcinoma
+ilc
+triple negative breast cancer
+tnbc
+her2 positive
+brca1
+brca2
+paget disease of the breast
+inflammatory breast cancer
+gynecomastia
+galactorrhea
+burns
+frostbite
+hypothermia
+hyperthermia
+heat stroke
+heat exhaustion
+decompression sickness
+the bends
+altitude sickness
+ams
+hace
+hape
+carbon monoxide poisoning
+cyanide poisoning
+organophosphate poisoning
+snake bite
+scorpion sting
+dog bite
+rabies
+drowning
+near drowning
+electric shock
+lightning strike
+trauma
+polytrauma
+shock
+hypovolemic shock
+hemorrhagic shock
+cardiogenic shock
+distributive shock
+septic shock
+neurogenic shock
+anaphylactic shock
+anaphylaxis
+systemic inflammatory response syndrome
+sirs
+sofa
+qsofa
+sepsis
+severe sepsis
+multiple organ dysfunction syndrome
+mods
+dic
+compartment syndrome
+crush syndrome
+rhabdomyolysis
+fat embolism syndrome
+systemic sclerosis
+marfan syndrome
+ehlers-danlos syndrome
+pseudoxanthoma elasticum
+pxe
+cutis laxa
+epidermolysis bullosa
+pemphigus vulgaris
+bullous pemphigoid
+dermatitis herpetiformis
+duhring
+duhring disease
+erythema multiforme
+stevens johnson syndrome
+toxic epidermal necrolysis
+ten
+lyell syndrome
+graft versus host disease
+gvhd
+psoriasis
+plaque psoriasis
+guttate psoriasis
+pustular psoriasis
+erythrodermic psoriasis
+lichen planus
+pityriasis rosea
+herald patch
+atopic dermatitis
+eczema
+contact dermatitis
+allergic contact dermatitis
+irritant contact dermatitis
+seborrheic dermatitis
+stasis dermatitis
+nummular eczema
+dyshidrotic eczema
+pompholyx
+ichthyosis vulgaris
+acne vulgaris
+rosacea
+hidradenitis suppurativa
+acne inversa
+alopecia areata
+androgenetic alopecia
+telogen effluvium
+vitiligo
+melasma
+chloasma
+freckles
+ephelides
+lentigo
+seborrheic keratosis
+actinic keratosis
+basal cell carcinoma
+bcc
+squamous cell carcinoma
+scc
+melanoma
+lentigo maligna
+superficial spreading melanoma
+nodular melanoma
+acral lentiginous melanoma
+mycosis fungoides
+cutaneous t cell lymphoma
+kaposi sarcoma
+angiosarcoma
+dermatofibroma
+keloid
+hypertrophic scar
+scabies
+pediculosis
+lice
+tinea
+tinea capitis
+tinea corporis
+ringworm
+tinea cruris
+jock itch
+tinea pedis
+athlete's foot
+tinea unguium
+onychomycosis
+tinea versicolor
+pityriasis versicolor
+candida intertrigo
+impetigo
+ecthyma
+cellulitis
+erysipelas
+necrotizing fasciitis
+furnucle
+boil
+carbuncle
+abscess
+folliculitis
+paronychia
+whitlow
+herpetic whitlow
+herpes simplex
+hsv-1
+hsv-2
+cold sore
+genital herpes
+herpes zoster
+shingles
+varicella
+chickenpox
+verruca
+wart
+plantar wart
+condyloma acuminata
+genital warts
+molluscum contagiosum
+measles
+rubella
+erythema infectiosum
+fifth disease
+slapped cheek
+roseola infantum
+sixth disease
+hand foot and mouth disease
+hfmd
+coxsackie
+kawasaki disease
+scarlet fever
+strawberry tongue
+rheumatic fever
+syphilis
+primary syphilis
+chancre
+secondary syphilis
+condyloma lata
+tertiary syphilis
+gumma
+neurosyphilis
+tabes dorsalis
+general paresis
+argyll robertson pupil
+congenital syphilis
+hutchinson
+hutchinson triad
+hutchinson teeth
+saddle nose
+saber shins
+gonorrhea
+chlamydia
+trichomoniasis
+bacterial vaginosis
+bv
+clue cells
+chancroid
+ducrey
+lymphogranuloma venereum
+lgv
+granuloma inguinale
+donovanosis
+donovan bodies
+depression
+major depressive disorder
+mdd
+dysthymia
+persistent depressive disorder
+bipolar disorder
+bipolar 1
+bipolar 2
+cyclothymia
+mania
+hypomania
+schizophrenia
+schizoaffective disorder
+schizophreniform disorder
+brief psychotic disorder
+delusional disorder
+folie a deux
+generalized anxiety disorder
+gad
+panic disorder
+panic attack
+agoraphobia
+social anxiety disorder
+specific phobia
+obsessive compulsive disorder
+ocd
+body dysmorphic disorder
+hoarding disorder
+trichotillomania
+excoriation disorder
+post-traumatic stress disorder
+ptsd
+acute stress disorder
+adjustment disorder
+dissociative identity disorder
+did
+multiple personality disorder
+dissociative amnesia
+dissociative fugue
+depersonalization-derealization disorder
+somatic symptom disorder
+illness anxiety disorder
+hypochondriasis
+conversion disorder
+functional neurological symptom disorder
+factitious disorder
+munchausen syndrome
+malingering
+anorexia nervosa
+bulimia nervosa
+binge eating disorder
+pica
+rumination disorder
+insomnia
+narcolepsy
+cataplexy
+sleep apnea
+rem sleep behavior disorder
+restless legs syndrome
+rls
+parasomnia
+sleep walking
+somnambulism
+night terrors
+nightmares
+adhd
+attention deficit hyperactivity disorder
+autism spectrum disorder
+asd
+asperger syndrome
+tourette syndrome
+conduct disorder
+oppositional defiant disorder
+odd
+intellectual disability
+specific learning disorder
+dyslexia
+dyscalculia
+dysgraphia
+personality disorder
+paranoid personality disorder
+schizoid personality disorder
+schizotypal personality disorder
+antisocial personality disorder
+borderline personality disorder
+bpd
+histrionic personality disorder
+narcissistic personality disorder
+avoidant personality disorder
+dependent personality disorder
+obsessive compulsive personality disorder
+ocpd
+alcohol use disorder
+alcoholism
+delirium tremens
+wernicke encephalopathy
+korsakoff syndrome
+opioid use disorder
+cannabis use disorder
+cocaine use disorder
+amphetamine use disorder
+sedative use disorder
+tobacco use disorder
+nicotine dependence
+gambling disorder
+delirium
+dementia
+suicide
+suicidal ideation
+non-suicidal self-injury
+nssi
