@@ -283,6 +283,13 @@ def test_over_redaction_token_retention(tmp_path):
     assert not any(f["kind"] == "over_redaction" for f in res["fails"])
 
 
+def test_sandbox_fidelity_and_symlink_containment(tmp_path):
+    """Sandbox check enforces read-only input, zero temp/net leaks, env determinism, and symlink containment."""
+    from tools.torture.sandbox import check_sandbox
+    res = check_sandbox(tmp_path / "sbx", seed=1, n_patients=8)
+    assert res["fails"] == [], json.dumps(res["fails"])
+
+
 def test_torture_smoke(tmp_path):
     """Two generated torture datasets must have zero leaks and zero false merges."""
     from tools.torture.check import check_seed

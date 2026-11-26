@@ -14,6 +14,7 @@ import csv
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import sys
 from typing import List
@@ -24,6 +25,15 @@ from wardguard.model import ParsedFile
 from wardguard.safety.log import safe_reason
 
 
+def _is_safe_input_path(p: Path, root_resolved: Path) -> bool:
+    """Return True only when p resolves inside root_resolved."""
+    try:
+        target = p.resolve()
+        return target.is_relative_to(root_resolved)
+    except (OSError, RuntimeError, ValueError):
+        return False
+
+
 def load_all(input_dir: Path) -> List[ParsedFile]:
     """Read all files under input_dir recursively in deterministic sorted order."""
     results: List[ParsedFile] = []
@@ -31,9 +41,44 @@ def load_all(input_dir: Path) -> List[ParsedFile]:
     if not input_dir.exists():
         return results
 
-    paths = sorted([p for p in input_dir.rglob("*") if p.is_file()], key=lambda p: p.relative_to(input_dir).as_posix())
+    root_resolved = input_dir.resolve()
+    paths: List[Path] = []
+    for dirpath, dirnames, filenames in os.walk(input_dir, followlinks=False):
+        dirnames.sort()
+        filenames.sort()
+        dp = Path(dirpath)
+        for name in filenames:
+            p = dp / name
+            if p.is_symlink() or p.is_file():
+                paths.append(p)
+    paths.sort(key=lambda p: p.relative_to(input_dir).as_posix())
+
     for p in paths:
         rel = p.relative_to(input_dir).as_posix()
+        if p.is_symlink() and not _is_safe_input_path(p, root_resolved):
+            results.append(
+                ParsedFile(
+                    rel=rel,
+                    sha256="",
+                    size=0,
+                    fmt="unsupported",
+                    status="quarantined",
+                    reason="unsafe_symlink",
+                )
+            )
+            continue
+        if not p.is_file():
+            results.append(
+                ParsedFile(
+                    rel=rel,
+                    sha256="",
+                    size=0,
+                    fmt="unsupported",
+                    status="quarantined",
+                    reason="unsafe_symlink" if p.is_symlink() else "unsupported_format",
+                )
+            )
+            continue
         try:
             raw = p.read_bytes()
         except Exception as e:

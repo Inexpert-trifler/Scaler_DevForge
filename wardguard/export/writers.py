@@ -11,8 +11,11 @@ def write_file(pf: ParsedFile, output_dir: Path, policy: dict) -> None:
         return
 
     out_rel = pf.out_rel or f"sanitized/{pf.rel}"
-    dest = output_dir / out_rel
+    san_root = (output_dir / "sanitized").resolve()
+    dest = (output_dir / out_rel).resolve()
     try:
+        if not dest.is_relative_to(san_root):
+            raise ValueError("path_escape")
         dest.parent.mkdir(parents=True, exist_ok=True)
         data = render(pf, policy)
         dest.write_bytes(data)
