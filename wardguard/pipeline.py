@@ -11,7 +11,7 @@ import time
 from typing import Any, Dict, List
 
 from wardguard.detect import build_gazetteer, detect_file
-from wardguard.detect.hidden import extract_hidden_slots
+from wardguard.detect.hidden import extract_hidden_slots, apply_filename_renaming
 from wardguard.export.records import write_records
 from wardguard.export.report import write_report
 from wardguard.export.writers import write_file
@@ -77,6 +77,12 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
                     pf.status = "quarantined"
                     pf.reason = safe_reason(e)
                     event("file_quarantined", count=1)
+
+        # Apply filename renaming for files whose @filename contains PII mentions (TR-EXP-2)
+        try:
+            apply_filename_renaming(files, policy)
+        except Exception:
+            pass
 
         # Pass 2: Global Linkage and Privacy
         active_units = [u for pf in files if pf.status == "pending" for u in pf.units]

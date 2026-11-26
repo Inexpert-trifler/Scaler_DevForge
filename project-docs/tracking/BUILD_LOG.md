@@ -12,3 +12,4 @@
 - [2026-11-26 19:35] [H3] Lakshya [L-05] Ingestion: magic-byte sniffing, multi-encoding decode (BOM/UTF-8/UTF-16/cp1252), ragged CSV rows, deep JSON safety (1500+ levels), generic quarantine | CONTRACT: ok | tests: 74 passed | 0.015s 34.94MB
 - [2026-11-26 19:47] [H4] Lakshya [L-06] Unit enumeration: RFC 6901 JSON pointers, CSV row:N locators with duplicate/empty header handling, FHIR/text doc locators | CONTRACT: ok | tests: 81 passed | 0.015s 34.86MB
 - [2026-11-26 19:52] [H5] Lakshya [L-07] Export: RFC 4180 CSV/TSV writer, JSON type/structure-preserving emitter, sorted records.jsonl, and SPEC §5 report.json | CONTRACT: ok | tests: 87 passed | 0.015s 34.91MB
+- [2026-11-26 20:33] [H6] Lakshya [L-08] Hidden channels: @filename stem, @header, @key slots, metadata pointers, base64 / escape decoding, and collision-safe PII file renaming | CONTRACT: ok | tests: 93 passed | 0.016s 35.28MB
