@@ -1,0 +1,1443 @@
+# Complaints & symptoms (English, Hindi, Hinglish)
+fever
+pyrexia
+bukhar
+bukhaar
+बुखार
+ताप
+pain
+dard
+dardh
+दर्द
+पीड़ा
+ache
+headache
+sar dard
+sir dard
+सिर दर्द
+सर दर्द
+stomach ache
+pet dard
+पेट दर्द
+abdominal pain
+chest pain
+seene me dard
+छाती में दर्द
+body ache
+badan dard
+बदन दर्द
+cough
+khansi
+khaansi
+खांसी
+cold
+zukaam
+jukam
+जुकाम
+जुखाम
+breathlessness
+dyspnea
+saans lene me takleef
+सांस फूलना
+सांस में तकलीफ
+vomiting
+ulti
+उल्टी
+वमन
+nausea
+ji machlana
+जी मिचलाना
+loose motions
+loose stools
+diarrhea
+dast
+दस्त
+weakness
+kamzori
+durbalta
+कमजोरी
+fatigue
+thakan
+थकान
+dizziness
+chakkar
+चक्कर
+swelling
+soojan
+sujan
+सूजन
+rash
+khujli
+itching
+खुजली
+daane
+दाने
+burning micturition
+peshab me jalan
+पेशाब में जलन
+loss of appetite
+bhookh na lagna
+भूख न लगना
+weight loss
+vajan kam hona
+वजन कम होना
+palpitations
+ghabrahat
+घबराहट
+insomnia
+neend na aana
+नींद न आना
+constipation
+kabz
+कब्ज़
+कब्ज
+bleeding
+khoon aana
+रक्तस्राव
+खून बहना
+injury
+chot
+चोट
+trauma
+wound
+ghav
+घाव
+burn
+jalan
+जलन
+fainting
+behosh
+behoshi
+बेहोशी
+loss of consciousness
+seizure
+daura
+दौरा
+fits
+झटका
+joint pain
+jodo me dard
+जोड़ों में दर्द
+back pain
+kamar dard
+कमर दर्द
+neck pain
+gardan dard
+गर्दन दर्द
+sore throat
+gale me kharash
+गले में खराश
+difficulty swallowing
+nigalne me dikkat
+निगलने में कठिनाई
+redness
+laalmi
+लालिमा
+discharge
+paani aana
+पानी आना
+pus
+peep
+पीप
+peeliya
+jaundice
+पीलिया
+anemia
+khoon ki kami
+खून की कमी
+high bp
+low bp
+sugar badhna
+blood sugar
+sugar
+मधुमेह
+बीपी
+चक्कर आना
+घबराहट होना
+पेट फूलना
+उल्टी आना
+दस्त लगना
+खांसी आना
+बुखार चढ़ना
+जोड़ों की सूजन
+पेशाब रुकना
+पेशाब में रुकावट
+urinary retention
+peshab me rukavat
+blood in urine
+peshab me khoon
+hematuria
+blood in stool
+latrine me khoon
+melena
+hematemesis
+khoon ki ulti
+hemoptysis
+balgham me khoon
+phlegm
+balgham
+बलगम
+sputum
+ear pain
+kaan me dard
+कान में दर्द
+eye pain
+aankh me dard
+आंख में दर्द
+vision loss
+dhundhla dikhna
+धुंधला दिखना
+blurry vision
+hearing loss
+kam sunai dena
+कम सुनाई देना
+swallowing difficulty
+dysphagia
+hoarseness
+aawaz baithna
+आवाज बैठना
+cramps
+marod
+मरोड़
+aithan
+ऐंठन
+tingling
+jhunjhuni
+झुनझुनी
+numbness
+sunn hona
+सुन्न होना
+paralysis
+lakwa
+लकवा
+falij
+फ़ालिज
+tremors
+kaanpna
+कांपना
+rigors
+chills
+thand lagna
+ठंड लगना
+kampkampi
+कंपकंपी
+sweating
+paseena
+पसीना
+excessive thirst
+pyaas lagna
+प्यास लगना
+polyuria
+bar bar peshab aana
+बार बार पेशाब आना
+weight gain
+vajan badhna
+वजन बढ़ना
+hair fall
+baal jhadna
+बाल झड़ना
+skin darkening
+twacha ka rang badalna
+त्वचा का रंग बदलना
+pallor
+peela padna
+पीला पड़ना
+dehydration
+paani ki kami
+पानी की कमी
+loss of smell
+anosmia
+loss of taste
+ageusia
+sneezing
+chheenk
+छींक
+runny nose
+naak behna
+नाक बहना
+nasal blockage
+naak band hona
+नाक बंद होना
+wheezing
+seeti jaisi aawaz
+सीटी जैसी आवाज
+acid reflux
+khatti dakar
+खट्टी डकार
+heartburn
+seene me jalan
+सीने में जलन
+gas
+pet me gas
+पेट में गैस
+bloating
+afara
+अफ़ारा
+belching
+dakar
+डकार
+hiccups
+hichki
+हिचकी
+loss of balance
+santulan bigadna
+संतुलन बिगड़ना
+memory loss
+yaad-dasht kamzor hona
+याददाश्त कम होना
+confusion
+bhram
+भ्रम
+anxiety
+chinta
+चिंता
+stress
+depression
+tanaav
+तनाव
+उदास रहना
+man na lagna
+मन न लगना
+irritability
+chidhchidhapan
+चिड़चिड़ापन
+mood swings
+restlessness
+bechaini
+बेचैनी
+delirium
+badhavasi
+बदहवासी
+hallucinations
+bharam hona
+hallucination
+sweating at night
+raat me paseena aana
+रात में पसीना आना
+loss of weight
+swollen lymph nodes
+gilti
+गिल्टी
+gaanth
+गांठ
+swelling in neck
+gale me soojan
+गले में सूजन
+swelling in legs
+pairo me soojan
+पैरों में सूजन
+pedal edema
+facial puffiness
+chehre par soojan
+चेहरे पर सूजन
+difficulty passing urine
+peshab karne me pareshani
+पेशाब करने में परेशानी
+frequent urination
+peshab jaldi aana
+urinary urgency
+peshab na rok pana
+incontinence
+peshab nikal jana
+fecal incontinence
+mal na rok pana
+rectal bleeding
+khuni bawasir
+piles
+bawasir
+बवासीर
+fissure
+bhagandar
+fistula
+भगंदर
+hernia
+phoolna
+corn
+gokhru
+wart
+massa
+मस्सा
+boil
+phoda
+फोड़ा
+fungal infection
+daad
+दाद
+scabies
+khajuao
+itching all over body
+sar me chot
+sir me chot
+chest trauma
+fracture
+haddi tootna
+हड्डी टूटना
+sprain
+moch
+मोच
+dislocation
+haddi utarna
+हड्डी उतरना
+ligament tear
+muscle pull
+khinchaav
+खिंचाव
+bruise
+neel padna
+नील पड़ना
+cut
+cheera
+कट
+laceration
+bleeding gums
+masudo se khoon
+मसूड़ों से खून
+toothache
+daant me dard
+दांत में दर्द
+cavity
+keeda lagna
+कीड़ा लगना
+mouth ulcer
+chhale
+छाले
+tongue bite
+jeebh katna
+जीभ कटना
+bad breath
+saans se badboo
+सांस से बदबू
+dry mouth
+gala sookhna
+गला सूखना
+hoarseness of voice
+voice change
+swollen tonsils
+tonsils badhna
+टॉन्सिल
+snoring
+kharate
+खर्राटे
+choking
+dum ghutna
+दम घुटना
+asphyxia
+heat stroke
+loo lagna
+लू लगना
+sunburn
+hypothermia
+thand se jamna
+frostbite
+gangrene
+ang sadna
+अंग सड़ना
+sepsis
+infection failna
+poisoning
+zehar
+विष
+food poisoning
+kharab khana
+snake bite
+saanp ka katna
+सांप का काटना
+dog bite
+kutte ka katna
+कुत्ते का काटना
+monkey bite
+bandar ka katna
+insect bite
+keede ka katna
+sting
+dank marna
+डंक
+electric shock
+bijli ka jhatka
+बिजली का झटका
+burn injury
+jalna
+जलना
+scalding
+acid attack
+acid burn
+smoke inhalation
+dhuen se dam ghutna
+drowning
+doobna
+डूबना
+near drowning
+foreign body
+kuchh fasna
+choking on food
+khana atakna
+kana me kida
+ear discharge
+kaan behna
+कान बहना
+deafness
+bahrapan
+बहरापन
+red eye
+aankh laal hona
+आंख लाल होना
+eye watering
+aankh se paani aana
+आंख से पानी आना
+eye discharge
+kichad aana
+कीचड़ आना
+photophobia
+roshni se pareshani
+रोशनी से परेशानी
+diplopia
+do-do dikhna
+दो-दो दिखना
+night blindness
+rataundhi
+रतौंधी
+dry eyes
+aankh sookhna
+foreign body in eye
+aankh me kankar
+hair loss
+patchy hair loss
+alopecia
+dandruff
+roosi
+रूसी
+acne
+keel muhase
+कील मुंहासे
+pimples
+pigmentation
+jhaiya
+झाइयां
+skin peeling
+chamdi utarna
+चमड़ी उतरना
+nail infection
+nakhun pakna
+नाखून पकना
+ingrown nail
+sweaty palms
+hatheliyo me paseena
+body odor
+badan ki badboo
+excessive body hair
+hirsutism
+gynecomastia
+menstrual cramps
+period me dard
+mahavari me dard
+माहवारी में दर्द
+heavy bleeding
+zyada khoon aana
+ज्यादा खून आना
+menorrhagia
+irregular periods
+irreguler mahavari
+अनियमित माहवारी
+missed period
+period miss hona
+amenorrhea
+white discharge
+safed paani
+सफेद पानी
+leukorrhea
+pelvic pain
+pedu me dard
+पेड़ू में दर्द
+infertility
+bachha na theharna
+निःसंतानता
+miscarriage
+garbhpaat
+गर्भपात
+morning sickness
+subah ulti aana
+breast lump
+stan me gaanth
+स्तन में गांठ
+breast pain
+stan me dard
+breast tenderness
+nipple discharge
+low libido
+erectile dysfunction
+premature ejaculation
+शीघ्रपतन
+impotence
+napunsakta
+नपुंसकता
+blood in semen
+testicular pain
+andkosh me dard
+अंडकोश में दर्द
+swollen testicle
+andkosh me soojan
+phimosis
+balanitis
+hydrocele
+piles
+fissure
+fistula
+corn
+callus
+bunion
+ingrown toenail
+ganglion
+lipoma
+charbi ki gaanth
+cyst
+sebaceous cyst
+abscess
+cellulitis
+carbuncle
+furuncle
+folliculitis
+impetigo
+erysipelas
+scabies
+lice
+jooein
+जूएं
+bed bugs
+khatmal
+ringworm
+tinea
+athlete's foot
+jock itch
+candidiasis
+thrush
+leukoplakia
+oral submucous fibrosis
+osmf
+gutkha khana
+tobacco chewing
+smoking
+cigarette
+bidi
+alcohol abuse
+sharab peena
+दारू
+शराब
+drug addiction
+nasha
+नशा
+withdrawal symptoms
+nasha chhodne ke lakshan
+tremors
+seizures
+hallucinations
+delirium tremens
+depression
+anxiety
+panic attack
+suicidal thoughts
+aatmhatya ke vichar
+आत्महत्या के विचार
+self harm
+apne aap ko chot pahunchana
+memory loss
+dementia
+alzheimer
+parkinson
+stroke
+paralysis
+facial palsy
+bell's palsy
+migraine
+sinusitis
+tonsillitis
+pharyngitis
+laryngitis
+otitis media
+otitis externa
+mastoiditis
+labyrinthitis
+vertigo
+meniere's
+tinnitus
+hearing loss
+cataract
+glaucoma
+diabetic retinopathy
+hypertensive retinopathy
+macular degeneration
+retinal detachment
+corneal ulcer
+uveitis
+scleritis
+conjunctivitis
+pterygium
+chalazion
+stye
+blepharitis
+dacryocystitis
+strabismus
+amblyopia
+refractive error
+myopia
+hypermetropia
+astigmatism
+presbyopia
+chashma lagna
+चश्मा लगना
+glasses
+asthma
+copd
+bronchitis
+bronchiectasis
+pneumonia
+tuberculosis
+pleural effusion
+pneumothorax
+pulmonary embolism
+pulmonary edema
+interstitial lung disease
+ild
+sarcoidosis
+silicosis
+asbestosis
+hypertension
+hypotension
+coronary artery disease
+angina
+myocardial infarction
+heart attack
+dil ka daura
+दिल का दौरा
+heart failure
+arrhythmia
+atrial fibrillation
+palpitations
+rheumatic heart disease
+infective endocarditis
+pericarditis
+myocarditis
+cardiomyopathy
+aortic stenosis
+mitral regurgitation
+deep vein thrombosis
+dvt
+varicose veins
+peripheral artery disease
+vasculitis
+gerd
+gastritis
+peptic ulcer
+peptic ulcer disease
+pud
+h pylori
+acid peptic disease
+apd
+gastric ulcer
+duodenal ulcer
+esophagitis
+hiatus hernia
+achalasia
+dyspepsia
+badhazmi
+बदहजमी
+indigestion
+irritable bowel syndrome
+ibs
+inflammatory bowel disease
+ibd
+crohn's disease
+ulcerative colitis
+celiac disease
+sprue
+malabsorption
+appendicitis
+diverticulitis
+intestinal obstruction
+intussusception
+volvulus
+hernia
+peritonitis
+hepatitis
+acute hepatitis
+chronic hepatitis
+cirrhosis
+liver cirrhosis
+hepatic failure
+portal hypertension
+ascites
+fatty liver
+nafld
+mash
+nash
+jaundice
+gallstones
+cholelithiasis
+choledocholithiasis
+cholecystitis
+cholangitis
+pancreatitis
+acute pancreatitis
+chronic pancreatitis
+splenomegaly
+hepatomegaly
+hepatosplenomegaly
+hsm
+tilli badhna
+तिल्ली बढ़ना
+liver badhna
+लिवर बढ़ना
+acute kidney injury
+aki
+chronic kidney disease
+ckd
+renal failure
+kidney failure
+gurde kharab
+गुर्दे खराब
+nephrotic syndrome
+nephritic syndrome
+glomerulonephritis
+pyelonephritis
+cystitis
+uti
+urinary tract infection
+kidney stone
+renal calculi
+ureteric stone
+bladder stone
+prostatitis
+benign prostatic hyperplasia
+bph
+gadyad
+गदूद
+prostate badhna
+urethral stricture
+hydrocele
+varicocele
+orchitis
+epididymitis
+testicular torsion
+cryptorchidism
+hypogonadism
+diabetes
+diabetes mellitus
+type 1 diabetes
+type 2 diabetes
+gestational diabetes
+dka
+diabetic ketoacidosis
+hypoglycemia
+thyroid
+hypothyroidism
+hyperthyroidism
+goiter
+ghenghe
+घेंघा
+hashimoto
+graves disease
+cushing's syndrome
+addison's disease
+pheochromocytoma
+hyperparathyroidism
+hypoparathyroidism
+osteoporosis
+osteomalacia
+rickets
+gout
+hyperuricemia
+dyslipidemia
+cholesterol badhna
+obesity
+motapa
+मोटापा
+metabolic syndrome
+anemia
+iron deficiency anemia
+megaloblastic anemia
+sickle cell anemia
+thalassemia
+aplastic anemia
+hemolytic anemia
+leukemia
+lymphoma
+multiple myeloma
+itp
+hemophilia
+dvt
+pulmonary embolism
+dic
+rheumatoid arthritis
+osteoarthritis
+gout
+pseudogout
+ankylosing spondylitis
+psoriatic arthritis
+reactive arthritis
+systemic lupus erythematosus
+sle
+scleroderma
+sjogren's syndrome
+polymyositis
+dermatomyositis
+fibromyalgia
+osteomyelitis
+septic arthritis
+tuberculosis spine
+pott's spine
+cervical spondylosis
+lumbar spondylosis
+sciatica
+disc slip
+slip disc
+disc herniation
+kyphosis
+scoliosis
+fracture
+dislocation
+sprain
+strain
+tendinitis
+bursitis
+plantar fasciitis
+carpal tunnel syndrome
+ganglion cyst
+frozen shoulder
+rotator cuff tear
+tennis elbow
+golfer's elbow
+trigger finger
+dupuytren's contracture
+acne
+eczema
+dermatitis
+psoriasis
+lichen planus
+vitiligo
+safed daag
+सफेद दाग
+melasma
+urticaria
+pitti
+पित्ती
+allergy
+alopecia
+tinea
+candidiasis
+scabies
+pediculosis
+impetigo
+cellulitis
+furuncle
+carbuncle
+abscess
+herpes simplex
+herpes zoster
+warts
+molluscum contagiosum
+keloid
+corn
+callus
+burn
+sunburn
+frostbite
+bite
+sting
+poisoning
+trauma
+wound
+ulcer
+gangrene
+shock
+sepsis
+anaphylaxis
+drowning
+asphyxia
+foreign body
+heat stroke
+hypothermia
+stroke
+cva
+tia
+seizure
+epilepsy
+headache
+migraine
+cluster headache
+tension headache
+neuralgia
+trigeminal neuralgia
+sciatica
+neuropathy
+peripheral neuropathy
+diabetic neuropathy
+bell's palsy
+facial palsy
+meningitis
+encephalitis
+brain abscess
+dementia
+alzheimer's
+parkinson's
+tremor
+myasthenia gravis
+guillain-barre syndrome
+multiple sclerosis
+motor neuron disease
+mnd
+als
+hydrocephalus
+subdural hematoma
+epidural hematoma
+subarachnoid hemorrhage
+cerebral palsy
+autism
+adhd
+intellectual disability
+depression
+anxiety
+bipolar disorder
+schizophrenia
+ocd
+ptsd
+phobia
+panic disorder
+insomnia
+eating disorder
+substance abuse
+alcoholism
+addiction
+delirium
+delirium tremens
+psychosis
+neurosis
+hypochondriasis
+somatoform disorder
+conversion disorder
+malingering
+factitious disorder
+grief
+bereavement
+stress
+burnout
+adjustment disorder
+personality disorder
+mental retardation
+developmental delay
+speech delay
+learning disability
+dyslexia
+dyscalculia
+stammering
+stuttering
+bed wetting
+enuresis
+encopresis
+night terrors
+somnambulism
+teeth grinding
+bruxism
+nail biting
+hair pulling
+trichotillomania
+tic disorder
+tourette's
+chorea
+dystonia
+ataxia
+vertigo
+motion sickness
+jet lag
+altitude sickness
+decompression sickness
+sea sickness
+car sickness
+morning sickness
+travel sickness
+food poisoning
+botulism
+cholera
+typhoid
+paratyphoid
+salmonella
+shigella
+campylobacter
+e coli
+amoebiasis
+giardiasis
+worm infestation
+ascariasis
+enterobiasis
+hookworm
+tapeworm
+hydatid cyst
+filariasis
+malaria
+dengue
+chikungunya
+yellow fever
+zika
+japanese encephalitis
+kala azar
+leishmaniasis
+leptospirosis
+scrub typhus
+brucellosis
+rabies
+tetanus
+diphtheria
+pertussis
+measles
+mumps
+rubella
+chickenpox
+smallpox
+monkeypox
+polio
+hepatitis a
+hepatitis b
+hepatitis c
+hepatitis d
+hepatitis e
+hiv
+aids
+covid-19
+sars
+mers
+influenza
+bird flu
+swine flu
+ebola
+marburg
+nipah
+hanta
+anthrax
+plague
+tularemia
+glanders
+melioidosis
+leprosy
+tuberculosis
+syphilis
+gonorrhea
+chlamydia
+trichomoniasis
+cancroid
+lymphogranuloma venereum
+donovanosis
+hpv
+genital herpes
+molluscum
+scabies
+pubic lice
+candidiasis
+bacterial vaginosis
+pelvic inflammatory disease
+epididymo-orchitis
+urethritis
+cervicitis
+vaginitis
+vulvitis
+balanitis
+prostatitis
+orchitis
+cystitis
+pyelonephritis
+glomerulonephritis
+nephrotic syndrome
+acute tubular necrosis
+interstitial nephritis
+polycystic kidney disease
+renal cell carcinoma
+wilms tumor
+bladder cancer
+prostate cancer
+testicular cancer
+penile cancer
+cervical cancer
+uterine cancer
+endometrial cancer
+ovarian cancer
+vulvar cancer
+vaginal cancer
+breast cancer
+lung cancer
+colorectal cancer
+gastric cancer
+esophageal cancer
+pancreatic cancer
+liver cancer
+hcc
+cholangiocarcinoma
+gallbladder cancer
+oral cancer
+tongue cancer
+laryngeal cancer
+pharyngeal cancer
+nasopharyngeal cancer
+thyroid cancer
+melanoma
+basal cell carcinoma
+squamous cell carcinoma
+osteosarcoma
+ewing's sarcoma
+chondrosarcoma
+rhabdomyosarcoma
+leiomyosarcoma
+liposarcoma
+fibrosarcoma
+angiosarcoma
+kaposi's sarcoma
+gist
+neuroblastoma
+retinoblastoma
+medulloblastoma
+glioblastoma
+astrocytoma
+meningioma
+pituitary adenoma
+craniopharyngioma
+acoustic neuroma
+schwannoma
+neurofibroma
+lymphoma
+hodgkin's lymphoma
+non-hodgkin's lymphoma
+burkitt's lymphoma
+multiple myeloma
+leukemia
+all
+aml
+cll
+cml
+myelodysplastic syndrome
+myelofibrosis
+polycythemia vera
+essential thrombocythemia
+amyloidosis
+sarcoidosis
+histiocytosis
+mastocytosis
+porphyria
+hemochromatosis
+wilson's disease
+gaucher's disease
+niemann-pick disease
+tay-sachs disease
+fabry disease
+glycogen storage disease
+mucopolysaccharidosis
+cystinuria
+hyperoxaluria
+alcaptonuria
+phenylketonuria
+maple syrup urine disease
+homocystinuria
+galactosemia
+fructose intolerance
+g6pd deficiency
+spherocytosis
+thalassemia
+sickle cell disease
+hemophilia
+von willebrand disease
+protein c deficiency
+protein s deficiency
+antithrombin deficiency
+factor v leiden
+prothrombin mutation
+antiphospholipid syndrome
+lupus anticoagulant
+paroxysmal nocturnal hemoglobinuria
+autoimmune hemolytic anemia
+cold agglutinin disease
+idiopathic thrombocytopenic purpura
+thrombotic thrombocytopenic purpura
+hemolytic uremic syndrome
+disseminated intravascular coagulation
+heparin-induced thrombocytopenia
+aplastic anemia
+pure red cell aplasia
+myelophthisic anemia
+sideroblastic anemia
+megaloblastic anemia
+pernicious anemia
+folate deficiency
+vitamin b12 deficiency
+iron deficiency
+anemia of chronic disease
+leukopenia
+neutropenia
+agranulocytosis
+lymphopenia
+eosinophilia
+basophilia
+monocytosis
+thrombocytopenia
+thrombocytosis
+pancytopenia
+splenomegaly
+lymphadenopathy
+thymoma
+myasthenia gravis
+lambert-eaton syndrome
+polymyositis
+dermatomyositis
+inclusion body myositis
+muscular dystrophy
+duchenne muscular dystrophy
+becker muscular dystrophy
+myotonic dystrophy
+facioscapulohumeral muscular dystrophy
+limb-girdle muscular dystrophy
+spinal muscular atrophy
+amyotrophic lateral sclerosis
+guillain-barre syndrome
+cidp
+charcot-marie-tooth disease
+hereditary motor sensory neuropathy
+freidreich's ataxia
+spinocerebellar ataxia
+ataxia telangiectasia
+huntington's disease
+wilson's disease
+parkinson's disease
+progressive supranuclear palsy
+multiple system atrophy
+corticobasal degeneration
+lewy body dementia
+alzheimer's disease
+frontotemporal dementia
+vascular dementia
+creutzfeldt-jakob disease
+normal pressure hydrocephalus
+pseudotumor cerebri
+idiopathic intracranial hypertension
+trigeminal neuralgia
+glossopharyngeal neuralgia
+postherpetic neuralgia
+complex regional pain syndrome
+phantom limb pain
+fibromyalgia
+chronic fatigue syndrome
+restless legs syndrome
+periodic limb movement disorder
+narcolepsy
+sleep apnea
+insomnia
+parasomnia
+rem sleep behavior disorder
+somnambulism
+night terrors
+nightmares
+circadian rhythm disorder
+shift work disorder
+jet lag
+depression
+dysthymia
+bipolar 1
+bipolar 2
+cyclothymia
+schizophrenia
+schizoaffective disorder
+delusional disorder
+brief psychotic disorder
+panic disorder
+agoraphobia
+social anxiety disorder
+specific phobia
+generalized anxiety disorder
+separation anxiety disorder
+selective mutism
+obsessive-compulsive disorder
+body dysmorphic disorder
+hoarding disorder
+trichotillomania
+excoriation disorder
+ptsd
+acute stress disorder
+adjustment disorder
+reactive attachment disorder
+disinhibited social engagement disorder
+dissociative identity disorder
+dissociative amnesia
+depersonalization disorder
+derealization disorder
+somatic symptom disorder
+illness anxiety disorder
+conversion disorder
+factitious disorder
+munchausen by proxy
+anorexia nervosa
+bulimia nervosa
+binge eating disorder
+pica
+rumination disorder
+avoidant restrictive food intake disorder
+enuresis
+encopresis
+insomnia disorder
+hypersomnolence disorder
+narcolepsy
+obstructive sleep apnea
+central sleep apnea
+sleep-related hypoventilation
+circadian rhythm sleep-wake disorders
+nightmare disorder
+rem sleep behavior disorder
+restless legs syndrome
+substance-induced sleep disorder
+erectile disorder
+female orgasmic disorder
+female sexual interest/arousal disorder
+genito-pelvic pain/penetration disorder
+male hypoactive sexual desire disorder
+premature ejaculation
+delayed ejaculation
+substance-induced sexual dysfunction
+gender dysphoria
+oppositional defiant disorder
+intermittent explosive disorder
+conduct disorder
+antisocial personality disorder
+pyromania
+kleptomania
+substance use disorder
+alcohol use disorder
+cannabis use disorder
+phencyclidine use disorder
+inhalant use disorder
+opioid use disorder
+sedative use disorder
+stimulant use disorder
+tobacco use disorder
+gambling disorder
+delirium
+major neurocognitive disorder
+mild neurocognitive disorder
+paranoid personality disorder
+schizoid personality disorder
+schizotypal personality disorder
+antisocial personality disorder
+borderline personality disorder
+histrionic personality disorder
+narcissistic personality disorder
+avoidant personality disorder
+dependent personality disorder
+obsessive-compulsive personality disorder
+intellectual disability
+global developmental delay
+language disorder
+speech sound disorder
+childhood-onset fluency disorder
+social communication disorder
+autism spectrum disorder
+adhd
+specific learning disorder
+developmental coordination disorder
+stereotypic movement disorder
+tic disorders
+tourette's disorder
+persistent motor or vocal tic disorder
+provisional tic disorder
+other specified neurodevelopmental disorder
+unspecified neurodevelopmental disorder

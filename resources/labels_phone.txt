@@ -1,0 +1,20 @@
+# Generic phone labels
+phone
+mobile
+contact
+ph
+mob
+cell
+telephone
+contact no
+phone no
+mobile no
+ph no
+फ़ोन
+फोन
+मोबाइल
+संपर्क
+दूरभाष
+contact#
+phone_number
+mobile_number

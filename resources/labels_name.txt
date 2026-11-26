@@ -1,0 +1,38 @@
+# Generic name / patient labels (English, Hindi, transliterated)
+name
+patient
+pt
+patient name
+pt name
+pt. name
+pt_nm
+patient_name
+patient's name
+naam
+नाम
+मरीज़
+मरीज
+रोगी
+रोगी का नाम
+मरीज़ का नाम
+guardian
+relative
+father
+husband
+mother
+caregiver
+पिता
+पति
+माता
+अभिभावक
+पुत्र
+पुत्री
+relative name
+guardian name
+s/o
+d/o
+w/o
+c/o
+h/o
+f/o
+m/o

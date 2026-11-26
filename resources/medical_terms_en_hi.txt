@@ -1,0 +1,625 @@
+# Medical terminology, clinical abbreviations & Hindi/English clinical terms
+bp
+blood pressure
+pulse
+pr
+hr
+heart rate
+temp
+temperature
+afebrile
+febrile
+spo2
+saturation
+o2 sat
+rr
+respiratory rate
+rbs
+fbs
+ppbs
+blood sugar
+random blood sugar
+fasting blood sugar
+post prandial
+hba1c
+glycated hemoglobin
+cbc
+complete blood count
+hb
+hemoglobin
+tlc
+total leukocyte count
+dlc
+differential leukocyte count
+platelets
+plt
+pcv
+hematocrit
+esr
+crp
+c-reactive protein
+lft
+liver function test
+sgot
+ast
+sgpt
+alt
+alp
+alkaline phosphatase
+bilirubin
+total bilirubin
+direct bilirubin
+indirect bilirubin
+albumin
+globulin
+ag ratio
+kft
+rft
+kidney function test
+renal function test
+urea
+blood urea
+creatinine
+serum creatinine
+uric acid
+electrolytes
+sodium
+potassium
+chloride
+bicarbonate
+lipid profile
+cholesterol
+total cholesterol
+triglycerides
+tg
+hdl
+ldl
+vldl
+tft
+thyroid function test
+t3
+t4
+tsh
+urine r/m
+urine routine
+urine microscopic
+urine culture
+pus cells
+rbc
+epithelial cells
+albumin
+sugar
+casts
+crystals
+stool r/m
+stool routine
+occult blood
+ova
+cyst
+cxr
+chest x-ray
+x-ray
+usg
+ultrasound
+sonography
+ncct
+cect
+ct scan
+mri
+ecg
+ekg
+echo
+echocardiography
+eeg
+emg
+ncv
+pft
+endoscopy
+colonoscopy
+biopsy
+fnac
+histopathology
+pap smear
+troponin
+trop t
+trop i
+cpk
+cpk-mb
+d-dimer
+ferritin
+procalcitonin
+inr
+pt
+aptt
+bleeding time
+bt
+clotting time
+ct
+widal
+malaria antigen
+mp
+rapid antigen
+elisa
+pcr
+rt-pcr
+western blot
+mantoux
+sputum afb
+cbnaat
+genexpert
+vitals
+per abdomen
+pa
+per vaginal
+pv
+per rectal
+pr
+per speculum
+ps
+systemic examination
+cvs
+s1 s2 heard
+no murmur
+rs
+nvbs
+bilateral air entry
+creps
+rhonchi
+wheeze
+cns
+conscious
+oriented
+gcs
+pupils b/l reacting
+motor
+sensory
+reflexes
+plantar
+extensor
+flexor
+git
+soft
+non-tender
+tender
+guarding
+rigidity
+distended
+bowel sounds
+organomegaly
+no hepatosplenomegaly
+icterus
+pallor
+cyanosis
+clubbing
+lymphadenopathy
+edema
+pedal edema
+dehydration
+k/c/o
+known case of
+c/o
+complaining of
+h/o
+history of
+o/e
+on examination
+adv
+advice
+rx
+treatment
+prescription
+dx
+provisional diagnosis
+final diagnosis
+investigations
+inv
+past history
+family history
+personal history
+treatment history
+surgical history
+allergic history
+no known allergies
+nka
+nkda
+diet
+veg
+non-veg
+appetite
+sleep
+bowel
+bladder
+addictions
+smoking
+alcohol
+tobacco
+admission
+discharge
+transfer
+referral
+referred to
+referred from
+lave
+ama
+absconded
+expired
+death
+brought dead
+mlc
+medico-legal case
+non-mlc
+casualty
+emergency
+triage
+red
+yellow
+green
+black
+icu
+micu
+sicu
+nicu
+picu
+ccu
+hdw
+hsu
+ward
+general ward
+private ward
+semi-private
+bed no
+cabin
+cabin no
+ot
+operation theatre
+pre-op
+post-op
+intra-op
+pac
+pre-anesthetic checkup
+ga
+general anesthesia
+sa
+spinal anesthesia
+ea
+epidural anesthesia
+la
+local anesthesia
+sedation
+intubation
+ett
+endotracheal tube
+ventilator
+cpap
+bipap
+high flow nasal cannula
+hfnc
+oxygen
+o2
+nasal prongs
+face mask
+nrbm
+venturi mask
+iv fluids
+iv line
+cannula
+central line
+cvp
+picc line
+arterial line
+urinary catheter
+foley
+foley's catheter
+rt
+ryle's tube
+nasogastric tube
+ng tube
+chest tube
+icd
+intercostal drain
+drain
+abdominal drain
+suction
+dressing
+sterile dressing
+suture
+suture removal
+staples
+cast
+plaster
+slab
+traction
+pop
+crepe bandage
+sling
+cervical collar
+nebulization
+neb
+inhaler
+spacer
+rotahaler
+respules
+syrup
+syp
+tablet
+tab
+capsule
+cap
+injection
+inj
+ointment
+oint
+drops
+gutt
+cream
+gel
+lotion
+powder
+mouthwash
+gargle
+suppository
+enema
+patch
+iv
+im
+sc
+subcutaneous
+id
+intradermal
+po
+per oral
+sublingual
+sl
+pr
+per rectum
+topical
+inhalation
+od
+once daily
+bd
+bid
+twice daily
+tds
+tid
+three times daily
+qid
+four times daily
+hs
+at bedtime
+sos
+as needed
+prn
+stat
+immediately
+ac
+before meals
+pc
+after meals
+bbf
+before breakfast
+af
+after food
+bf
+before food
+empty stomach
+khali pet
+खाली पेट
+khane ke baad
+खाने के बाद
+khane se pehle
+खाने से पहले
+din me ek baar
+दिन में एक बार
+din me do baar
+दिन में दो बार
+din me teen baar
+दिन में तीन बार
+raat ko sote samay
+रात को सोते समय
+zaroorat padne par
+ज़रूरत पड़ने पर
+turant
+तुरंत
+x 3 days
+x 5 days
+x 7 days
+x 10 days
+x 14 days
+x 1 month
+x 3 months
+continuous
+lifelong
+tapering dose
+review after
+follow up
+f/u
+sos review
+visit opd
+take rest
+bed rest
+salt restricted diet
+sugar free diet
+low fat diet
+high protein diet
+liquid diet
+soft diet
+normal diet
+npo
+nil per oral
+nil per os
+kbm
+khana peena band
+खाना पीना बंद
+plenty of fluids
+paani khoob peeyo
+warm water gargle
+steam inhalation
+deep breathing exercise
+physiotherapy
+consultant
+attending physician
+resident
+sr
+senior resident
+jr
+junior resident
+intern
+medical officer
+mo
+smo
+cmo
+chief medical officer
+nursing staff
+sister in-charge
+staff nurse
+ward boy
+aya
+attendant
+technician
+pharmacist
+radiographer
+lab technician
+phlebotomist
+counselor
+dietician
+social worker
+asha
+asha didi
+asha worker
+anm
+aganwadi worker
+mpw
+health worker
+dai
+midwife
+surgeon
+physician
+pediatrician
+gynecologist
+obstetrician
+cardiologist
+neurologist
+nephrologist
+gastroenterologist
+pulmonologist
+dermatologist
+psychiatrist
+radiologist
+pathologist
+anesthesiologist
+orthopedic surgeon
+ent specialist
+ophthalmologist
+oncologist
+urologist
+neurosurgeon
+plastic surgeon
+endocrinologist
+rheumatologist
+hematologist
+neonatologist
+intensivist
+general practitioner
+family physician
+bams
+bhms
+bums
+mbbs
+md
+ms
+dnb
+dm
+mch
+diploma
+fellowship
+doctor
+dr
+dr.
+वैद्य
+हकीम
+डॉक्टर
+नर्स
+आशा दीदी
+आशा वर्कर
+अस्पताल
+दवाखाना
+चिकित्सालय
+औषधालय
+वार्ड
+बिस्तर
+कमरा
+पर्चा
+नुस्खा
+जांच
+खून की जांच
+पेशाब की जांच
+दवा
+गोली
+कैप्सूल
+सुई
+टीका
+इंजेक्शन
+सलाइन
+ग्लूकोज
+पट्टी
+मरहम
+ऑपरेशन
+शल्य चिकित्सा
+चीरा
+टांका
+टांके
+प्लास्टर
+एक्सरे
+सोनोग्राफी
+सीटी स्कैन
+एमआरआई
+ईसीजी
+रक्तचाप
+बीपी
+नाड़ी
+तापमान
+बुखार नापना
+ऑक्सीजन
+वेंटीलेटर
+आईसीयू
+आपातकालीन
+इमरजेंसी
+ओपीडी
+आईपीडी
+भर्ती
+छुट्टी
+डिस्चार्ज
+मृत्यु
+जांच रिपोर्ट
+परामर्श
+परहेज
+इलाज
+उपचार
+शमन
+रोग
+बीमारी
+संक्रमण
+इन्फेक्शन
+कीटाणु
+जीवाणु
+विषाणु
+बैक्टीरिया
+वायरस
+फंगस
+परजीवी
+खून
+रक्त
+मवाद
+पीप
+बलगम
+कफ
+पित्त
+वायु
+वात
+कफ
+दोष
+नाड़ी परीक्षा
+आयुर्वेद
+होम्योपैथी
+यूनानी
+एलोपैथी

@@ -1,0 +1,27 @@
+# Generic identifier labels
+id
+mrn
+uhid
+ipd
+opd
+reg
+reg no
+cr no
+abha
+aadhaar
+aadhar
+pan
+insurance
+policy
+beneficiary
+abha address
+abha id
+abha no
+पंजीकरण संख्या
+यूएचआईडी
+आधार
+पहचान संख्या
+registration no
+admission no
+admission_id
+patient_id
