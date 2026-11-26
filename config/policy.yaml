@@ -1,0 +1,27 @@
+age_band_years: 5          # band width; band must contain the true age
+age_top_code: 90           # ages >= 90 -> "90+"
+date_shift_max_days: 180   # per-patient offset in [-180, 180] \ {0}
+k_min: 5                   # k-anonymity threshold for targeted coarsening
+min_confidence: 0.5        # mentions below are ignored
+pin_keep_digits: 3         # 229073 -> 229***
+village_action: tehsil     # tehsil | district | remove
+dob_action: year           # year | shift   (see DECISIONS D-012)
+link_age_tolerance: 1
+link_conflict_age_gap: 2
+psn_prefix: "PSN-"
+tokens:                    # replacement tokens
+  PATIENT_NAME: "[NAME]"   # replaced by the PSN when the unit has one
+  RELATIVE_NAME: "[RELATIVE]"
+  PHONE: "[PHONE]"
+  AADHAAR: "[AADHAAR]"
+  AADHAAR_MASKED: "[AADHAAR]"
+  ABHA_NUMBER: "[ABHA]"
+  ABHA_ADDRESS: "[ABHA]"
+  PAN: "[PAN]"
+  MRN: "[MRN]"
+  INSURANCE_ID: "[INSURANCE]"
+  EMAIL: "[EMAIL]"
+  HOUSE: "[ADDRESS]"
+  LANDMARK: "[ADDRESS]"
+  LOCALITY: "[ADDRESS]"
+  OTHER_PERSON: "[NAME]"

@@ -63,7 +63,6 @@ DIRECT = {
     EType.OTHER_PERSON,
     EType.CANARY,
 }
-
 QUASI = {
     EType.DOB,
     EType.AGE,
@@ -93,7 +92,7 @@ class Mention:
 @dataclass(slots=True)
 class Slot:
     """One string-bearing location of a record that can contain PII."""
-    path: str  # e.g. "col:Name", "doc", etc.
+    path: str  # e.g. col:Name, @filename, /visits/3/patient/name
     text: str  # decoded string form of the value
     channel: Channel
     value_type: ValueType = "str"  # original JSON type; CSV/text always "str"
@@ -120,7 +119,7 @@ class Evidence:
 @dataclass(slots=True)
 class Unit:
     """A scoring record: CSV row, JSON-pointer record, or whole doc."""
-    uid: str  # f"{file_rel}#{loc}" - unique, stable
+    uid: str  # f"{file_rel}#{loc}" — unique, stable
     file_rel: str  # input-relative path, POSIX style
     loc: str  # "row:N" | "/visits/3" | "doc"
     slots: list[Slot] = field(default_factory=list)

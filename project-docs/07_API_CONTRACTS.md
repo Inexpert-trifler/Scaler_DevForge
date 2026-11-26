@@ -154,4 +154,4 @@ tools/chaos_gen.py --src ../Secret-Wards-ToolKit/dev/input --dst ../chaos/input 
 ## C. Contract change log
 | Date | Change | Approved by |
 |---|---|---|
-| 2026-11-26 | v1.0 created | Lakshya, Saransh (pending confirmation at M0) |
+| 2026-11-26 | v1.0 created and frozen at Milestone M0 | Lakshya, Saransh (Approved at M0) |
