@@ -19,6 +19,11 @@ ALLOWED_EVENTS: Set[str] = {
     "privacy_complete",
     "export_complete",
     "link_error",
+    "privacy_error",
+    "kanon_error",
+    "detection_error",
+    "filename_rename_error",
+    "export_error",
     "fatal_error",
 }
 

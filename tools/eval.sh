@@ -3,13 +3,16 @@
 set -euo pipefail
 
 INPUT_DIR="${1:-tests/sample_data}"
-OUTPUT_RUN1="/tmp/wardguard_eval_run1"
-OUTPUT_RUN2="/tmp/wardguard_eval_run2"
-OUTPUT_DIFF_SECRET="/tmp/wardguard_eval_diff_secret"
 
-# Ensure clean temporary directories
-rm -rf "$OUTPUT_RUN1" "$OUTPUT_RUN2" "$OUTPUT_DIFF_SECRET"
-mkdir -p "$OUTPUT_RUN1" "$OUTPUT_RUN2" "$OUTPUT_DIFF_SECRET"
+# Temporary directories created safely with mktemp -d and cleaned up on exit
+OUTPUT_RUN1=$(mktemp -d /tmp/wardguard_eval_run1_XXXXXX)
+OUTPUT_RUN2=$(mktemp -d /tmp/wardguard_eval_run2_XXXXXX)
+OUTPUT_DIFF_SECRET=$(mktemp -d /tmp/wardguard_eval_diff_secret_XXXXXX)
+
+cleanup() {
+    rm -rf "$OUTPUT_RUN1" "$OUTPUT_RUN2" "$OUTPUT_DIFF_SECRET"
+}
+trap cleanup EXIT INT TERM
 
 echo "=== WardGuard Evaluation ==="
 echo "Input directory: $INPUT_DIR"
@@ -77,5 +80,5 @@ PEAK_RSS=$(python3 -c "import json; r=json.load(open('$OUTPUT_RUN1/report.json')
 
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M")
 echo ""
-echo "=== BUILD LOG LINE ==="
-echo "- [$TIMESTAMP] [H1.5] Lakshya [L-03] eval.sh verification | CONTRACT: ok | files: ${FILES_SANITIZED}/${FILES_TOTAL} sanitized, ${FILES_QUARANTINED} quarantined | ${TIME_SEC}s ${PEAK_RSS}MB"
+echo "=== EVALUATION SUMMARY ==="
+echo "[$TIMESTAMP] eval.sh verification | CONTRACT: ok | files: ${FILES_SANITIZED}/${FILES_TOTAL} sanitized, ${FILES_QUARANTINED} quarantined | ${TIME_SEC}s ${PEAK_RSS}MB"

@@ -130,3 +130,47 @@ def test_readers_quarantine_reasons():
         assert statuses["scan.jpg"] == ("quarantined", "unsupported_format")
         assert statuses["empty.txt"] == ("quarantined", "unsupported_format")
         assert statuses["corrupt.txt"] == ("quarantined", "undecodable")
+
+
+def test_sniff_plain_text_robustness_bug_a():
+    """Verify Bug A fixes: title commas, WhatsApp exports, Devanagari lines sniff as text."""
+    # 1. Hospital title with comma in line 1 (.txt) -> text
+    hosp = b"SANJEEVANI MULTISPECIALITY HOSPITAL, LUCKNOW\nPatient visited OPD.\nAdvised rest."
+    assert sniff(hosp, "discharge_summary.txt") == "text"
+
+    # 2. Nursing note title with comma
+    nursing = b"NURSING NOTES - Ward 8 (Medicine), Bed 2 - Morning round\nBP 120/80\nPulse 72"
+    assert sniff(nursing, "note.text") == "text"
+
+    # 3. WhatsApp export starting with [dd/mm/yy...] -> text
+    whatsapp = b"[23/06/26, 8:11 pm] Dr. Sharma: Patient vitals stable, discharge tomorrow."
+    assert sniff(whatsapp, "chat_export.txt") == "text"
+
+    # 4. Devanagari with comma in line 1
+    deva_txt = "नमस्ते अस्पताल, लखनऊ\nमरीज़ को बुखार है।".encode("utf-8")
+    assert sniff(deva_txt, "hindi_note.txt") == "text"
+
+    # 5. Real CSV in .txt -> text because extension is .txt and content is not valid JSON
+    fake_csv_txt = b"Col1,Col2\nVal1,Val2\nVal3,Val4"
+    assert sniff(fake_csv_txt, "data.txt") == "text"
+
+    # 6. JSON content in .csv -> json (content wins when it truly parses)
+    valid_json_csv = b'{"patients": [{"id": 1, "name": "Rajesh"}]}'
+    assert sniff(valid_json_csv, "export.csv") == "json"
+
+    # 7. Truncated / malformed JSON in .json -> stays json so reader quarantines as malformed
+    trunc_json = b'{"name": "Incomplete", '
+    assert sniff(trunc_json, "record.json") == "json"
+
+    # 8. Truncated JSON-like text in .txt -> text (does not parse as JSON)
+    pseudo_json_txt = b'{"note": "This is a doctor note that ends abruptly...'
+    assert sniff(pseudo_json_txt, "raw_note.txt") == "text"
+
+    # 9. FHIR Bundle -> fhir
+    fhir_bundle = b'{"resourceType": "Bundle", "type": "collection", "entry": []}'
+    assert sniff(fhir_bundle, "bundle.json") == "fhir"
+
+    # 10. UTF-16 CSV -> csv
+    u16_csv = "Name,Age,Gender\nRajesh,45,M\nSunita,38,F".encode("utf-16")
+    assert sniff(u16_csv, "records.csv") == "csv"
+

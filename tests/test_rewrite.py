@@ -404,3 +404,68 @@ def test_canary_rewrite_token(default_policy):
     )
     out = apply_mentions(text, [m_canary], None, default_policy)
     assert out == "Note [CANARY] tag."
+
+
+def test_json_key_renaming_rfc6901_unescaping_and_collision_safety(default_policy):
+    """Bug B test: RFC 6901 unescaping, deterministic suffix on collisions, nested parent/child."""
+    # 1. Key containing '/' and '~' (RFC 6901 escaped)
+    raw_obj = {
+        "by_uhid": {
+            "SNJ/126~1064511": {"patient": "Rajesh"}
+        }
+    }
+    pf = ParsedFile(rel="test.json", sha256="abc", size=10, fmt="json", status="pending", obj=raw_obj)
+    s = Slot(
+        path="@key:/by_uhid/SNJ~1126~01064511",
+        text="[MRN]",
+        channel="key",
+    )
+    pf.file_slots = [s]
+    rendered = render(pf, default_policy)
+    parsed = json.loads(rendered.decode("utf-8"))
+    assert "[MRN]" in parsed["by_uhid"]
+    assert "SNJ/126~1064511" not in parsed["by_uhid"]
+    assert parsed["by_uhid"]["[MRN]"] == {"patient": "Rajesh"}
+
+    # 2. Three sibling keys all mapping to [MRN] keep 3 entries with distinct deterministic names
+    obj_coll = {
+        "index": {
+            "MRN_A": 1,
+            "MRN_B": 2,
+            "MRN_C": 3,
+        }
+    }
+    pf_coll = ParsedFile(rel="coll.json", sha256="abc", size=10, fmt="json", status="pending", obj=obj_coll)
+    pf_coll.file_slots = [
+        Slot(path="@key:/index/MRN_A", text="[MRN]", channel="key"),
+        Slot(path="@key:/index/MRN_B", text="[MRN]", channel="key"),
+        Slot(path="@key:/index/MRN_C", text="[MRN]", channel="key"),
+    ]
+    rendered_coll = render(pf_coll, default_policy)
+    parsed_coll = json.loads(rendered_coll.decode("utf-8"))
+    assert list(parsed_coll["index"].keys()) == ["[MRN]", "[MRN]_2", "[MRN]_3"]
+    assert parsed_coll["index"]["[MRN]"] == 1
+    assert parsed_coll["index"]["[MRN]_2"] == 2
+    assert parsed_coll["index"]["[MRN]_3"] == 3
+
+    # 3. Nested case: both parent key and child key contain PII -> both renamed
+    obj_nested = {
+        "Aadhaar_123456789012": {
+            "UHID_9999": "patient data"
+        }
+    }
+    pf_nested = ParsedFile(rel="nested.json", sha256="abc", size=10, fmt="json", status="pending", obj=obj_nested)
+    pf_nested.file_slots = [
+        Slot(path="@key:/Aadhaar_123456789012", text="[AADHAAR]", channel="key"),
+        Slot(path="@key:/Aadhaar_123456789012/UHID_9999", text="[MRN]", channel="key"),
+    ]
+    rendered_nested = render(pf_nested, default_policy)
+    parsed_nested = json.loads(rendered_nested.decode("utf-8"))
+    assert "[AADHAAR]" in parsed_nested
+    assert "[MRN]" in parsed_nested["[AADHAAR]"]
+    assert parsed_nested["[AADHAAR]"]["[MRN]"] == "patient data"
+
+    # 4. Same input twice -> identical bytes
+    rendered_nested2 = render(pf_nested, default_policy)
+    assert rendered_nested == rendered_nested2
+
