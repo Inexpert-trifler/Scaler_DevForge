@@ -49,6 +49,8 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
                 try:
                     enumerate_units(pf)
                     extract_hidden_slots(pf)
+                    if pf.units:
+                        pf.rows = None
                 except Exception as e:
                     pf.status = "quarantined"
                     pf.reason = safe_reason(e)
@@ -76,16 +78,20 @@ def run(input_dir: Path, output_dir: Path, secret: bytes, policy: Dict[str, Any]
 
             # 1b. Harvest dynamic gazetteer from now-classified structured name columns (TR-DET-5)
             gaz = build_gazetteer(files, policy)
+            # in-memory only: lets the export safety nets (embedded base64, unit-less text)
+            # recognise names harvested from the rest of the dataset
+            policy = {**policy, "_gazetteer": gaz}
 
             # 1c. Full pass to scan free-text and hidden slots using the harvested gazetteer
-            for pf in files:
-                if pf.status == "pending":
-                    try:
-                        detect_file(pf, gaz, policy)
-                    except Exception as e:
-                        pf.status = "quarantined"
-                        pf.reason = safe_reason(e)
-                        event("file_quarantined", count=1)
+            if not getattr(gaz, "is_empty", False):
+                for pf in files:
+                    if pf.status == "pending":
+                        try:
+                            detect_file(pf, gaz, policy, gaz_only=True)
+                        except Exception as e:
+                            pf.status = "quarantined"
+                            pf.reason = safe_reason(e)
+                            event("file_quarantined", count=1)
         except Exception as e:
             pipeline_errors["detection"] = pipeline_errors.get("detection", 0) + 1
             event("detection_error", count=1)

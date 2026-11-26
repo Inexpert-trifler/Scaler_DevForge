@@ -19,7 +19,7 @@ def write_records(files: List[ParsedFile], output_dir: Path) -> None:
         if pf.status != "sanitized" or not pf.out_rel:
             continue
         for u in pf.units:
-            if u.patient_bearing or u.psn is not None:
+            if u.patient_bearing:
                 records.append(
                     {
                         "file": pf.out_rel,

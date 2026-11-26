@@ -16,14 +16,40 @@ Implements TR-ING-2:
 from __future__ import annotations
 import json
 import re
+import sys
 from typing import Optional
 from wardguard.ingest.decode import decode
 from wardguard.model import Fmt
 
 
+def _first_non_empty_lines(text: str, limit: int = 12, max_bytes: int = 65536) -> list[str]:
+    """Extract up to `limit` non-empty lines without splitting huge single/multi-MB files."""
+    lines: list[str] = []
+    pos = 0
+    end_limit = min(len(text), max_bytes)
+    while pos < end_limit and len(lines) < limit:
+        nl = text.find("\n", pos, end_limit)
+        if nl == -1:
+            if len(text) > end_limit:
+                # Line extends past max_bytes; find the actual newline if one exists nearby
+                nl_full = text.find("\n", end_limit, min(len(text), end_limit * 4))
+                chunk = text[pos:] if nl_full == -1 else text[pos:nl_full]
+                pos = len(text) if nl_full == -1 else nl_full + 1
+            else:
+                chunk = text[pos:]
+                pos = end_limit
+        else:
+            chunk = text[pos:nl]
+            pos = nl + 1
+        chunk = chunk.rstrip("\r")
+        if chunk.strip():
+            lines.append(chunk)
+    return lines
+
+
 def _has_consistent_delimiter(text: str, delimiter: str) -> bool:
     """Check if delimiter appears consistently on non-empty lines."""
-    non_empty_lines = [line for line in text.splitlines() if line.strip()]
+    non_empty_lines = _first_non_empty_lines(text, limit=10)
     if len(non_empty_lines) < 2:
         return False
     sample = non_empty_lines[:10]
@@ -36,6 +62,18 @@ def _has_consistent_delimiter(text: str, delimiter: str) -> bool:
         return False
     matching = sum(1 for c in counts if c == mode_count)
     return (matching / len(counts)) >= 0.70
+
+
+def _is_json_lines(text: str) -> bool:
+    lines = _first_non_empty_lines(text, limit=200, max_bytes=262144)
+    if len(lines) < 2:
+        return False
+    for ln in lines:
+        try:
+            json.loads(ln)
+        except Exception:
+            return False
+    return True
 
 
 def sniff(raw: bytes, rel: str) -> Fmt:
@@ -98,17 +136,27 @@ def sniff(raw: bytes, rel: str) -> Fmt:
     # 4. JSON / FHIR validation
     # If content begins with { or [, check if it actually parses as JSON
     if stripped_text.startswith(("{", "[")):
+        orig_limit = sys.getrecursionlimit()
         try:
+            if orig_limit < 5000:
+                sys.setrecursionlimit(5000)
             parsed = json.loads(stripped_text)
             if isinstance(parsed, dict) and parsed.get("resourceType") == "Bundle":
                 return "fhir"
             return "json"
         except Exception:
+            # NDJSON / JSON Lines: every non-empty line is its own JSON value. It is NOT a CSV
+            # (commas inside objects are not delimiters). Treat it as text so values are
+            # rewritten in place and every line stays valid JSON.
+            if _is_json_lines(stripped_text):
+                return "text"
             # Did not parse as JSON!
             # If it had a .json extension, return "json" so it will be quarantined as malformed/truncated
             if is_json_ext:
                 return "json"
             # Otherwise, it's NOT JSON. Continue sniffing!
+        finally:
+            sys.setrecursionlimit(orig_limit)
 
     elif is_json_ext:
         # A .json file that does not start with { or [ stays "json" so it is quarantined

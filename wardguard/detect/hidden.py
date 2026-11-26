@@ -90,20 +90,29 @@ def decode_escape_sequences(text: str) -> Optional[str]:
 
 
 def extract_json_keys(obj: Any, parent_pointer: str = "") -> List[tuple[str, str]]:
-    """Recursively collect (path, key_text) for all dictionary keys."""
+    """Iteratively collect (path, key_text) for all dictionary keys (stack-safe for deep JSON)."""
     keys: List[tuple[str, str]] = []
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            k_str = str(k)
-            escaped_k = escape_pointer_segment(k_str)
-            slot_path = f"@key:{parent_pointer}/{escaped_k}" if parent_pointer else f"@key:/{escaped_k}"
-            keys.append((slot_path, k_str))
-            child_pointer = f"{parent_pointer}/{escaped_k}" if parent_pointer else f"/{escaped_k}"
-            keys.extend(extract_json_keys(v, child_pointer))
-    elif isinstance(obj, list):
-        for idx, item in enumerate(obj):
-            child_pointer = f"{parent_pointer}/{idx}"
-            keys.extend(extract_json_keys(item, child_pointer))
+    stack: list[tuple[Any, str]] = [(obj, parent_pointer)]
+    while stack:
+        cur_obj, cur_ptr = stack.pop()
+        if isinstance(cur_obj, dict):
+            # Collect keys at this level in forward order, push children in reverse so pop order is forward
+            children: list[tuple[Any, str]] = []
+            for k, v in cur_obj.items():
+                k_str = str(k)
+                escaped_k = escape_pointer_segment(k_str)
+                slot_path = f"@key:{cur_ptr}/{escaped_k}" if cur_ptr else f"@key:/{escaped_k}"
+                keys.append((slot_path, k_str))
+                if isinstance(v, (dict, list)):
+                    child_ptr = f"{cur_ptr}/{escaped_k}" if cur_ptr else f"/{escaped_k}"
+                    children.append((v, child_ptr))
+            for child in reversed(children):
+                stack.append(child)
+        elif isinstance(cur_obj, list):
+            for idx in range(len(cur_obj) - 1, -1, -1):
+                item = cur_obj[idx]
+                if isinstance(item, (dict, list)):
+                    stack.append((item, f"{cur_ptr}/{idx}"))
     return keys
 
 
@@ -126,6 +135,18 @@ def extract_hidden_slots(pf: ParsedFile) -> None:
             value_type="str",
         )
     )
+
+    # 1b. Add @dirname slot: folder names leak too ("scans/Sunita_Yadav/visit.txt")
+    parent = p.parent.as_posix()
+    if parent and parent != ".":
+        pf.file_slots.append(
+            Slot(
+                path="@dirname",
+                text=parent,
+                channel="filename",
+                value_type="str",
+            )
+        )
 
     # 2. Add @header:<index> slots for CSV/TSV
     if pf.header:
@@ -213,45 +234,42 @@ def apply_filename_renaming(files: List[ParsedFile], policy: Optional[dict] = No
     if policy and "tokens" in policy:
         token_map.update(policy["tokens"])
 
-    used_paths: Set[str] = set()
+    def _replace(text: str, slot: Optional[Slot]) -> str:
+        if not slot or not slot.mentions:
+            return text
+        out = text
+        for m in sorted(slot.mentions, key=lambda m: (m.start, m.end), reverse=True):
+            etype_key = m.etype.value if hasattr(m.etype, "value") else str(m.etype)
+            rep = token_map.get(etype_key, f"[{etype_key}]")
+            out = out[:m.start] + rep + out[m.end:]
+        return out
 
-    for pf in files:
-        if pf.status != "pending":
-            continue
-
+    # Phase 1: desired output path for every pending file (sanitized stem AND folders)
+    desired: list[tuple[ParsedFile, str]] = []
+    for pf in (f for f in files if f.status == "pending"):  # load_all order is already deterministic
         p = Path(pf.rel)
+        fn_slot = next((fs for fs in pf.file_slots if fs.path == "@filename"), None)
+        dir_slot = next((fs for fs in pf.file_slots if fs.path == "@dirname"), None)
         parent_dir = p.parent.as_posix()
-        suffix = p.suffix
-        stem = p.stem
+        new_parent = _replace(parent_dir, dir_slot) if parent_dir != "." else "."
+        new_stem = _replace(p.stem, fn_slot)
+        rel_out = f"{new_parent}/{new_stem}{p.suffix}" if new_parent != "." else f"{new_stem}{p.suffix}"
+        desired.append((pf, f"sanitized/{rel_out}"))
 
-        # Find @filename slot
-        fn_slot = None
-        for fs in pf.file_slots:
-            if fs.path == "@filename":
-                fn_slot = fs
-                break
-
-        if fn_slot and fn_slot.mentions:
-            # Sort mentions right-to-left to safely replace spans
-            sorted_mentions = sorted(fn_slot.mentions, key=lambda m: m.start, reverse=True)
-            new_stem = stem
-            for m in sorted_mentions:
-                etype_key = m.etype.value if hasattr(m.etype, "value") else str(m.etype)
-                rep = token_map.get(etype_key, f"[{etype_key}]")
-                new_stem = new_stem[:m.start] + rep + new_stem[m.end:]
-
-            new_filename = f"{new_stem}{suffix}"
-            target_out = f"sanitized/{parent_dir}/{new_filename}" if parent_dir != "." else f"sanitized/{new_filename}"
-
-            # Check collision
-            if target_out in used_paths:
-                sha8 = pf.sha256[:8] if pf.sha256 else "00000000"
-                collision_filename = f"file_{sha8}{suffix}"
-                target_out = f"sanitized/{parent_dir}/{collision_filename}" if parent_dir != "." else f"sanitized/{collision_filename}"
-
-            pf.out_rel = target_out
-            used_paths.add(target_out)
-        else:
-            default_out = f"sanitized/{pf.rel}"
-            pf.out_rel = default_out
-            used_paths.add(default_out)
+    # Phase 2: deterministic collision resolution. Untouched paths are claimed first so a
+    # renamed file can never overwrite (or be overwritten by) a file that kept its name.
+    used_paths: Set[str] = set()
+    unchanged = [(pf, t) for pf, t in desired if t == f"sanitized/{pf.rel}"]
+    changed = [(pf, t) for pf, t in desired if t != f"sanitized/{pf.rel}"]
+    for pf, target in unchanged + changed:
+        if target in used_paths:
+            parent = target.rsplit("/", 1)[0]
+            suffix = Path(target).suffix
+            sha8 = pf.sha256[:8] if pf.sha256 else "00000000"
+            target = f"{parent}/file_{sha8}{suffix}"
+            n = 2
+            while target in used_paths:
+                target = f"{parent}/file_{sha8}_{n}{suffix}"
+                n += 1
+        pf.out_rel = target
+        used_paths.add(target)

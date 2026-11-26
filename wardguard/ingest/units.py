@@ -32,27 +32,30 @@ def get_value_type_and_text(val: Any) -> Tuple[ValueType, str]:
 
 
 def collect_leaf_slots(obj: Any, prefix: str = "") -> List[Slot]:
-    """Recursively collect Slots for all primitive leaves in a JSON structure."""
+    """Iteratively collect Slots for all primitive leaves in a JSON structure (stack-safe for deep JSON)."""
     slots: List[Slot] = []
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            seg = escape_pointer_segment(str(k))
-            path = f"{prefix}/{seg}"
-            slots.extend(collect_leaf_slots(v, path))
-    elif isinstance(obj, list):
-        for idx, item in enumerate(obj):
-            path = f"{prefix}/{idx}"
-            slots.extend(collect_leaf_slots(item, path))
-    else:
-        v_type, text = get_value_type_and_text(obj)
-        slots.append(
-            Slot(
-                path=prefix or "/",
-                text=text,
-                channel="content",
-                value_type=v_type,
+    stack: list[tuple[Any, str]] = [(obj, prefix)]
+    while stack:
+        cur_obj, cur_prefix = stack.pop()
+        if isinstance(cur_obj, dict):
+            # Push in reverse order to preserve original key traversal order
+            items = list(cur_obj.items())
+            for k, v in reversed(items):
+                seg = escape_pointer_segment(str(k))
+                stack.append((v, f"{cur_prefix}/{seg}"))
+        elif isinstance(cur_obj, list):
+            for idx in range(len(cur_obj) - 1, -1, -1):
+                stack.append((cur_obj[idx], f"{cur_prefix}/{idx}"))
+        else:
+            v_type, text = get_value_type_and_text(cur_obj)
+            slots.append(
+                Slot(
+                    path=cur_prefix or "/",
+                    text=text,
+                    channel="content",
+                    value_type=v_type,
+                )
             )
-        )
     return slots
 
 

@@ -6,8 +6,9 @@ Implements TR-DET-5:
 - Fast word-boundary search in text in both scripts using indexed token dictionaries
 """
 from __future__ import annotations
+from collections import defaultdict
 import re
-from typing import Optional
+from typing import Optional, Sequence
 from wardguard.model import Channel, ParsedFile, Role, EType
 from wardguard.detect.normalize import normalize_for_match, normalize_with_map, map_span_back
 from wardguard.detect.translit import (
@@ -29,6 +30,11 @@ _GIVEN_STOPWORDS = {
 }
 
 
+_ALNUM_RE = re.compile(r'[A-Za-z0-9\u0900-\u097f]+')
+_DIGIT_RUN_RE = re.compile(r'\d+')
+_RB = r'(?![A-Za-z0-9\u0900-\u097f])'
+
+
 class Gazetteer:
     """Dynamic gazetteer storing harvested names, hidden-channel given names, and MRN digit cores."""
 
@@ -37,10 +43,15 @@ class Gazetteer:
         self._entries: dict[str, tuple[Role, str]] = {}
         self._given_names: dict[str, tuple[Role, str]] = {}
         self._mrn_cores: set[str] = set()
-        self._compiled_regexes: list[tuple[re.Pattern, Role, str]] = []
-        self._compiled_given: list[tuple[re.Pattern, Role, str]] = []
-        self._compiled_mrns: list[tuple[re.Pattern, Role, str]] = []
+        # O(N) hash-indexed entry structures (entry tuples: [phrase, compiled_pat_or_None, role, canon])
+        self._single_entries: dict[str, list[list]] = defaultdict(list)
+        self._pair_entries: dict[tuple[str, str], list[list]] = defaultdict(list)
+        self._fallback_regexes: list[tuple[re.Pattern, Role, str]] = []
         self._dirty = True
+
+    @property
+    def is_empty(self) -> bool:
+        return not self._entries and not self._given_names and not self._mrn_cores
 
     def variants(self, name: str) -> set[str]:
         """Generate spelling, script, and ordering variants of a name."""
@@ -88,7 +99,9 @@ class Gazetteer:
     def add(self, name: str, role: Role = "patient") -> None:
         """Add a name and its expanded variants to the gazetteer."""
         name_clean = normalize_for_match(name.strip())
-        if not name_clean or len(name_clean) < 3:
+        if not name_clean or len(name_clean) < 3 or len(name_clean) > 80:
+            return
+        if any(c in name_clean for c in '{}[]":;\n\r\t'):
             return
 
         canon = canonical_name(name_clean)
@@ -123,86 +136,146 @@ class Gazetteer:
             self._mrn_cores.add(m.group(1))
             self._dirty = True
 
+    @staticmethod
+    def _compile_entry_pat(phrase: str) -> re.Pattern:
+        parts = phrase.split()
+        if len(parts) > 1:
+            body = r'[\s_]+'.join(re.escape(p) for p in parts)
+        else:
+            body = re.escape(phrase)
+        return re.compile(r'(?i)' + body + _RB)
+
     def _compile(self) -> None:
-        """Compile stored variants into regexes sorted by length descending."""
+        """Index stored variants into O(1) first-token / token-pair buckets for fast lookup."""
         if not self._dirty:
             return
 
-        # Boundary checks treating underscore, backslash, slash, and spaces uniformly as delimiters
-        lb = r'(?<![A-Za-z0-9\u0900-\u097f])'
-        rb = r'(?![A-Za-z0-9\u0900-\u097f])'
+        self._single_entries.clear()
+        self._pair_entries.clear()
+        self._fallback_regexes.clear()
 
-        # 1. Multi-word & full-name patterns (allowing spaces OR underscores between tokens)
         sorted_items = sorted(
             self._entries.items(),
             key=lambda x: (len(x[0].split()), len(x[0])),
-            reverse=True
+            reverse=True,
         )
-        patterns: list[tuple[re.Pattern, Role, str]] = []
         for phrase, (role, canon) in sorted_items:
-            parts = phrase.split()
-            if len(parts) > 1:
-                body = r'[\s_]+'.join(re.escape(p) for p in parts)
+            toks = _ALNUM_RE.findall(phrase)
+            if not toks or not _ALNUM_RE.match(phrase):
+                lb = r'(?<![A-Za-z0-9\u0900-\u097f])'
+                parts = phrase.split()
+                body = r'[\s_]+'.join(re.escape(p) for p in parts) if len(parts) > 1 else re.escape(phrase)
+                self._fallback_regexes.append((re.compile(r'(?i)' + lb + r'(' + body + r')' + _RB), role, canon))
+            elif len(toks) == 1:
+                self._single_entries[toks[0]].append([phrase, None, role, canon])
             else:
-                body = re.escape(phrase)
-            pattern = re.compile(r'(?i)' + lb + r'(' + body + r')' + rb)
-            patterns.append((pattern, role, canon))
-        self._compiled_regexes = patterns
-
-        # 2. Given-name patterns for hidden channels only
-        given_patterns: list[tuple[re.Pattern, Role, str]] = []
-        for tok, (role, canon) in sorted(self._given_names.items(), key=lambda x: len(x[0]), reverse=True):
-            given_patterns.append((
-                re.compile(r'(?i)' + lb + r'(' + re.escape(tok) + r')' + rb),
-                role,
-                canon,
-            ))
-        self._compiled_given = given_patterns
-
-        # 3. Harvested MRN digit-suffix patterns for hidden channels only
-        mrn_patterns: list[tuple[re.Pattern, Role, str]] = []
-        for core in sorted(self._mrn_cores, key=len, reverse=True):
-            mrn_patterns.append((
-                re.compile(r'(?<![0-9])(' + re.escape(core) + r')(?![0-9])'),
-                "patient",
-                "__MRN__",
-            ))
-        self._compiled_mrns = mrn_patterns
+                self._pair_entries[(toks[0], toks[1])].append([phrase, None, role, canon])
 
         self._dirty = False
 
-    def find(self, text: str, channel: Channel = "content") -> list[tuple[int, int, Role, str]]:
+    def find(
+        self,
+        text: str,
+        channel: Channel = "content",
+        _pre_norm: Optional[tuple[str, Sequence[int]]] = None,
+    ) -> list[tuple[int, int, Role, str]]:
         """Find gazetteer name occurrences in text with word/underscore boundaries.
         
         Uses normalize_with_map to guarantee exact offsets into original text.
         In hidden channels (filename, header, key, metadata), also matches harvested
         given names and numeric MRN cores.
         """
-        if not text or (not self._entries and not self._mrn_cores):
+        if not text or self.is_empty:
             return []
 
         self._compile()
         hits: list[tuple[int, int, Role, str]] = []
-        norm_text, index_map = normalize_with_map(text)
+        if _pre_norm is not None:
+            norm_text, index_map = _pre_norm
+        else:
+            norm_text, index_map = normalize_with_map(text)
         orig_len = len(text)
 
-        for pat, role, canon in self._compiled_regexes:
+        is_hidden = channel in _HIDDEN_CHANNELS
+        single_entries = self._single_entries
+        pair_entries = self._pair_entries
+        given_names = self._given_names
+
+        # Fast lowercase scan preserving character indices
+        norm_lower = norm_text.lower()
+        same_len = len(norm_lower) == len(norm_text)
+        scan_str = norm_lower if same_len else norm_text
+
+        prev_tok = ""
+        prev_start = 0
+
+        if single_entries or pair_entries or (is_hidden and given_names):
+            for m in _ALNUM_RE.finditer(scan_str):
+                cur_start = m.start()
+                cur_end = m.end()
+                cur_tok = m.group(0) if same_len else m.group(0).lower()
+
+                if pair_entries and prev_tok:
+                    bucket = pair_entries.get((prev_tok, cur_tok))
+                    if bucket:
+                        for entry in bucket:
+                            pat = entry[1]
+                            if pat is None:
+                                pat = self._compile_entry_pat(entry[0])
+                                entry[1] = pat
+                            pm = pat.match(norm_text, prev_start)
+                            if pm:
+                                start, end = map_span_back(prev_start, pm.end(), index_map, orig_len)
+                                if end > start:
+                                    hits.append((start, end, entry[2], entry[3]))
+
+                if single_entries:
+                    sbucket = single_entries.get(cur_tok)
+                    if sbucket:
+                        for entry in sbucket:
+                            phrase = entry[0]
+                            if len(phrase) == len(cur_tok):
+                                start, end = map_span_back(cur_start, cur_end, index_map, orig_len)
+                                if end > start:
+                                    hits.append((start, end, entry[2], entry[3]))
+                            else:
+                                pat = entry[1]
+                                if pat is None:
+                                    pat = self._compile_entry_pat(phrase)
+                                    entry[1] = pat
+                                pm = pat.match(norm_text, cur_start)
+                                if pm:
+                                    start, end = map_span_back(cur_start, pm.end(), index_map, orig_len)
+                                    if end > start:
+                                        hits.append((start, end, entry[2], entry[3]))
+
+                if is_hidden and given_names:
+                    g_info = given_names.get(cur_tok)
+                    if g_info is not None:
+                        start, end = map_span_back(cur_start, cur_end, index_map, orig_len)
+                        if end > start:
+                            hits.append((start, end, g_info[0], g_info[1]))
+
+                prev_tok = cur_tok
+                prev_start = cur_start
+
+        for pat, role, canon in self._fallback_regexes:
             for m in pat.finditer(norm_text):
                 start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
                 if end > start:
                     hits.append((start, end, role, canon))
 
-        if channel in _HIDDEN_CHANNELS:
-            for pat, role, canon in self._compiled_given:
-                for m in pat.finditer(norm_text):
-                    start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
+        if is_hidden and self._mrn_cores:
+            mrn_cores = self._mrn_cores
+            for dm in _DIGIT_RUN_RE.finditer(norm_text):
+                d_str = dm.group(0)
+                if d_str in mrn_cores:
+                    start, end = map_span_back(dm.start(), dm.end(), index_map, orig_len)
                     if end > start:
-                        hits.append((start, end, role, canon))
-            for pat, role, canon in self._compiled_mrns:
-                for m in pat.finditer(norm_text):
-                    start, end = map_span_back(m.start(1), m.end(1), index_map, orig_len)
-                    if end > start:
-                        hits.append((start, end, role, canon))
+                        hits.append((start, end, "patient", "__MRN__"))
+
+        if not hits:
+            return []
 
         # Deduplicate and resolve overlapping spans (longest span wins)
         hits.sort(key=lambda x: (x[0], -(x[1] - x[0])))
@@ -245,7 +318,10 @@ def build_gazetteer(files: list[ParsedFile], policy: Optional[dict] = None) -> G
 
                 # Also harvest high-confidence context/regex mentions found in pass 1a
                 for m in slot.mentions:
-                    if m.etype in (EType.PATIENT_NAME, EType.RELATIVE_NAME) and m.source in ("context", "column"):
+                    # Only confident rules feed the dataset-wide gazetteer: a weak guess (initials,
+                    # aliases) must not spread to every other file.
+                    if (m.etype in (EType.PATIENT_NAME, EType.RELATIVE_NAME) and m.source in ("context", "column")
+                            and (m.confidence or 0) >= 0.85):
                         role_m: Role = "relative" if m.etype == EType.RELATIVE_NAME else "patient"
                         if len(m.text.split()) >= 2:
                             gaz.add(m.text, role=role_m)

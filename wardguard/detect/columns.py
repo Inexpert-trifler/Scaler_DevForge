@@ -51,7 +51,44 @@ NON_NAME_HEADERS = {
 
 # Date/DOB regex for values: DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY, etc.
 # POS: "12/04/1977", "1985-06-20", "25-11-2001" | NEG: "650mg", "1-0-1"
-RE_DATE_VALUE = re.compile(r'^\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2})\s*$')
+_MON = r'(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*'
+RE_DATE_VALUE = re.compile(
+    r'(?i)^\s*([\d०-९]{1,2}[/.-][\d०-९]{1,2}[/.-][\d०-९]{2,4}|[\d०-९]{4}[/.-][\d०-९]{1,2}[/.-][\d०-९]{1,2}'
+    r'|\d{1,2}[ -]' + _MON + r'\.?[ -,]*\d{2,4}|' + _MON + r'\.?\s+\d{1,2},?\s+\d{4})'
+    r'(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?\s*$'
+)
+_YEAR_IN_DATE = re.compile(r'(?<!\d)((?:19|20)\d\d)(?!\d)')
+
+# Header words that announce a date / a date of birth (EN, HI, Hinglish, abbreviations)
+_DATE_HDR_TOKENS = {"date", "dt", "dated", "tithi", "tarikh", "tareekh", "din", "on", "datetime", "timestamp",
+                    "तिथि", "दिनांक", "तारीख", "तारिख"}
+_DOB_HDR_COMPACT = {"dob", "dateofbirth", "birthdate", "birthdt", "bdate", "janmtithi", "janamtithi", "janmdin",
+                    "janmtarikh", "जन्मतिथि", "जन्मदिनांक", "जन्मतारीख"}
+
+
+def _date_header_kind(header: str) -> Optional[EType]:
+    """DOB / DATE from the header wording alone (None if it does not look like a date header)."""
+    h = normalize_for_match(header.strip().lower())
+    compact = re.sub(r'[\s_.\-/()]+', '', h)
+    if compact in _DOB_HDR_COMPACT or "birth" in h or "जन्म" in h or compact.startswith("dob"):
+        return EType.DOB
+    toks = set(t for t in re.split(r'[\s_.\-/()]+', h) if t)
+    if toks & _DATE_HDR_TOKENS:
+        return EType.DATE
+    return None
+
+
+def _dates_look_like_birthdates(values: list[str]) -> bool:
+    """Birth dates spread over decades; visit/admission dates cluster within a couple of years."""
+    if len(values) > 500:
+        step = max(1, len(values) // 500)
+        values = values[::step][:500]
+    years = sorted(int(m.group(1)) for v in values if v for m in [_YEAR_IN_DATE.search(str(v).translate(
+        str.maketrans('०१२३४५६७८९', '0123456789')))] if m)
+    if len(years) < 3:
+        return False
+    median = years[len(years) // 2]
+    return (years[-1] - years[0]) >= 15 and median <= years[-1] - 8
 
 # Age regex for values: 48, 54 Y, 54Y, 32 years, 45 वर्ष
 # POS: "48", "54 Y", "32 yrs", "45 वर्ष" | NEG: "SNJ/26/064127"
@@ -261,9 +298,15 @@ def _is_name_like(val: str, med_terms: set[str], min_tokens: int = 2) -> bool:
 
 def profile_values(values: list[str]) -> Optional[EType]:
     """Profile column values: if >= 60% of non-empty values match a type, return that type."""
+    if len(values) > 2000:
+        step = max(1, len(values) // 1000)
+        values = values[::step][:1000]
     non_empty = [v.strip() for v in values if v and str(v).strip()]
     if not non_empty:
         return None
+    if len(non_empty) > 500:
+        step = max(1, len(non_empty) // 500)
+        non_empty = non_empty[::step][:500]
 
     total = len(non_empty)
     med_terms = load_medical_terms()
@@ -392,6 +435,16 @@ def classify_column(header: str, values: list[str]) -> Optional[EType]:
         hdr_tokens = set(re.split(r'[\s_/-]+', base_hdr))
         if clean_hdr in NON_NAME_HEADERS or bool(hdr_tokens & NON_NAME_HEADERS):
             return None
+
+    # Date columns: the header wording decides DOB vs DATE; with an unreadable header the
+    # spread of the years decides (birth dates span decades, visit dates do not).
+    if val_type == EType.DATE:
+        kind = _date_header_kind(header) if header else None
+        if kind is not None:
+            return kind
+        if hdr_type in (EType.DOB, EType.DATE):
+            return hdr_type
+        return EType.DOB if _dates_look_like_birthdates(values) else EType.DATE
 
     # If header is DOB and values are dates -> DOB
     if hdr_type == EType.DOB and val_type == EType.DATE:

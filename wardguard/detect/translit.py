@@ -56,6 +56,14 @@ def deva_to_latin(text: str) -> str:
     except Exception:
         latin = text
 
+    # ITRANS marks: anusvara "M" / chandrabindu ".N" / ".n" are a nasal that is written "m"
+    # only before labials (p, b, m) and "n" everywhere else: हरजिंदर -> harjinder, not harjimder.
+    latin = re.sub(r'(?:M|\.N|\.n)(?=[pbmPBM])', 'm', latin)
+    latin = re.sub(r'(?:M|\.N|\.n)', 'n', latin)
+    # Word-final inherent schwa: ITRANS writes it as a lowercase "a" after a consonant
+    # (a long vowel is "A"/"aa"), and Hindi does not pronounce it: गिल -> gil, यादव -> yadav.
+    latin = re.sub(r'(?<=[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ])a(?=\s|$)', '', latin)
+
     return simplify_latin_phonetics(latin)
 
 
@@ -93,12 +101,14 @@ def simplify_latin_phonetics(text: str) -> str:
     return " ".join(simplified)
 
 
+@lru_cache(maxsize=8192)
 def canonical_name(name: str) -> str:
     """Produce standardized Latin canonical name key for linkage and matching."""
     if not name:
         return ""
 
     lat = deva_to_latin(name)
+    lat = re.sub(r"['\u2019]", "", lat)
     lat = re.sub(r'[^a-zA-Z\s]', ' ', lat).lower()
     tokens = [t.strip() for t in lat.split() if t.strip()]
 

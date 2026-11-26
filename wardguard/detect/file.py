@@ -14,7 +14,7 @@ import re
 from typing import Optional
 from wardguard.model import ParsedFile, Unit, Slot, Mention, EType, Role, Channel
 from wardguard.detect.columns import classify_column
-from wardguard.detect.context import detect_text
+from wardguard.detect.context import detect_text, detect_gazetteer
 from wardguard.detect.evidence import extract_unit_evidence, parse_iso_date, parse_age, parse_gender, load_admin_areas
 from wardguard.detect.guards import is_protected
 from wardguard.detect.names import Gazetteer
@@ -200,7 +200,13 @@ def _classify_json_slot(slot: Slot) -> Optional[EType]:
     return None
 
 
-def detect_file(pf: ParsedFile, gaz: Gazetteer, policy: Optional[dict] = None) -> None:
+def detect_file(
+    pf: ParsedFile,
+    gaz: Gazetteer,
+    policy: Optional[dict] = None,
+    *,
+    gaz_only: bool = False,
+) -> None:
     """Orchestrate detection for a parsed file.
     
     Required contract:
@@ -208,61 +214,65 @@ def detect_file(pf: ParsedFile, gaz: Gazetteer, policy: Optional[dict] = None) -
     
     Pure w.r.t I/O. Deterministic.
     """
-    if pf.status != "pending" or not pf.units:
+    # NOTE: a file with zero data units (a header-only CSV, an empty JSON object, a note whose
+    # body failed to parse) still has file-level slots - header, file name, keys, metadata - and
+    # those must be scanned too. Returning early here used to write such headers out verbatim.
+    if pf.status != "pending":
         return
 
-    # 1. Structured Column Classification for CSV/TSV
-    if pf.fmt in ("csv", "tsv") and pf.header:
-        # Group slot values by column path: "col:<header>"
-        col_values: dict[str, list[str]] = {h: [] for h in pf.header}
-        for u in pf.units:
-            for s in u.slots:
-                # s.path has format "col:<name>" or "col#<index>"
-                if s.path.startswith("col:"):
-                    col_name = s.path[4:]
-                    if col_name in col_values:
-                        col_values[col_name].append(s.text)
+    if not gaz_only:
+        # 1. Structured Column Classification for CSV/TSV
+        if pf.fmt in ("csv", "tsv") and pf.header:
+            # Group slot values by column path: "col:<header>"
+            col_values: dict[str, list[str]] = {h: [] for h in pf.header}
+            for u in pf.units:
+                for s in u.slots:
+                    # s.path has format "col:<name>" or "col#<index>"
+                    if s.path.startswith("col:"):
+                        col_name = s.path[4:]
+                        if col_name in col_values:
+                            col_values[col_name].append(s.text)
 
-        # Classify each column
-        col_types: dict[str, Optional[EType]] = {}
-        for col_name, values in col_values.items():
-            col_types[col_name] = classify_column(col_name, values)
+            # Classify each column
+            col_types: dict[str, Optional[EType]] = {}
+            for col_name, values in col_values.items():
+                col_types[col_name] = classify_column(col_name, values)
 
-        # Apply classified column_type to slots
-        for u in pf.units:
-            for s in u.slots:
-                if s.path.startswith("col:"):
-                    col_name = s.path[4:]
-                    ctype = col_types.get(col_name)
+            # Apply classified column_type to slots
+            for u in pf.units:
+                for s in u.slots:
+                    if s.path.startswith("col:"):
+                        col_name = s.path[4:]
+                        ctype = col_types.get(col_name)
+                        if ctype:
+                            s.column_type = ctype
+                            if not _has_whole_cell_mention(s, ctype):
+                                m = _emit_whole_cell_mention(s, ctype)
+                                if m:
+                                    s.mentions.append(m)
+
+        # 1b. Structured Key Classification for JSON & FHIR
+        elif pf.fmt == "fhir":
+            res_types = _fhir_resource_types(pf)
+            for u in pf.units:
+                for s in u.slots:
+                    ctype = _classify_fhir_slot(pf, s, res_types)
                     if ctype:
                         s.column_type = ctype
                         if not _has_whole_cell_mention(s, ctype):
                             m = _emit_whole_cell_mention(s, ctype)
                             if m:
                                 s.mentions.append(m)
-
-    # 1b. Structured Key Classification for JSON & FHIR
-    elif pf.fmt == "fhir":
-        res_types = _fhir_resource_types(pf)
-        for u in pf.units:
-            for s in u.slots:
-                ctype = _classify_fhir_slot(pf, s, res_types)
-                if ctype:
-                    s.column_type = ctype
-                    if not _has_whole_cell_mention(s, ctype):
-                        m = _emit_whole_cell_mention(s, ctype)
-                        if m:
-                            s.mentions.append(m)
-    elif pf.fmt == "json":
-        for u in pf.units:
-            for s in u.slots:
-                ctype = _classify_json_slot(s)
-                if ctype:
-                    s.column_type = ctype
-                    if not _has_whole_cell_mention(s, ctype):
-                        m = _emit_whole_cell_mention(s, ctype)
-                        if m:
-                            s.mentions.append(m)
+        elif pf.fmt == "json":
+            for u in pf.units:
+                for s in u.slots:
+                    ctype = _classify_json_slot(s)
+                    if ctype:
+                        s.column_type = ctype
+                        if not _has_whole_cell_mention(s, ctype):
+                            m = _emit_whole_cell_mention(s, ctype)
+                            if m:
+                                s.mentions.append(m)
 
     # 2. Free-text scanning & Hidden channel scanning for each slot
     _WHOLE_CELL_TYPES = {
@@ -272,26 +282,64 @@ def detect_file(pf: ParsedFile, gaz: Gazetteer, policy: Optional[dict] = None) -
         EType.DOB, EType.DATE, EType.AGE, EType.PIN, EType.VILLAGE,
         EType.TEHSIL, EType.DISTRICT, EType.GENDER,
     }
+    text_cache: dict[tuple[str, str], tuple[Mention, ...]] = {}
+    dirty_units: list[Unit] = []
+
+    def _clone_mentions(cached: tuple[Mention, ...]) -> list[Mention]:
+        return [
+            Mention(
+                etype=m.etype, start=m.start, end=m.end, text=m.text,
+                script=m.script, channel=m.channel, role=m.role,
+                source=m.source, confidence=m.confidence,
+            )
+            for m in cached
+        ]
+
     for u in pf.units:
+        unit_changed = False
         for s in u.slots:
             # Skip free-text regex on slots already handled cleanly as atomic structured cells
             if s.column_type in _WHOLE_CELL_TYPES:
                 continue
+            if not s.text:
+                continue
 
-            # Run free-text detector with gazetteer and context rules
-            text_mentions = detect_text(s.text, channel=s.channel, gaz=gaz, policy=policy)
-            if text_mentions:
-                combined = s.mentions + text_mentions
-                s.mentions = resolve_overlaps(combined)
+            ckey = (s.text, s.channel) if len(s.text) <= 256 else None
+            if ckey is not None and ckey in text_cache:
+                cached = text_cache[ckey]
+                new_mentions = _clone_mentions(cached) if cached else []
+            else:
+                if gaz_only:
+                    new_mentions = detect_gazetteer(s.text, channel=s.channel, gaz=gaz)
+                else:
+                    new_mentions = detect_text(s.text, channel=s.channel, gaz=gaz, policy=policy)
+                if ckey is not None and len(text_cache) < 8192:
+                    text_cache[ckey] = tuple(new_mentions)
+
+            if new_mentions:
+                if s.mentions:
+                    s.mentions = resolve_overlaps(s.mentions + new_mentions)
+                else:
+                    s.mentions = new_mentions
+                unit_changed = True
+
+        if gaz_only and unit_changed:
+            dirty_units.append(u)
 
     # 3. Scan file-level slots (e.g. @filename, @header, @key)
     for fs in pf.file_slots:
-        fs_mentions = detect_text(fs.text, channel=fs.channel, gaz=gaz, policy=policy)
+        if not fs.text:
+            continue
+        if gaz_only:
+            fs_mentions = detect_gazetteer(fs.text, channel=fs.channel, gaz=gaz)
+        else:
+            fs_mentions = detect_text(fs.text, channel=fs.channel, gaz=gaz, policy=policy)
         if fs_mentions:
-            fs.mentions = resolve_overlaps(fs.mentions + fs_mentions)
+            fs.mentions = resolve_overlaps(fs.mentions + fs_mentions) if fs.mentions else fs_mentions
 
     # 4. Populate Unit Evidence and determine patient_bearing status
-    for u in pf.units:
+    units_to_update = dirty_units if gaz_only else pf.units
+    for u in units_to_update:
         u.evidence = extract_unit_evidence(u)
 
         # A unit is patient_bearing if it contains patient identifiers or clues
