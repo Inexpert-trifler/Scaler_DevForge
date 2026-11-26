@@ -35,7 +35,7 @@
 | Person | Task | State |
 |---|---|---|
 | Lakshya | L-01 Scaffold | TODO |
-| Saransh | S-07 detect_file orchestration | TODO |
+| Saransh | S-08 Linkage engine | TODO |
 
 ## Blockers
 None.

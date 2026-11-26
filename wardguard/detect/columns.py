@@ -161,18 +161,25 @@ def _match_header_lexicon(norm_header: str) -> Optional[EType]:
 
 
 def _is_name_like(val: str, med_terms: set[str]) -> bool:
-    """Check if value is name-like: 1-4 alphabetic tokens, not a number, not a medical term."""
+    """Check if value is name-like: 1-4 alphabetic tokens, not a sentence, not a medical term."""
     norm = normalize_for_match(val.strip())
     if not norm or len(norm) < 2:
         return False
-    # If it contains digits or common punctuation (except period/hyphen), not a pure name
-    if re.search(r'[0-9@#$%^&*()_+={}\[\]|\\:;"<>,?/~`]', norm):
+    # If it contains digits or common sentence punctuation, not a pure name cell
+    if re.search(r'[0-9@#$%^&*()_+={}\[\]|\\:;"<>,?/~`!.]', norm):
         return False
     tokens = norm.split()
-    if not (1 <= len(tokens) <= 5):
+    if not (1 <= len(tokens) <= 4):
         return False
     lower_norm = norm.lower()
     if lower_norm in med_terms:
+        return False
+    # Common English words indicating a sentence/phrase, not a name
+    non_name_stop_words = {
+        "is", "was", "for", "with", "by", "and", "or", "in", "at", "to",
+        "of", "from", "the", "a", "an", "on", "accompanied", "brought", "given"
+    }
+    if any(tok.lower() in non_name_stop_words for tok in tokens):
         return False
     # Check if each token is alphabetic (Latin or Devanagari)
     for tok in tokens:
