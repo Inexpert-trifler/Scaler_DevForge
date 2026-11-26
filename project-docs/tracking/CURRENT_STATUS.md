@@ -35,7 +35,7 @@
 | Person | Task | State |
 |---|---|---|
 | Lakshya | L-01 Scaffold | TODO |
-| Saransh | S-02 Patterns & Normalization | IN_PROGRESS |
+| Saransh | S-03 Column classifier | TODO |
 
 ## Blockers
 None.

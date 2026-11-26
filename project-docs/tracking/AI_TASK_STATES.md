@@ -39,7 +39,7 @@
 | ID | Task | Hours | Depends | Reqs | State | Gate / Notes |
 |---|---|---|---|---|---|---|
 | S-01 | Kit setup, read docs, study dev data; build `resources/` lexicons (labels EN/HI, honorifics, relations, generic tokens, drugs, eponyms, complaints, UP districts/tehsils, given names/surnames Latin+Deva) | H0–3 | – | TR-DET-4, 6 | DONE | 19 generic files committed (>7k tokens); baseline logged |
-| S-02 | `normalize.py` + `patterns.py`: all ID regexes, Verhoeff, Devanagari digits, masked forms + tests | H2–5 | L-02 | TR-DET-1, 2 | IN_PROGRESS | Patterns & Verhoeff checksums |
+| S-02 | `normalize.py` + `patterns.py`: all ID regexes, Verhoeff, Devanagari digits, masked forms + tests | H2–5 | L-02 | TR-DET-1, 2 | DONE | Tests green (8/8); Verhoeff + all Indian IDs |
 | S-03 | `columns.py`: header lexicon + value profiling classifier + tests (renamed-header cases) | H4–7 | S-02 | TR-DET-3 | TODO | all dev registration columns classified |
 | S-04 | `guards.py`: Dr., doses, 1-0-1, frequency, vitals, labs, eponyms, wards, C/O-complaint, K/C/O, H/O, ASHA + tests | H5–7 | S-02 | TR-DET-6 | TODO | contextual precision groups ≥ 0.9 |
 | S-05 | `context.py` + `detect_text`: labels, relations, honorifics, `Name 48 Y/F`; roles patient/relative | H6–10 | S-04 | TR-DET-4, 7 | TODO | 4/4 canaries |
